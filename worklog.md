@@ -284,3 +284,30 @@ Stage Summary:
 - 1 file created: README.md
 - Design proposal delivered covering: coin system optimization, login rewards tiers, 3-tier critical hits, pet growth 1-30 levels, content unlock system, daily tasks, pet mood system
 - Dev server: compiled OK, 0 errors
+
+---
+Task ID: 9 (Fix Pet Shop Purchase Bug)
+Agent: Main
+Task: Fix pet shop items unable to be purchased — clicking buy button has no response
+
+Work Log:
+- Diagnosed the issue in PetPage.tsx shop tab:
+  1. Buy button was a tiny `<button>` element with only `text-[10px]` size — extremely small touch target for mobile
+  2. The `CardContent` parent had an `onClick` that only handled equipping owned items, doing nothing for unowned items
+  3. The buy button used `e.stopPropagation()` which works but the button was too small to reliably tap
+  4. No visual feedback when purchase succeeded or failed
+- Fix implemented:
+  1. Replaced tiny text-only buy button with a proper shadcn `Button` component (`h-7 text-[11px]`) with ShoppingCart + Coins icons
+  2. Added amber gradient styling (`bg-gradient-to-r from-amber-400 to-amber-500`) for affordable items
+  3. Added `disabled={!canAfford}` with gray styling for items the user can't afford
+  4. Added `purchaseFeedback` state to show "购买成功!" (green) or "金币不足" (red) with animated motion.div
+  5. Removed the confusing `CardContent` onClick handler — now only the buttons themselves handle clicks
+  6. Cleaned up unused imports (CardHeader, CardTitle, DialogTrigger, useGameStore)
+  7. Added `ShoppingCart` icon import from lucide-react
+
+Stage Summary:
+- 1 file modified: src/components/math/PetPage.tsx
+- Buy button now uses proper Button component with adequate touch target size
+- Visual feedback shows purchase success/failure for 1.5 seconds
+- Grayed-out state for items user can't afford
+- Dev server: compiled OK, no new lint errors

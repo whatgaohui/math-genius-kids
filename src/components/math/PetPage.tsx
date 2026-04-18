@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Coins,
@@ -24,8 +23,8 @@ import {
   Undo2,
   Check,
   Sparkles,
+  ShoppingCart,
 } from 'lucide-react';
-import { useGameStore } from '@/lib/game-store';
 import {
   usePetStore,
   PET_CONFIGS,
@@ -40,6 +39,7 @@ export default function PetPage() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [editNameOpen, setEditNameOpen] = useState(false);
   const [tempName, setTempName] = useState('');
+  const [purchaseFeedback, setPurchaseFeedback] = useState<{ id: string; success: boolean } | null>(null);
 
   const petType = usePetStore((s) => s.petType);
   const petName = usePetStore((s) => s.petName);
@@ -397,33 +397,44 @@ export default function PetPage() {
                     {items.map((item) => {
                       const owned = furniture.includes(item.id);
                       const equipped = Object.values(equippedFurniture).includes(item.id);
+                      const canAfford = coins >= item.price;
+                      const showFeedback = purchaseFeedback?.id === item.id;
                       return (
                         <Card
                           key={item.id}
                           className={`border-0 py-0 transition-all ${
                             equipped
                               ? 'ring-2 ring-emerald-400'
-                              : 'hover:scale-[1.02] cursor-pointer'
+                              : owned
+                                ? 'hover:scale-[1.02] cursor-pointer'
+                                : 'hover:scale-[1.02]'
                           }`}
                         >
-                          <CardContent
-                            className="bg-white p-3 dark:bg-gray-800/50"
-                            onClick={() => {
-                              if (owned && !equipped) {
-                                equipFurniture(
-                                  item.id,
-                                  item.category
-                                );
-                              }
-                            }}
-                          >
+                          <CardContent className="bg-white p-3 dark:bg-gray-800/50">
                             <p className="text-2xl text-center mb-1">
                               {item.emoji}
                             </p>
                             <p className="text-xs font-medium text-center text-gray-800 dark:text-gray-100 mb-1">
                               {item.name}
                             </p>
-                            {equipped ? (
+                            {showFeedback && purchaseFeedback?.success ? (
+                              <motion.div
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="flex items-center justify-center gap-1 text-emerald-600"
+                              >
+                                <Check className="h-3 w-3" />
+                                <span className="text-[10px] font-medium">购买成功!</span>
+                              </motion.div>
+                            ) : showFeedback && !purchaseFeedback?.success ? (
+                              <motion.div
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="text-center text-[10px] text-red-500"
+                              >
+                                金币不足
+                              </motion.div>
+                            ) : equipped ? (
                               <div className="flex items-center justify-center gap-1">
                                 <Check className="h-3 w-3 text-emerald-500" />
                                 <span className="text-[10px] text-emerald-600">
@@ -434,7 +445,7 @@ export default function PetPage() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="w-full h-6 text-[10px] px-1"
+                                className="w-full h-7 text-[11px] px-1"
                                 onClick={() =>
                                   equipFurniture(item.id, item.category)
                                 }
@@ -442,24 +453,30 @@ export default function PetPage() {
                                 装备
                               </Button>
                             ) : (
-                              <div className="text-center">
-                                <button
-                                  className={`flex items-center justify-center gap-0.5 mx-auto text-[10px] ${
-                                    coins >= item.price
-                                      ? 'text-amber-600 hover:text-amber-700'
-                                      : 'text-gray-400 cursor-not-allowed'
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (coins >= item.price) {
-                                      buyFurniture(item.id);
-                                    }
-                                  }}
-                                >
-                                  <Coins className="h-3 w-3" />
-                                  {item.price}
-                                </button>
-                              </div>
+                              <Button
+                                size="sm"
+                                variant={canAfford ? 'default' : 'secondary'}
+                                className={`w-full h-7 text-[11px] px-1 gap-1 ${
+                                  canAfford
+                                    ? 'bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-white shadow-sm'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                }`}
+                                onClick={() => {
+                                  if (canAfford) {
+                                    const success = buyFurniture(item.id);
+                                    setPurchaseFeedback({ id: item.id, success });
+                                    setTimeout(() => setPurchaseFeedback(null), 1500);
+                                  } else {
+                                    setPurchaseFeedback({ id: item.id, success: false });
+                                    setTimeout(() => setPurchaseFeedback(null), 1500);
+                                  }
+                                }}
+                                disabled={!canAfford}
+                              >
+                                <ShoppingCart className="h-3 w-3" />
+                                <Coins className="h-3 w-3" />
+                                {item.price}
+                              </Button>
                             )}
                           </CardContent>
                         </Card>
