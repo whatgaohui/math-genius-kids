@@ -17,6 +17,7 @@ import {
   CalendarDays,
 } from 'lucide-react';
 import { useGameStore, type PracticeRecord, type Subject } from '@/lib/game-store';
+import BottomNav from './BottomNav';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -433,6 +434,7 @@ export default function StatsPage() {
           )}
         </motion.div>
       </div>
+      <BottomNav />
     </div>
   );
 }

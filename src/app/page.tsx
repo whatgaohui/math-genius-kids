@@ -39,8 +39,10 @@ const viewComponents: Record<string, React.ComponentType> = {
   pet: PetPage,
   settings: SettingsPage,
   chinese: ChineseHome,
+  'chinese-home': ChineseHome,
   'chinese-play': ChinesePlay,
   english: EnglishHome,
+  'english-home': EnglishHome,
   'english-play': EnglishPlay,
 }
 

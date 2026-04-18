@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Award, Lock, Unlock } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { ACHIEVEMENTS } from '@/lib/achievements';
+import BottomNav from './BottomNav';
 
 export default function AchievementsPage() {
   const unlockedAchievements = useGameStore((s) => s.unlockedAchievements);
@@ -190,6 +191,7 @@ export default function AchievementsPage() {
           })}
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

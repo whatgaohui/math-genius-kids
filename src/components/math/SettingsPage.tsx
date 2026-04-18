@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { usePetStore } from '@/lib/pet-store';
+import BottomNav from './BottomNav';
 
 const AVATAR_OPTIONS = [
   '😀', '😎', '🤩', '🥳', '🧑‍🎓', '👩‍🎓',
@@ -277,6 +278,7 @@ export default function SettingsPage() {
           </motion.div>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

@@ -25,12 +25,14 @@ import {
   Check,
   Sparkles,
 } from 'lucide-react';
+import { useGameStore } from '@/lib/game-store';
 import {
   usePetStore,
   PET_CONFIGS,
   FURNITURE_SHOP,
   getPetXPForNextLevel,
 } from '@/lib/pet-store';
+import BottomNav from './BottomNav';
 
 type Tab = 'home' | 'adopt' | 'shop' | 'room';
 
@@ -160,6 +162,7 @@ export default function PetPage() {
             ))}
           </div>
         </div>
+        <BottomNav />
       </div>
     );
   }
@@ -590,6 +593,7 @@ export default function PetPage() {
           </DialogContent>
         </Dialog>
       </div>
+      <BottomNav />
     </div>
   );
 }
