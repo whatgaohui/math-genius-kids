@@ -52,3 +52,17 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Database
+*.db
+*.db-journal
+/db/
+
+# Download temp
+/download/
+
+# Agent context (development only)
+/agent-ctx/
+
+# Mini services runtime
+mini-services/*/node_modules
