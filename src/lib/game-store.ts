@@ -95,6 +95,21 @@ interface GameState {
   // Current game session
   session: GameSessionState | null;
 
+  // Last session result (saved before session is cleared)
+  lastResult: {
+    correct: number;
+    wrong: number;
+    total: number;
+    timeMs: number;
+    stars: number;
+    xp: number;
+    maxCombo: number;
+    mode: string;
+    operation: string;
+    difficulty: string;
+    subject: Subject;
+  } | null;
+
   // Daily challenge
   dailyChallengeCompletedDates: string[];
 
@@ -198,6 +213,8 @@ export const useGameStore = create<GameState & GameActions>()(
       lastLevelEmoji: '',
 
       session: null,
+
+      lastResult: null,
 
       dailyChallengeCompletedDates: [],
 
@@ -395,8 +412,24 @@ export const useGameStore = create<GameState & GameActions>()(
           newDailyDates = [...state.dailyChallengeCompletedDates, today];
         }
 
+        // Save result before clearing session (for ResultPage to read)
+        const resultData = {
+          correct,
+          wrong: total - correct,
+          total,
+          timeMs: totalTimeMs,
+          stars,
+          xp,
+          maxCombo: session.sessionMaxCombo,
+          mode: session.sessionMode,
+          operation: session.sessionOperation,
+          difficulty: session.sessionDifficulty,
+          subject: session.sessionSubject,
+        };
+
         set({
           session: null,
+          lastResult: resultData,
           totalStars: newTotalStars,
           totalXP: newTotalXP,
           playerLevel: newPlayerLevel,

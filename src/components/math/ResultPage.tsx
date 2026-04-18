@@ -10,6 +10,7 @@ import type { QuestionReviewItem } from '@/components/shared/PracticeResult'
 
 export default function ResultPage() {
   const session = useGameStore((s) => s.session)
+  const lastResult = useGameStore((s) => s.lastResult)
   const lastGameSource = useGameStore((s) => s.lastGameSource)
   const lastLevelName = useGameStore((s) => s.lastLevelName)
   const lastLevelEmoji = useGameStore((s) => s.lastLevelEmoji)
@@ -28,16 +29,17 @@ export default function ResultPage() {
     if (soundEnabled) playCompleteSound()
   }, [])
 
-  const sessionCorrect = session?.sessionCorrect ?? 0
-  const sessionWrong = session?.sessionWrong ?? 0
-  const sessionTimeMs = session?.sessionTimeMs ?? 0
-  const sessionStars = session?.sessionStars ?? 0
-  const sessionMaxCombo = session?.sessionMaxCombo ?? 0
-  const sessionXP = session?.sessionXP ?? 0
+  // Use lastResult (saved before session cleared) as primary source
+  const resultCorrect = session?.sessionCorrect ?? lastResult?.correct ?? 0
+  const resultWrong = session?.sessionWrong ?? lastResult?.wrong ?? 0
+  const resultTotal = session ? session.questions.length : (lastResult?.total ?? 0)
+  const resultTimeMs = lastResult?.timeMs ?? session?.sessionTimeMs ?? 0
+  const resultStars = lastResult?.stars ?? session?.sessionStars ?? 0
+  const resultMaxCombo = lastResult?.maxCombo ?? session?.sessionMaxCombo ?? 0
+  const resultXP = lastResult?.xp ?? session?.sessionXP ?? 0
   const questions = session?.questions ?? []
 
-  const total = sessionCorrect + sessionWrong
-  const accuracy = total > 0 ? sessionCorrect / total : 0
+  const accuracy = resultTotal > 0 ? resultCorrect / resultTotal : 0
   const encouragement = getEncouragement(accuracy)
 
   const answeredQuestions = questions.filter((q: any) => q.userAnswer !== undefined)
@@ -87,7 +89,10 @@ export default function ResultPage() {
     : '自由练习'
   const modeEmoji = lastGameSource === 'math-adventure' ? '🏆' : '📖'
 
-  // Fallback: if no session data, use latest practice record
+  // Primary render: use lastResult if session is null
+  const total = resultCorrect + resultWrong
+
+  // Fallback: if no result data at all, use latest practice record
   if (total === 0 && practiceHistory.length > 0) {
     const latest = practiceHistory[0]
     return (
@@ -110,13 +115,13 @@ export default function ResultPage() {
 
   return (
     <PracticeResult
-      correct={sessionCorrect}
-      wrong={sessionWrong}
-      total={total}
-      stars={sessionStars}
-      xp={sessionXP}
-      timeMs={sessionTimeMs}
-      maxCombo={sessionMaxCombo}
+      correct={resultCorrect}
+      wrong={resultWrong}
+      total={resultTotal}
+      stars={resultStars}
+      xp={resultXP}
+      timeMs={resultTimeMs}
+      maxCombo={resultMaxCombo}
       accuracy={accuracy}
       subject="math"
       modeLabel={modeLabel}
@@ -126,7 +131,7 @@ export default function ResultPage() {
       encouragementEmoji={encouragement.emoji}
       encouragementText={encouragement.text}
       speedEncouragement={speedEnc}
-      adventureSuccess={lastGameSource === 'math-adventure' && sessionStars >= 1 ? true : undefined}
+      adventureSuccess={lastGameSource === 'math-adventure' && resultStars >= 1 ? true : undefined}
       adventureLevelName={lastGameSource === 'math-adventure' ? lastLevelName : undefined}
       adventureLevelEmoji={lastGameSource === 'math-adventure' ? lastLevelEmoji : undefined}
       questions={reviewItems}
