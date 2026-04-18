@@ -31,6 +31,7 @@ interface FloatingXP {
 
 export default function ChinesePlay() {
   const { setCurrentView, completeSubjectSession, soundEnabled } = useGameStore();
+  const [rewardInfo, setRewardInfo] = useState<{ coins: number; petXP: number; isCriticalHit: boolean } | null>(null);
 
   // Read config from shared mutable object
   const config = chinesePlayConfig;
@@ -184,20 +185,32 @@ export default function ChinesePlay() {
     setQuestions(qs);
   };
 
-  const handleFinish = () => {
+  const handleFinish = useCallback(() => {
     const totalTimeMs = Date.now() - startTime;
-    const stars = calculateStars(correct, questions.length);
-    const xp = calculateXP(correct, questions.length, totalTimeMs, stars, maxCombo);
-    completeSubjectSession(correct, questions.length, totalTimeMs);
-    // results shown via isFinished state
-  };
+    const result = completeSubjectSession({
+      correct,
+      total: questions.length,
+      timeMs: totalTimeMs,
+      maxCombo,
+      subject: 'chinese',
+      mode: config.mode,
+      difficulty: String(config.grade),
+    });
+    if (result) {
+      setRewardInfo({
+        coins: result.reward.coins,
+        petXP: result.reward.petXP,
+        isCriticalHit: result.reward.isCriticalHit,
+      });
+    }
+  }, [correct, questions.length, maxCombo, startTime, config.mode, config.grade, completeSubjectSession]);
 
   // When finished is triggered, record the session
   useEffect(() => {
     if (isFinished) {
       handleFinish();
     }
-  }, [isFinished]);
+  }, [isFinished, handleFinish]);
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
@@ -206,16 +219,22 @@ export default function ChinesePlay() {
   };
 
   if (isFinished) {
+    const totalTime = elapsed || (Date.now() - startTime);
+    const stars = calculateStars(correct, questions.length);
+    const xp = calculateXP(correct, questions.length, totalTime, stars, maxCombo);
     return (
       <PracticeResult
         correct={correct}
         total={questions.length}
-        timeMs={elapsed || (Date.now() - startTime)}
+        timeMs={totalTime}
         maxCombo={maxCombo}
-        stars={calculateStars(correct, questions.length)}
-        xp={calculateXP(correct, questions.length, elapsed || (Date.now() - startTime), calculateStars(correct, questions.length), maxCombo)}
+        stars={stars}
+        xp={xp}
         subject="chinese"
         modeName={modeConfig?.name ?? ''}
+        coinsEarned={rewardInfo?.coins}
+        petXPEarned={rewardInfo?.petXP}
+        isCriticalHit={rewardInfo?.isCriticalHit ?? false}
         onBack={handleBack}
         onRetry={handleRetry}
       />

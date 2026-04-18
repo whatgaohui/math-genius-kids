@@ -128,6 +128,9 @@ export default function ResultPage() {
       modeEmoji={modeEmoji}
       petType={petType}
       petName={petName}
+      coinsEarned={lastResult?.coinsEarned}
+      petXPEarned={lastResult?.petXPEarned}
+      isCriticalHit={lastResult?.isCriticalHit ?? false}
       encouragementEmoji={encouragement.emoji}
       encouragementText={encouragement.text}
       speedEncouragement={speedEnc}

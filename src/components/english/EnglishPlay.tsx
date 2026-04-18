@@ -29,6 +29,7 @@ interface FloatingXP {
 
 export default function EnglishPlay() {
   const { setCurrentView, completeSubjectSession, soundEnabled } = useGameStore();
+  const [rewardInfo, setRewardInfo] = useState<{ coins: number; petXP: number; isCriticalHit: boolean } | null>(null);
 
   // Read config from shared mutable object
   const config = englishPlayConfig;
@@ -181,16 +182,31 @@ export default function EnglishPlay() {
     setQuestions(qs);
   };
 
-  const handleFinish = () => {
+  const handleFinish = useCallback(() => {
     const totalTimeMs = Date.now() - startTime;
-    completeSubjectSession(correct, questions.length, totalTimeMs);
-  };
+    const result = completeSubjectSession({
+      correct,
+      total: questions.length,
+      timeMs: totalTimeMs,
+      maxCombo,
+      subject: 'english',
+      mode: config.mode,
+      difficulty: String(config.grade),
+    });
+    if (result) {
+      setRewardInfo({
+        coins: result.reward.coins,
+        petXP: result.reward.petXP,
+        isCriticalHit: result.reward.isCriticalHit,
+      });
+    }
+  }, [correct, questions.length, maxCombo, startTime, config.mode, config.grade, completeSubjectSession]);
 
   useEffect(() => {
     if (isFinished) {
       handleFinish();
     }
-  });
+  }, [isFinished, handleFinish]);
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
@@ -212,6 +228,9 @@ export default function EnglishPlay() {
         xp={xp}
         subject="english"
         modeName={modeConfig?.name ?? ''}
+        coinsEarned={rewardInfo?.coins}
+        petXPEarned={rewardInfo?.petXP}
+        isCriticalHit={rewardInfo?.isCriticalHit ?? false}
         onBack={handleBack}
         onRetry={handleRetry}
       />

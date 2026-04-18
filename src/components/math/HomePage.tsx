@@ -1,9 +1,10 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Star, Zap, Flame, ChevronRight, Trophy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Star, Zap, Flame, ChevronRight, Trophy, Coins, Gift, X } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
-import { usePetStore, PET_CONFIGS } from '@/lib/pet-store';
+import { usePetStore, PET_CONFIGS, getPetEmoji, PET_ABILITIES } from '@/lib/pet-store';
 import { getXPForNextLevel } from '@/lib/math-utils';
 import { Card, CardContent } from '@/components/ui/card';
 import BottomNav from './BottomNav';
@@ -93,6 +94,13 @@ export default function HomePage() {
   const setCurrentSubject = useGameStore((s) => s.setCurrentSubject);
 
   const petType = usePetStore((s) => s.petType);
+  const petLevel = usePetStore((s) => s.petLevel);
+  const coins = usePetStore((s) => s.coins);
+  const loginStreak = usePetStore((s) => s.loginStreak);
+  const checkAndClaimLoginReward = usePetStore((s) => s.checkAndClaimLoginReward);
+
+  const [loginReward, setLoginReward] = useState<{ coins: number; isNewLogin: boolean } | null>(null);
+
   const petConfig = petType
     ? PET_CONFIGS.find((p) => p.id === petType) ?? null
     : null;
@@ -100,6 +108,17 @@ export default function HomePage() {
   const displayName = playerName || '小朋友';
   const xpInfo = getXPForNextLevel(totalXP);
   const xpPercent = Math.round(xpInfo.progress * 100);
+
+  // Check login reward on mount
+  useEffect(() => {
+    const result = checkAndClaimLoginReward();
+    if (result.isNewLogin) {
+      setLoginReward(result);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Get pet abilities for display
+  const unlockedAbilities = PET_ABILITIES.filter((a) => petLevel >= a.level);
 
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-amber-50/60 via-orange-50/30 to-white">
@@ -129,7 +148,7 @@ export default function HomePage() {
               </span>
               {petConfig && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-600">
-                  {petConfig.emoji} {petConfig.name}
+                  {getPetEmoji(petType, petLevel)} {petConfig.name} Lv.{petLevel}
                 </span>
               )}
             </div>
@@ -161,26 +180,23 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* ── Streak Banner ── */}
+        {/* ── Streak Badge (non-interactive, display-only) ── */}
         {streak > 0 && (
-          <motion.div
-            variants={itemVariants}
-            className="mb-6 overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 via-rose-500 to-pink-500 p-4 text-white shadow-lg shadow-rose-200/40"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 text-2xl backdrop-blur-sm">
-                🔥
+          <motion.div variants={itemVariants} className="mb-6">
+            <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-orange-50 to-rose-50 px-4 py-2.5 border border-orange-100/80">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🔥</span>
+                <span className="text-sm font-semibold text-gray-600">
+                  连续学习 <span className="text-orange-600 font-bold">{streak}</span> 天
+                </span>
               </div>
-              <div>
-                <p className="text-sm font-bold">连续学习 {streak} 天！</p>
-                <p className="text-xs opacity-90">
-                  {streak >= 7
-                    ? '太厉害了！坚持就是胜利！🏆'
-                    : streak >= 3
-                      ? '很棒哦！继续加油！💪'
-                      : '每天进步一点点！✨'}
-                </p>
-              </div>
+              <span className="text-xs text-orange-500/70">
+                {streak >= 7
+                  ? '坚持就是胜利！🏆'
+                  : streak >= 3
+                    ? '很棒哦！💪'
+                    : '每天进步一点点 ✨'}
+              </span>
             </div>
           </motion.div>
         )}
@@ -297,6 +313,64 @@ export default function HomePage() {
           </motion.div>
         )}
       </motion.main>
+
+        {/* ── Login Reward Popup ── */}
+        <AnimatePresence>
+          {loginReward && loginReward.isNewLogin && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-6"
+              onClick={() => setLoginReward(null)}
+            >
+              <motion.div
+                initial={{ scale: 0.7, y: 30 }}
+                animate={{ scale: 1, y: 0 }}
+                exit={{ scale: 0.8, y: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className="relative w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => setLoginReward(null)}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+                <div className="text-center">
+                  <motion.span
+                    className="text-5xl block mb-3"
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    🎁
+                  </motion.span>
+                  <h3 className="text-xl font-black text-gray-800 mb-1">每日签到奖励！</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    已连续签到 <span className="text-orange-500 font-bold">{loginStreak}</span> 天
+                  </p>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', delay: 0.3, stiffness: 300 }}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-amber-100 to-orange-100 px-6 py-3 border border-amber-200"
+                  >
+                    <Coins className="h-6 w-6 text-amber-500" />
+                    <span className="text-2xl font-black text-amber-600">+{loginReward.coins}</span>
+                  </motion.div>
+                  <p className="text-xs text-gray-400 mt-3">连续签到天数越多，奖励越丰厚！</p>
+                  <button
+                    onClick={() => setLoginReward(null)}
+                    className="mt-4 w-full rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 py-3 text-sm font-bold text-white shadow-md active:scale-95 transition-transform"
+                  >
+                    太棒了！收下奖励
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       {/* ── Bottom Navigation ── */}
       <BottomNav />

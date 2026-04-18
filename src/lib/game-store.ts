@@ -9,6 +9,7 @@ import type { EnglishQuestion, EnglishMode } from './english-utils';
 import { generateQuestions, calculateStars, calculateXP, calculateLevel } from './math-utils';
 import { computeUnlockedAchievements } from './achievements';
 import type { PracticeRecordSummary } from './achievements';
+import { usePetStore, type PracticeReward } from './pet-store';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -108,6 +109,9 @@ interface GameState {
     operation: string;
     difficulty: string;
     subject: Subject;
+    coinsEarned: number;
+    petXPEarned: number;
+    isCriticalHit: boolean;
   } | null;
 
   // Daily challenge
@@ -154,12 +158,18 @@ interface GameActions {
   updateSessionMaxCombo: () => void;
   resetGame: () => void;
 
-  // ── Chinese Session ──
+  // ── Chinese/English Session ──
   startChineseSession: (mode: ChineseMode, grade: number, count?: number) => void;
-  completeSubjectSession: (correct: number, total: number, timeMs: number) => PracticeRecord | null;
-
-  // ── English Session ──
   startEnglishSession: (mode: EnglishMode, grade: number, count?: number) => void;
+  completeSubjectSession: (params: {
+    correct: number;
+    total: number;
+    timeMs: number;
+    maxCombo: number;
+    subject: Subject;
+    mode: string;
+    difficulty: string;
+  }) => { record: PracticeRecord; reward: PracticeReward } | null;
 
   // ── Achievements ──
   refreshAchievements: () => string[];
@@ -386,7 +396,7 @@ export const useGameStore = create<GameState & GameActions>()(
         const newTotalStars = state.totalStars + stars;
         const newTotalXP = state.totalXP + xp;
         const newPlayerLevel = calculateLevel(newTotalXP);
-        const newHistory = [record, ...state.practiceHistory].slice(0, 200); // Keep last 200
+        const newHistory = [record, ...state.practiceHistory].slice(0, 200);
 
         // Update streak
         const today = getTodayStr();
@@ -412,6 +422,18 @@ export const useGameStore = create<GameState & GameActions>()(
           newDailyDates = [...state.dailyChallengeCompletedDates, today];
         }
 
+        // Award coins & pet XP
+        const petStore = usePetStore.getState();
+        const reward = petStore.calculatePracticeReward({
+          correct,
+          total,
+          stars,
+          maxCombo: session.sessionMaxCombo,
+          timeMs: totalTimeMs,
+          playerStreak: newStreak,
+        });
+        petStore.awardPracticeReward(reward);
+
         // Save result before clearing session (for ResultPage to read)
         const resultData = {
           correct,
@@ -425,6 +447,9 @@ export const useGameStore = create<GameState & GameActions>()(
           operation: session.sessionOperation,
           difficulty: session.sessionDifficulty,
           subject: session.sessionSubject,
+          coinsEarned: reward.coins,
+          petXPEarned: reward.petXP,
+          isCriticalHit: reward.isCriticalHit,
         };
 
         set({
@@ -439,7 +464,6 @@ export const useGameStore = create<GameState & GameActions>()(
           dailyChallengeCompletedDates: newDailyDates,
         });
 
-        // Refresh achievements
         get().refreshAchievements();
 
         return record;
@@ -522,12 +546,23 @@ export const useGameStore = create<GameState & GameActions>()(
       },
 
       // ── Complete subject session (for chinese/english with external answer tracking) ──
-      completeSubjectSession: (correct: number, total: number, timeMs: number): PracticeRecord | null => {
+      // Does NOT require an active session — all info passed via params
+      completeSubjectSession: (params: {
+        correct: number;
+        total: number;
+        timeMs: number;
+        maxCombo: number;
+        subject: Subject;
+        mode: string;
+        difficulty: string;
+      }): { record: PracticeRecord; reward: PracticeReward } | null => {
         const state = get();
-        if (!state.session) return null;
+        const { correct, total, timeMs, maxCombo, subject, mode, difficulty } = params;
+
+        if (total === 0) return null;
 
         const stars = calculateStars(correct, total);
-        const xp = calculateXP(correct, total, timeMs, stars, state.session.sessionMaxCombo);
+        const xp = calculateXP(correct, total, timeMs, stars, maxCombo);
 
         const record: PracticeRecord = {
           date: getTodayStr(),
@@ -536,10 +571,10 @@ export const useGameStore = create<GameState & GameActions>()(
           timeMs,
           stars,
           xp,
-          operation: state.session.sessionOperation,
-          difficulty: state.session.sessionDifficulty,
-          mode: state.session.sessionMode,
-          subject: state.session.sessionSubject,
+          operation: mode,
+          difficulty,
+          mode,
+          subject,
         };
 
         const newTotalStars = state.totalStars + stars;
@@ -550,7 +585,9 @@ export const useGameStore = create<GameState & GameActions>()(
         const today = getTodayStr();
         let newStreak = state.streak;
         if (state.lastPracticeDate !== today) {
-          const lastDate = new Date(state.lastPracticeDate);
+          const lastDate = state.lastPracticeDate
+            ? new Date(state.lastPracticeDate)
+            : new Date(0);
           const todayDate = new Date(today);
           const diffDays = Math.floor(
             (todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
@@ -562,8 +599,39 @@ export const useGameStore = create<GameState & GameActions>()(
           }
         }
 
+        // Award coins & pet XP via pet store
+        const petStore = usePetStore.getState();
+        const reward = petStore.calculatePracticeReward({
+          correct,
+          total,
+          stars,
+          maxCombo,
+          timeMs,
+          playerStreak: newStreak,
+        });
+        petStore.awardPracticeReward(reward);
+
+        // Save lastResult for result page
+        const resultData = {
+          correct,
+          wrong: total - correct,
+          total,
+          timeMs,
+          stars,
+          xp,
+          maxCombo,
+          mode,
+          operation: mode,
+          difficulty,
+          subject,
+          coinsEarned: reward.coins,
+          petXPEarned: reward.petXP,
+          isCriticalHit: reward.isCriticalHit,
+        };
+
         set({
           session: null,
+          lastResult: resultData,
           totalStars: newTotalStars,
           totalXP: newTotalXP,
           playerLevel: newPlayerLevel,
@@ -573,7 +641,7 @@ export const useGameStore = create<GameState & GameActions>()(
         });
 
         get().refreshAchievements();
-        return record;
+        return { record, reward };
       },
 
       // ── Achievements ──

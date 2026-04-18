@@ -17,12 +17,14 @@ import {
   ChevronUp,
   BookOpen,
   Coins,
+  Gift,
+  Sparkles,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useState } from 'react'
-import { usePetStore, PET_CONFIGS } from '@/lib/pet-store'
+import { usePetStore, PET_CONFIGS, getPetEmoji } from '@/lib/pet-store'
 import { PetCompanionBadge } from '@/components/math/PetCompanion'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -59,6 +61,11 @@ export interface PracticeResultProps {
   // Pet
   petType?: string | null
   petName?: string | null
+
+  // Rewards
+  coinsEarned?: number
+  petXPEarned?: number
+  isCriticalHit?: boolean
 
   // Encouragement
   encouragementEmoji?: string
@@ -209,6 +216,9 @@ export function PracticeResult(props: PracticeResultProps) {
     modeName, // legacy
     petType,
     petName,
+    coinsEarned,
+    petXPEarned,
+    isCriticalHit = false,
     encouragementEmoji: encEmoji,
     encouragementText: encText,
     speedEncouragement,
@@ -402,22 +412,75 @@ export function PracticeResult(props: PracticeResultProps) {
         )}
 
         {/* Pet Reward Banner */}
-        {effectivePetType && petConfig && (
+        {coinsEarned !== undefined && coinsEarned > 0 && (
           <motion.div custom={2.6} initial="hidden" animate="visible" variants={cardSlideUp}>
+            {/* Critical Hit Banner */}
+            {isCriticalHit && (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.3 }}
+                className="rounded-2xl bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-400 p-4 text-white shadow-lg mb-3 overflow-hidden relative"
+              >
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMTAiIGN5PSIxMCIgcj0iMSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIi8+PC9zdmc+')] opacity-50" />
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <motion.span
+                      className="text-3xl"
+                      animate={{ rotate: [0, 15, -15, 0], scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.8, repeat: Infinity, repeatType: 'reverse' }}
+                    >
+                      ✨
+                    </motion.span>
+                    <div>
+                      <p className="text-base font-black">暴击！金币翻倍！</p>
+                      <p className="text-xs text-white/80">宠物的好运让你获得双倍奖励！</p>
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.3, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  >
+                    <Gift className="h-8 w-8" />
+                  </motion.div>
+                </div>
+              </motion.div>
+            )}
             <div className="rounded-2xl bg-gradient-to-r from-amber-100 to-orange-100 p-4 border border-amber-200 shadow-sm">
               <div className="flex items-center gap-3">
-                <motion.span className="text-3xl" animate={{ y: [0, -4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
-                  {petConfig.emoji}
-                </motion.span>
+                <div className="relative">
+                  <motion.span
+                    className="text-3xl block"
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    {effectivePetType
+                      ? getPetEmoji(effectivePetType, usePetStore.getState().petLevel)
+                      : '🐾'}
+                  </motion.span>
+                  {isCriticalHit && (
+                    <motion.span
+                      className="absolute -top-2 -right-2 text-sm"
+                      animate={{ scale: [0, 1.2, 1], rotate: [0, 20, -20, 0] }}
+                      transition={{ duration: 0.6, delay: 0.4 }}
+                    >
+                      ⚡
+                    </motion.span>
+                  )}
+                </div>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-gray-800">{effectivePetName || petConfig.name} 获得了奖励！</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="flex items-center gap-1 text-xs text-amber-600">
-                      <Coins className="h-3.5 w-3.5" />+{correct * 2 + stars * 5} 金币
+                  <p className="text-sm font-bold text-gray-800">
+                    {effectivePetName || (petConfig?.name ?? '小伙伴')} 获得了奖励！
+                  </p>
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-amber-600">
+                      <Coins className="h-3.5 w-3.5" />+{coinsEarned} 金币
                     </span>
-                    <span className="flex items-center gap-1 text-xs text-violet-500">
-                      <Zap className="h-3.5 w-3.5" />+{correct * 3 + stars * 10} 宠物经验
-                    </span>
+                    {petXPEarned !== undefined && petXPEarned > 0 && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-violet-500">
+                        <Sparkles className="h-3.5 w-3.5" />+{petXPEarned} 经验
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
