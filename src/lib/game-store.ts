@@ -435,7 +435,7 @@ export const useGameStore = create<GameState & GameActions>()(
       startChineseSession: (mode: ChineseMode, _grade: number, count: number = 10) => {
         // Import dynamically to avoid issues
         import('./chinese-utils').then(({ generateChineseQuestions }) => {
-          const questions = generateChineseQuestions(mode, _grade as 1 | 2 | 3, count);
+          const questions = generateChineseQuestions(mode, _grade as 1|2|3|4|5|6, count);
           const session: GameSessionState = {
             questions,
             currentQuestionIndex: 0,

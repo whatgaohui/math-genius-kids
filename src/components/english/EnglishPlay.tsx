@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Volume2, Zap, Check, X, Flame } from 'lucide-react';
@@ -221,7 +220,7 @@ export default function EnglishPlay() {
 
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-emerald-50 to-white">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
@@ -232,58 +231,55 @@ export default function EnglishPlay() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 via-teal-50 to-white">
-      {/* Top Bar */}
-      <header className="px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2 mb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="text-gray-500 hover:text-gray-700 shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-600">
-                {modeConfig?.name}
-              </span>
-              <span className="text-xs text-gray-400">
-                {currentIndex + 1}/{questions.length}
-              </span>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-emerald-50 to-white relative overflow-hidden">
+      {/* Top Bar — gradient banner matching GamePlay style */}
+      <div className="bg-gradient-to-r from-emerald-400 to-teal-500 px-4 py-3 text-white">
+        <div className="max-w-md mx-auto">
+          {/* Row 1: Back / Mode / Volume */}
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={handleBack}
+              className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              退出
+            </button>
+            <span className="text-sm font-semibold truncate max-w-[40%]">
+              {modeConfig?.name}
+            </span>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSpeak}
+                className="text-white/80 hover:text-white transition-colors"
+              >
+                <Volume2 className={`w-4 h-4 ${isSpeaking ? 'animate-pulse' : ''}`} />
+              </button>
+              <div className="flex items-center gap-1 text-sm">
+                <Zap className="w-4 h-4" />
+                <span className="font-mono font-medium">{formatTime(elapsed)}</span>
+              </div>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleSpeak}
-            className="text-emerald-500"
-          >
-            <Volume2 className={`w-5 h-5 ${isSpeaking ? 'animate-pulse' : ''}`} />
-          </Button>
-        </div>
 
-        {/* Progress Bar */}
-        <Progress value={progress} className="h-2" />
+          {/* Progress Bar */}
+          <Progress
+            value={progress}
+            className="h-2 bg-white/30"
+          />
 
-        {/* Stats Row */}
-        <div className="flex items-center justify-between mt-2 px-1">
-          <Badge variant="secondary" className="bg-emerald-100 text-emerald-600 text-xs">
-            ✓ {correct}
-          </Badge>
-          <div className="flex items-center gap-1">
-            <Zap className="w-3 h-3 text-gray-400" />
-            <span className="text-xs text-gray-400">{formatTime(elapsed)}</span>
+          {/* Row 2: Stats */}
+          <div className="flex items-center justify-between text-xs text-white/70 mt-1">
+            <span>{currentIndex + 1}/{questions.length}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-200">✓ {correct}</span>
+              <span className="text-red-200">✗ {wrong}</span>
+            </div>
           </div>
-          <Badge variant="secondary" className="bg-gray-100 text-gray-500 text-xs">
-            ✗ {wrong}
-          </Badge>
         </div>
-      </header>
+      </div>
 
-      {/* Question Area */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pb-6">
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 max-w-md mx-auto w-full">
         {/* Combo Popup */}
         <AnimatePresence>
           {combo >= 3 && (
@@ -293,11 +289,12 @@ export default function EnglishPlay() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0, opacity: 0, y: -20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-400 to-teal-400 text-white shadow-lg"
+              className="mb-3"
             >
-              <Flame className="w-5 h-5" />
-              <span className="font-bold text-lg">{combo}</span>
-              <span className="text-sm font-medium">Combo!</span>
+              <Badge className="bg-gradient-to-r from-emerald-400 to-teal-500 text-white border-none px-3 py-1.5 text-sm gap-1 shadow-lg">
+                <Flame className="w-4 h-4" />
+                {combo} 连击
+              </Badge>
             </motion.div>
           )}
         </AnimatePresence>
@@ -308,26 +305,26 @@ export default function EnglishPlay() {
           initial={{ x: 60, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="w-full max-w-sm"
+          className="w-full mb-5"
           ref={cardRef}
         >
           <Card
-            className={`relative overflow-hidden border-2 transition-all duration-300 ${
+            className={`relative overflow-hidden border-2 transition-all duration-300 shadow-lg ${
               feedback === 'correct'
-                ? 'border-green-400 shadow-lg shadow-green-100'
+                ? 'border-green-400 shadow-green-100'
                 : feedback === 'wrong'
-                  ? 'border-red-400 shadow-lg shadow-red-100'
+                  ? 'border-red-400 shadow-red-100'
                   : 'border-emerald-100'
             }`}
           >
-            <CardContent className="p-8 text-center">
+            <CardContent className="p-6 sm:p-8 text-center">
               {/* Question Prompt */}
               <div className="mb-2">
                 <span className="text-xs text-gray-400 font-medium">
-                  {config.mode === 'word-picture' && 'Choose the correct meaning'}
-                  {config.mode === 'picture-word' && 'Choose the correct word'}
-                  {config.mode === 'listening' && 'Listen and choose the word'}
-                  {config.mode === 'spelling' && 'Choose the correct spelling'}
+                  {config.mode === 'word-picture' && '选择正确的含义'}
+                  {config.mode === 'picture-word' && '选择正确的单词'}
+                  {config.mode === 'listening' && '听发音，选出正确的单词'}
+                  {config.mode === 'spelling' && '选择正确的拼写'}
                 </span>
               </div>
 
@@ -341,9 +338,9 @@ export default function EnglishPlay() {
                 }
                 transition={{ duration: 0.4 }}
               >
-                <p className="text-3xl sm:text-4xl font-bold text-gray-800 my-6 leading-relaxed">
+                <p className="text-3xl sm:text-4xl font-bold text-gray-800 my-4 sm:my-6 leading-relaxed">
                   {config.mode === 'listening'
-                    ? '🎧 Listen...'
+                    ? '🎧 听一听...'
                     : currentQuestion.prompt}
                 </p>
               </motion.div>
@@ -355,10 +352,10 @@ export default function EnglishPlay() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute top-4 right-4"
+                    className="absolute top-3 right-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                      <Check className="w-6 h-6 text-white" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-green-500 flex items-center justify-center">
+                      <Check className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                   </motion.div>
                 )}
@@ -367,10 +364,10 @@ export default function EnglishPlay() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute top-4 right-4"
+                    className="absolute top-3 right-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                      <X className="w-6 h-6 text-white" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500 flex items-center justify-center">
+                      <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                   </motion.div>
                 )}
@@ -396,8 +393,8 @@ export default function EnglishPlay() {
           </Card>
         </motion.div>
 
-        {/* Answer Options (2x2 Grid) */}
-        <div className="w-full max-w-sm mt-6 grid grid-cols-2 gap-3">
+        {/* Answer Options (2x2 Grid) — touch-friendly min 44px height */}
+        <div className="w-full grid grid-cols-2 gap-3">
           {currentQuestion.options.map((option, idx) => {
             const isCorrectOption = idx === currentQuestion.correctIndex;
             const isSelected = feedback !== 'idle' && hasAnswered;
@@ -416,7 +413,7 @@ export default function EnglishPlay() {
                 key={`${currentIndex}-${idx}`}
                 whileTap={{ scale: 0.95 }}
                 disabled={hasAnswered}
-                className={`rounded-xl p-4 text-center transition-all duration-200 ${optionStyle}`}
+                className={`rounded-xl py-4 px-3 min-h-[44px] text-center transition-all duration-200 shadow-sm ${optionStyle}`}
                 onClick={() => handleAnswer(idx)}
               >
                 <span
@@ -428,7 +425,6 @@ export default function EnglishPlay() {
                 >
                   {option}
                 </span>
-                <div className="text-xs text-gray-400 mt-1">{idx + 1}</div>
               </motion.button>
             );
           })}

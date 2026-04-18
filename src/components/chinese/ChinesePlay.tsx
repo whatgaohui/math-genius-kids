@@ -3,16 +3,17 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Volume2, Zap, Check, X, Flame } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import {
   generateChineseQuestions,
+  getAvailableMode,
   MODE_CONFIG,
   type ChineseQuestion,
   type ChineseMode,
+  type ChineseGrade,
 } from '@/lib/chinese-utils';
 import { chinesePlayConfig } from '@/components/chinese/ChineseHome';
 import { calculateStars, calculateXP } from '@/lib/math-utils';
@@ -56,9 +57,10 @@ export default function ChinesePlay() {
 
   // Generate questions on mount
   useEffect(() => {
+    const resolvedMode = getAvailableMode(config.mode as ChineseMode, config.grade as ChineseGrade);
     const qs = generateChineseQuestions(
-      config.mode as ChineseMode,
-      config.grade as 1 | 2 | 3,
+      resolvedMode,
+      config.grade as ChineseGrade,
       config.count
     );
     setQuestions(qs);
@@ -173,9 +175,10 @@ export default function ChinesePlay() {
     setCurrentIndex(0);
     setStartTime(Date.now());
     setElapsed(0);
+    const resolvedMode = getAvailableMode(config.mode as ChineseMode, config.grade as ChineseGrade);
     const qs = generateChineseQuestions(
-      config.mode as ChineseMode,
-      config.grade as 1 | 2 | 3,
+      resolvedMode,
+      config.grade as ChineseGrade,
       config.count
     );
     setQuestions(qs);
@@ -221,77 +224,74 @@ export default function ChinesePlay() {
 
   if (!currentQuestion) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-white">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="w-10 h-10 border-4 border-red-200 border-t-red-500 rounded-full"
+          className="w-10 h-10 border-4 border-rose-200 border-t-rose-500 rounded-full"
         />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-red-50 via-orange-50 to-white">
-      {/* Top Bar */}
-      <header className="px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2 mb-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="text-gray-500 hover:text-gray-700 shrink-0"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-gray-600">
-                {modeConfig?.name}
-              </span>
-              <span className="text-xs text-gray-400">
-                {currentIndex + 1}/{questions.length}
-              </span>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 to-white relative overflow-hidden">
+      {/* Top Bar — gradient banner matching GamePlay style */}
+      <div className="bg-gradient-to-r from-rose-400 to-orange-500 px-4 py-3 text-white">
+        <div className="max-w-md mx-auto">
+          {/* Row 1: Back / Mode / Volume */}
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={handleBack}
+              className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              退出
+            </button>
+            <span className="text-sm font-semibold truncate max-w-[40%]">
+              {modeConfig?.name}
+            </span>
+            <div className="flex items-center gap-3">
+              {config.mode === 'dictation' && (
+                <button
+                  onClick={() => {
+                    const prompt = currentQuestion.prompt;
+                    const match = prompt.match(/\(([^)]+)\)/);
+                    const textToSpeak = match ? match[1] : prompt;
+                    setIsSpeaking(true);
+                    speakChinese(textToSpeak, 0.7).finally(() => setIsSpeaking(false));
+                  }}
+                  className="text-white/80 hover:text-white transition-colors"
+                >
+                  <Volume2 className={`w-4 h-4 ${isSpeaking ? 'animate-pulse' : ''}`} />
+                </button>
+              )}
+              <div className="flex items-center gap-1 text-sm">
+                <Zap className="w-4 h-4" />
+                <span className="font-mono font-medium">{formatTime(elapsed)}</span>
+              </div>
             </div>
           </div>
-          {config.mode === 'dictation' && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                const prompt = currentQuestion.prompt;
-                const match = prompt.match(/\(([^)]+)\)/);
-                const textToSpeak = match ? match[1] : prompt;
-                setIsSpeaking(true);
-                speakChinese(textToSpeak, 0.7).finally(() => setIsSpeaking(false));
-              }}
-              className="text-orange-500"
-            >
-              <Volume2 className={`w-5 h-5 ${isSpeaking ? 'animate-pulse' : ''}`} />
-            </Button>
-          )}
-        </div>
 
-        {/* Progress Bar */}
-        <Progress value={progress} className="h-2" />
+          {/* Progress Bar */}
+          <Progress
+            value={progress}
+            className="h-2 bg-white/30"
+          />
 
-        {/* Stats Row */}
-        <div className="flex items-center justify-between mt-2 px-1">
-          <Badge variant="secondary" className="bg-red-100 text-red-600 text-xs">
-            ✓ {correct}
-          </Badge>
-          <div className="flex items-center gap-1">
-            <Zap className="w-3 h-3 text-gray-400" />
-            <span className="text-xs text-gray-400">{formatTime(elapsed)}</span>
+          {/* Row 2: Stats */}
+          <div className="flex items-center justify-between text-xs text-white/70 mt-1">
+            <span>{currentIndex + 1}/{questions.length}</span>
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-200">✓ {correct}</span>
+              <span className="text-red-200">✗ {wrong}</span>
+            </div>
           </div>
-          <Badge variant="secondary" className="bg-gray-100 text-gray-500 text-xs">
-            ✗ {wrong}
-          </Badge>
         </div>
-      </header>
+      </div>
 
-      {/* Question Area */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 pb-6">
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 max-w-md mx-auto w-full">
         {/* Combo Popup */}
         <AnimatePresence>
           {combo >= 3 && (
@@ -301,11 +301,12 @@ export default function ChinesePlay() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0, opacity: 0, y: -20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-orange-400 to-red-400 text-white shadow-lg"
+              className="mb-3"
             >
-              <Flame className="w-5 h-5" />
-              <span className="font-bold text-lg">{combo}</span>
-              <span className="text-sm font-medium">连击!</span>
+              <Badge className="bg-gradient-to-r from-orange-400 to-red-500 text-white border-none px-3 py-1.5 text-sm gap-1 shadow-lg">
+                <Flame className="w-4 h-4" />
+                {combo} 连击
+              </Badge>
             </motion.div>
           )}
         </AnimatePresence>
@@ -316,19 +317,19 @@ export default function ChinesePlay() {
           initial={{ x: 60, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="w-full max-w-sm"
+          className="w-full mb-5"
           ref={cardRef}
         >
           <Card
-            className={`relative overflow-hidden border-2 transition-all duration-300 ${
+            className={`relative overflow-hidden border-2 transition-all duration-300 shadow-lg ${
               feedback === 'correct'
-                ? 'border-green-400 shadow-lg shadow-green-100'
+                ? 'border-green-400 shadow-green-100'
                 : feedback === 'wrong'
-                  ? 'border-red-400 shadow-lg shadow-red-100'
-                  : 'border-red-100'
+                  ? 'border-red-400 shadow-red-100'
+                  : 'border-rose-100'
             }`}
           >
-            <CardContent className="p-8 text-center">
+            <CardContent className="p-6 sm:p-8 text-center">
               {/* Question Prompt */}
               <div className="mb-2">
                 <span className="text-xs text-gray-400 font-medium">
@@ -336,6 +337,10 @@ export default function ChinesePlay() {
                   {config.mode === 'recognize-pinyin' && '选择正确的拼音'}
                   {config.mode === 'word-match' && '选择正确的词语'}
                   {config.mode === 'dictation' && '听发音，选出正确的汉字'}
+                  {config.mode === 'idiom-fill' && '选择正确的字补全成语'}
+                  {config.mode === 'antonym' && '选择正确的反义词'}
+                  {config.mode === 'poetry-fill' && '选择正确的字补全诗句'}
+                  {config.mode === 'synonym' && '选择正确的近义词'}
                 </span>
               </div>
 
@@ -349,10 +354,8 @@ export default function ChinesePlay() {
                 }
                 transition={{ duration: 0.4 }}
               >
-                <p className="text-4xl font-bold text-gray-800 my-6">
-                  {config.mode === 'dictation'
-                    ? currentQuestion.prompt
-                    : currentQuestion.prompt}
+                <p className="text-3xl sm:text-4xl font-bold text-gray-800 my-4 sm:my-6">
+                  {currentQuestion.prompt}
                 </p>
               </motion.div>
 
@@ -363,10 +366,10 @@ export default function ChinesePlay() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute top-4 right-4"
+                    className="absolute top-3 right-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                      <Check className="w-6 h-6 text-white" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-green-500 flex items-center justify-center">
+                      <Check className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                   </motion.div>
                 )}
@@ -375,10 +378,10 @@ export default function ChinesePlay() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute top-4 right-4"
+                    className="absolute top-3 right-3"
                   >
-                    <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center">
-                      <X className="w-6 h-6 text-white" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500 flex items-center justify-center">
+                      <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                   </motion.div>
                 )}
@@ -404,13 +407,13 @@ export default function ChinesePlay() {
           </Card>
         </motion.div>
 
-        {/* Answer Options (2x2 Grid) */}
-        <div className="w-full max-w-sm mt-6 grid grid-cols-2 gap-3">
+        {/* Answer Options (2x2 Grid) — touch-friendly min 44px height */}
+        <div className="w-full grid grid-cols-2 gap-3">
           {currentQuestion.options.map((option, idx) => {
             const isCorrectOption = idx === currentQuestion.correctIndex;
             const isSelected = feedback !== 'idle' && hasAnswered;
 
-            let optionStyle = 'bg-white border-2 border-gray-100 hover:border-red-200 active:scale-95';
+            let optionStyle = 'bg-white border-2 border-gray-100 hover:border-rose-200 active:scale-95';
             if (isSelected) {
               if (isCorrectOption) {
                 optionStyle = 'bg-green-50 border-2 border-green-400';
@@ -426,11 +429,11 @@ export default function ChinesePlay() {
                 key={`${currentIndex}-${idx}`}
                 whileTap={{ scale: 0.95 }}
                 disabled={hasAnswered}
-                className={`rounded-xl p-4 text-center transition-all duration-200 ${optionStyle}`}
+                className={`rounded-xl py-4 px-3 min-h-[44px] text-center transition-all duration-200 shadow-sm ${optionStyle}`}
                 onClick={() => handleAnswer(idx)}
               >
                 <span
-                  className={`text-xl font-bold ${
+                  className={`text-xl sm:text-2xl font-bold ${
                     isCorrectOption && isSelected
                       ? 'text-green-600'
                       : 'text-gray-700'
@@ -438,7 +441,6 @@ export default function ChinesePlay() {
                 >
                   {option}
                 </span>
-                <div className="text-xs text-gray-400 mt-1">{idx + 1}</div>
               </motion.button>
             );
           })}
