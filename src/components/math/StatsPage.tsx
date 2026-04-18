@@ -61,6 +61,48 @@ function getSubjectColor(subject: Subject): string {
   }
 }
 
+// Mode name mapping for Chinese modes
+const CHINESE_MODE_NAMES: Record<string, string> = {
+  'recognize-char': '识字大冒险',
+  'recognize-pinyin': '拼音小能手',
+  'word-match': '词语消消乐',
+  'dictation': '听写小达人',
+  'idiom-fill': '成语填空',
+  'antonym': '反义词大挑战',
+  'poetry-fill': '古诗填空',
+  'synonym': '近义词连连看',
+};
+
+// Mode name mapping for English modes
+const ENGLISH_MODE_NAMES: Record<string, string> = {
+  'word-picture': '看图识词',
+  'picture-word': '看词选图',
+  'listening': '听力挑战',
+  'spelling': '拼写大师',
+};
+
+function getModeDisplayName(record: PracticeRecord): string {
+  // Math modes
+  if (record.subject === 'math') {
+    switch (record.mode) {
+      case 'free': return '自由练习';
+      case 'speed': return '速度挑战';
+      case 'adventure': return '闯关模式';
+      case 'daily': return '每日挑战';
+      default: return record.mode;
+    }
+  }
+  // Chinese modes
+  if (record.subject === 'chinese') {
+    return CHINESE_MODE_NAMES[record.mode] || record.mode;
+  }
+  // English modes
+  if (record.subject === 'english') {
+    return ENGLISH_MODE_NAMES[record.mode] || record.mode;
+  }
+  return record.mode;
+}
+
 // ─── Stat Card ──────────────────────────────────────────────────────────────
 
 function StatCard({
@@ -398,13 +440,7 @@ export default function StatsPage() {
                           <div>
                             <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
                               {getSubjectLabel(record.subject)} ·{' '}
-                              {record.mode === 'free'
-                                ? '自由练习'
-                                : record.mode === 'speed'
-                                  ? '速度挑战'
-                                  : record.mode === 'adventure'
-                                    ? '冒险模式'
-                                    : '每日挑战'}
+                              {getModeDisplayName(record)}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               {record.date}

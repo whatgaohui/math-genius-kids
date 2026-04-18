@@ -243,3 +243,44 @@ Stage Summary:
 - Root cause: `endSession()` clearing session before ResultPage could read it
 - Fix: `lastResult` field stores result data before session is cleared
 - ResultPage now uses `lastResult` as primary data source, ensuring accuracy is always correct regardless of session state
+
+---
+Task ID: 8 (GitHub Upload + UI Fix + Stats Fix + Design Proposal)
+Agent: Main
+Task: Upload project to GitHub, fix homepage streak UI, fix Chinese stats mode display, design reward/pet system proposal
+
+Work Log:
+- **GitHub Upload**:
+  - Created new repository `whatgaohui/math-genius-kids` via GitHub API
+  - Added .gitignore entries for db/, download/, agent-ctx/, *.db files
+  - Removed cached db/custom.db from git tracking
+  - Pushed all code to GitHub successfully
+  - Added comprehensive README.md with project description, features, tech stack, structure
+  - Cleaned token from remote URL for security
+
+- **Homepage "连续学习" UI Fix**:
+  - Changed streak badge from rounded pill (looked clickable) to info banner style
+  - Used `border-l-4 border-orange-400` left accent border (clearly non-interactive)
+  - Added `bg-white/70` subtle background instead of gradient
+  - Added decorative watermark emoji with `opacity-10` in background
+  - Changed text color from `font-semibold` to regular `text-gray-500` for info feel
+  - Right-side text now in a small rounded-full tag instead of plain text
+
+- **StatsPage Mode Display Fix**:
+  - Added `CHINESE_MODE_NAMES` mapping for all 8 Chinese modes (recognize-char, recognize-pinyin, word-match, dictation, idiom-fill, antonym, poetry-fill, synonym)
+  - Added `ENGLISH_MODE_NAMES` mapping for all 4 English modes (word-picture, picture-word, listening, spelling)
+  - Created `getModeDisplayName()` function to properly display mode names for all 3 subjects
+  - Math modes: fixed "冒险模式" → "闯关模式" to match actual game terminology
+  - Recent records now show correct Chinese/English mode names instead of falling through to "每日挑战"
+
+- **Reward/Pet System Design Proposal**:
+  - Analyzed current system: coins/rewards/critical/login streak all already implemented
+  - Designed comprehensive upgrade proposal with 5 core mechanisms
+  - Created implementation priority matrix (P0-P3)
+
+Stage Summary:
+- GitHub: https://github.com/whatgaohui/math-genius-kids
+- 3 files modified: HomePage.tsx (streak UI), StatsPage.tsx (mode names), .gitignore
+- 1 file created: README.md
+- Design proposal delivered covering: coin system optimization, login rewards tiers, 3-tier critical hits, pet growth 1-30 levels, content unlock system, daily tasks, pet mood system
+- Dev server: compiled OK, 0 errors

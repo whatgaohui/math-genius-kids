@@ -180,23 +180,26 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* ── Streak Badge (non-interactive, display-only) ── */}
+        {/* ── Streak Badge (non-interactive info banner) ── */}
         {streak > 0 && (
           <motion.div variants={itemVariants} className="mb-6">
-            <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-orange-50 to-rose-50 px-4 py-2.5 border border-orange-100/80">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🔥</span>
-                <span className="text-sm font-semibold text-gray-600">
-                  连续学习 <span className="text-orange-600 font-bold">{streak}</span> 天
+            <div className="relative overflow-hidden rounded-lg border-l-4 border-orange-400 bg-white/70 px-4 py-3">
+              <div className="pointer-events-none absolute -right-3 -top-3 text-4xl opacity-10">🔥</div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🔥</span>
+                  <span className="text-sm text-gray-500">
+                    已连续学习 <span className="font-bold text-orange-600">{streak}</span> 天
+                  </span>
+                </div>
+                <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-500">
+                  {streak >= 7
+                    ? '坚持就是胜利！🏆'
+                    : streak >= 3
+                      ? '很棒哦！💪'
+                      : '每天进步一点点 ✨'}
                 </span>
               </div>
-              <span className="text-xs text-orange-500/70">
-                {streak >= 7
-                  ? '坚持就是胜利！🏆'
-                  : streak >= 3
-                    ? '很棒哦！💪'
-                    : '每天进步一点点 ✨'}
-              </span>
             </div>
           </motion.div>
         )}
