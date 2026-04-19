@@ -161,7 +161,7 @@ export default function PetPage() {
 
   if (!petType || !petConfig) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+      <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-rose-50 via-pink-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
         <div className="mx-auto max-w-md px-4 py-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -231,7 +231,7 @@ export default function PetPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-rose-50 via-pink-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <div className="mx-auto max-w-md px-4 py-6 pb-24">
         {/* Header */}
         <motion.div

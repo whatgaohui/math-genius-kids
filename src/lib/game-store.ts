@@ -207,6 +207,7 @@ interface GameActions {
     subject: Subject;
     mode: string;
     difficulty: string;
+    floorLevel?: number;
   }) => { record: PracticeRecord; reward: PracticeReward } | null;
 
   // ── Achievements ──
@@ -723,7 +724,8 @@ export const useGameStore = create<GameState & GameActions>()(
           },
         };
 
-        set({
+        // Build the base update object
+        const baseUpdate: Partial<GameState> = {
           session: null,
           lastResult: resultData,
           totalStars: newTotalStars,
@@ -732,7 +734,38 @@ export const useGameStore = create<GameState & GameActions>()(
           streak: newStreak,
           lastPracticeDate: today,
           practiceHistory: newHistory,
-        });
+        };
+
+        // Adventure progress tracking for chinese/english
+        if (mode === 'adventure' && floorLevel !== undefined && floorLevel > 0) {
+          if (subject === 'chinese') {
+            // Update highest completed level
+            if (floorLevel > state.chineseAdventureLevel) {
+              baseUpdate.chineseAdventureLevel = floorLevel;
+            }
+            // Update stars for this floor (keep best)
+            const currentStars = state.chineseAdventureStars[floorLevel] ?? 0;
+            if (stars > currentStars) {
+              baseUpdate.chineseAdventureStars = {
+                ...state.chineseAdventureStars,
+                [floorLevel]: stars,
+              };
+            }
+          } else if (subject === 'english') {
+            if (floorLevel > state.englishAdventureLevel) {
+              baseUpdate.englishAdventureLevel = floorLevel;
+            }
+            const currentStars = state.englishAdventureStars[floorLevel] ?? 0;
+            if (stars > currentStars) {
+              baseUpdate.englishAdventureStars = {
+                ...state.englishAdventureStars,
+                [floorLevel]: stars,
+              };
+            }
+          }
+        }
+
+        set(baseUpdate);
 
         get().refreshAchievements();
         return { record, reward };

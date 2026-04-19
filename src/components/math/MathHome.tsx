@@ -597,7 +597,7 @@ export default function MathHome() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-amber-50 via-orange-50/30 to-white">
       {/* Header */}
       <div className="bg-gradient-to-r from-amber-400 to-orange-500 px-4 pb-5 text-white">
         <div className="max-w-md mx-auto">

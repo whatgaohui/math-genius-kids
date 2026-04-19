@@ -41,7 +41,7 @@ const CONFETTI = Array.from({ length: 12 }, (_, i) => ({
 }));
 
 export default function ChinesePlay() {
-  const { setCurrentView, completeSubjectSession, soundEnabled } = useGameStore();
+  const { setCurrentView, completeSubjectSession, soundEnabled, lastLevelName, lastLevelEmoji } = useGameStore();
   const [rewardInfo, setRewardInfo] = useState<{
     coins: number;
     petXP: number;
@@ -291,8 +291,9 @@ export default function ChinesePlay() {
       timeMs: totalTimeMs,
       maxCombo,
       subject: 'chinese',
-      mode: isSpeedMode ? 'speed' : config.mode,
+      mode: isSpeedMode ? 'speed' : (config.isAdventure ? 'adventure' : config.mode),
       difficulty: String(config.grade),
+      floorLevel: config.isAdventure ? config.adventureFloor : undefined,
     });
     if (result) {
       setRewardInfo({
@@ -307,7 +308,7 @@ export default function ChinesePlay() {
         },
       });
     }
-  }, [correct, wrong, maxCombo, startTime, config.mode, config.grade, completeSubjectSession, isSpeedMode, config.speedTimeLimit]);
+  }, [correct, wrong, maxCombo, startTime, config.mode, config.grade, completeSubjectSession, isSpeedMode, config.speedTimeLimit, config.isAdventure, config.adventureFloor]);
 
   // When finished is triggered, record the session
   useEffect(() => {
@@ -337,8 +338,11 @@ export default function ChinesePlay() {
         stars={stars}
         xp={xp}
         subject="chinese"
-        modeLabel={isSpeedMode ? '速度模式' : (modeConfig?.name ?? '')}
-        modeEmoji={isSpeedMode ? '⚡' : (modeConfig?.emoji)}
+        modeLabel={isSpeedMode ? '速度模式' : (config.isAdventure ? '闯关模式' : (modeConfig?.name ?? ''))}
+        modeEmoji={isSpeedMode ? '⚡' : (config.isAdventure ? '🗺️' : modeConfig?.emoji)}
+        adventureSuccess={config.isAdventure ? stars >= 1 : undefined}
+        adventureLevelName={config.isAdventure ? lastLevelName : undefined}
+        adventureLevelEmoji={config.isAdventure ? lastLevelEmoji : undefined}
         coinsEarned={rewardInfo?.coins}
         petXPEarned={rewardInfo?.petXP}
         isCriticalHit={rewardInfo?.isCriticalHit ?? false}

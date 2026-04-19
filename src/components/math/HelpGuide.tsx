@@ -1243,7 +1243,7 @@ export default function HelpGuide() {
   const ActiveContent = TAB_COMPONENTS[activeTab] ?? GettingStartedTab;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-violet-50/20 to-white flex flex-col">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50 via-violet-50/20 to-white flex flex-col">
       {/* Header */}
       <div className={`bg-gradient-to-r ${TABS.find(t => t.id === activeTab)?.color ?? 'from-violet-500 to-purple-600'} px-4 pb-4 text-white shrink-0`}>
         <div className="max-w-md mx-auto">

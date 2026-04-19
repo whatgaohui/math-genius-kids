@@ -303,7 +303,7 @@ export default function StatsPage() {
   const recentRecords = useMemo(() => practiceHistory.slice(0, 10), [practiceHistory]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-emerald-50 via-teal-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       <div className="mx-auto max-w-md px-4 py-6 pb-24">
         {/* Header */}
         <motion.div
