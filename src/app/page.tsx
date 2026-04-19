@@ -17,6 +17,7 @@ const StatsPage = dynamic(() => import('@/components/math/StatsPage'), { ssr: fa
 const AchievementsPage = dynamic(() => import('@/components/math/AchievementsPage'), { ssr: false })
 const PetPage = dynamic(() => import('@/components/math/PetPage'), { ssr: false })
 const SettingsPage = dynamic(() => import('@/components/math/SettingsPage'), { ssr: false })
+const HelpGuide = dynamic(() => import('@/components/math/HelpGuide'), { ssr: false })
 const ChineseHome = dynamic(() => import('@/components/chinese/ChineseHome'), { ssr: false })
 const ChinesePlay = dynamic(() => import('@/components/chinese/ChinesePlay'), { ssr: false })
 const EnglishHome = dynamic(() => import('@/components/english/EnglishHome'), { ssr: false })
@@ -38,6 +39,7 @@ const viewComponents: Record<string, React.ComponentType> = {
   achievements: AchievementsPage,
   pet: PetPage,
   settings: SettingsPage,
+  help: HelpGuide,
   chinese: ChineseHome,
   'chinese-home': ChineseHome,
   'chinese-play': ChinesePlay,

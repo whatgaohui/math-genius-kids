@@ -415,3 +415,61 @@ Stage Summary:
 - Settings page now matches app-wide design language
 - bun run lint: 0 errors, 0 warnings
 - Dev server: compiled OK
+
+---
+Task ID: 13 (Unified Subject Pages + Help Guide)
+Agent: Main
+Task: Redesign math/chinese/english subject pages for unified interaction, add help guide page
+
+Work Log:
+- Analyzed current issues:
+  - Math: 2 layers before answering (MathHome → PracticeSetup) — wasteful
+  - Chinese: 8 large mode cards + grade + count on one page — too long
+  - English: 4 large mode cards + grade + count on one page — too long
+- Designed unified interaction pattern: all subjects = 1 page with compact inline selectors + floating start button
+
+**MathHome.tsx — Complete rewrite (merged PracticeSetup + SpeedSetup + AdventureMode into one page):**
+- 3-tab pill bar: 自由练习 | 限时挑战 | 闯关模式
+- Free practice: operations (3x2 grid), difficulty (3 pills), count (4 pills) — all compact
+- Speed challenge: time options (2x2 grid), operations (3 pills), rules hint
+- Adventure mode: 3-column compact level grid (12 levels), direct click-to-start
+- Floating start button (fixed bottom) for free/speed modes
+- Adventure mode hides floating button since levels are directly clickable
+- Help (?) button in header
+
+**ChineseHome.tsx — Compact single page:**
+- Modes as 2x2 compact pill grid (emoji + name), locked modes shown gray
+- Grades as horizontal scrollable pills
+- Count as 4-column grid
+- Floating start button fixed at bottom
+- All content fits in one screen without scrolling
+
+**EnglishHome.tsx — Compact single page:**
+- Modes as 2x2 compact pill grid (emoji + name)
+- Grades as horizontal scrollable pills
+- Count as 4-column grid
+- Floating start button fixed at bottom
+
+**HelpGuide.tsx — New comprehensive help page:**
+- 7 collapsible sections with gradient headers:
+  1. 📚 学习系统 (6 items: modes, XP, leveling)
+  2. 💰 金币奖励 (8 items: base, star, combo, perfect, speed, streak, crit, talent)
+  3. 🐾 宠物系统 (6 items: adopt, growth, mood, shop, talents, switching)
+  4. ✨ 宠物天赋 (7 items: each pet's unique talent)
+  5. ⚡ 技能与等级 (5 items: coin bonus, XP bonus, crit rate, combo, unlocks)
+  6. 🏆 成就系统 (5 items: first practice, streaks, perfect, speed, all-subjects)
+  7. 💡 答题技巧 (6 items: combos, speed, perfect, daily, talent strategy, pet leveling)
+- Kid-friendly language, animated expand/collapse
+- Accessible via ? button on all subject home pages
+
+**page.tsx — Added help route**
+
+Stage Summary:
+- 4 files modified: MathHome.tsx, ChineseHome.tsx, EnglishHome.tsx, page.tsx
+- 1 file created: HelpGuide.tsx
+- Math reduced from 2 interaction layers to 1 (PracticeSetup/SpeedSetup no longer needed for direct navigation)
+- Chinese/English pages shortened significantly (large cards → compact 2x2 pills)
+- All 3 subjects now have consistent UI pattern with floating start button
+- Help guide covers all game systems comprehensively
+- bun run lint: 0 errors, 0 warnings
+- Dev server: compiled OK
