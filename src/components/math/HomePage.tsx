@@ -111,11 +111,14 @@ export default function HomePage() {
 
   // Check login reward on mount
   useEffect(() => {
-    const result = checkAndClaimLoginReward();
-    if (result.isNewLogin) {
-      setLoginReward(result);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    // Use queueMicrotask to avoid synchronous setState in effect
+    queueMicrotask(() => {
+      const result = checkAndClaimLoginReward();
+      if (result.isNewLogin) {
+        setLoginReward(result);
+      }
+    });
+  }, []);
 
   // Get pet abilities for display
   const unlockedAbilities = PET_ABILITIES.filter((a) => petLevel >= a.level);

@@ -389,3 +389,29 @@ Stage Summary:
 - Switching pets now provides different strategic advantages
 - Talent effects visible in adoption UI, pet home page, and result page bonus breakdown
 - Dev server: compiled OK, no new lint errors
+
+---
+Task ID: 12 (Settings Page UI Redesign)
+Agent: Main
+Task: Redesign the settings page with a much better UI
+
+Work Log:
+- Analyzed current SettingsPage.tsx issues: plain Cards, cramped 8-column avatar grid, no profile card, generic layout
+- Studied reference pages (HomePage, PetPage) for consistent design language
+- Completely rewrote SettingsPage.tsx with:
+  1. Profile Card: Gradient hero card showing avatar with edit button, name, level, pet info, XP progress
+  2. Quick Stats Row: 4-column grid (Stars, XP, Streak, Coins) matching HomePage style
+  3. Avatar Picker Dialog: Bottom sheet with category tabs, 4-column grid, large preview
+  4. Edit Name Dialog: Bottom sheet with large input field, clean save button
+  5. Grouped Settings: iOS-style rows (个人资料, 学习数据, 偏好设置, 数据管理, 关于)
+  6. Learning Stats: Practice count, total questions, accuracy with Badge values
+  7. Clear Data Dialog: Itemized list of what will be deleted
+  8. About Section: Feature tags for all app modules
+  9. Decorative: Background blobs, staggered animations, dark mode support
+- Fixed HomePage.tsx lint error: setState in useEffect moved to queueMicrotask
+
+Stage Summary:
+- 2 files modified: SettingsPage.tsx (complete rewrite), HomePage.tsx (lint fix)
+- Settings page now matches app-wide design language
+- bun run lint: 0 errors, 0 warnings
+- Dev server: compiled OK
