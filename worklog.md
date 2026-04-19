@@ -221,6 +221,28 @@ Stage Summary:
 - Dev server: compiled OK, all API routes working
 
 ---
+
+Task ID: Mobile Overflow Fix + Adventure Mode Alignment + APK Build
+Agent: Main
+Task: Fix double scrollbar, align Chinese/English adventure mode, build APK
+
+Work Log:
+- Fixed double scrollbar issue: Changed CSS so `html` has `overflow: hidden` (no scrollbar), `body` has `overflow-x: hidden; overflow-y: auto` (single vertical scrollbar only)
+- Removed redundant `overflow-x-hidden` from layout.tsx, page.tsx, and 9 page components (HomePage, SettingsPage, StatsPage, PetPage, MathHome, AchievementsPage, HelpGuide, ChineseHome, EnglishHome)
+- Fixed Chinese/English adventure mode: ChinesePlay/EnglishPlay now pass `floorLevel` to `completeSubjectSession()` when in adventure mode
+- Updated game-store.ts `completeSubjectSession()` to track `chineseAdventureLevel`, `chineseAdventureStars`, `englishAdventureLevel`, `englishAdventureStars` on adventure completion
+- Verified Chinese/English speed challenge working correctly (not blank)
+- Built APK: added `output: 'export'` → `next build` → `cap sync` → `gradle assembleDebug` → restored config
+- APK output: /home/z/my-project/download/xuexidaoren-v1.1.apk (4.7MB)
+- GitHub token expired (401), push pending new token
+
+Stage Summary:
+- Double scrollbar issue fixed globally via CSS
+- Chinese/English adventure mode now properly tracks progress and awards floor-based coin multipliers
+- APK v1.1 built successfully with latest web assets
+- GitHub push blocked by expired token
+
+---
 项目当前状态描述/判断:
 - 项目运行正常，dev server编译无错误
 - 所有页面在375px手机宽度下适配良好
