@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   ArrowLeft,
   Play,
@@ -11,10 +12,12 @@ import {
   BookOpen,
   Zap,
   Lock,
+  ChevronDown,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { MODE_CONFIG, getModesForGrade, type ChineseMode, type ChineseGrade } from '@/lib/chinese-utils';
 import { playClickSound, resumeAudioContext } from '@/lib/sound';
+import { cn } from '@/lib/utils';
 
 // ── Shared mutable config for ChinesePlay ──
 let _chinesePlayConfig = {
@@ -96,6 +99,8 @@ const TIERS: AdventureTier[] = [
   { name: '语文传奇', startFloor: 111, endFloor: 150, grades: [4, 5, 6], modes: ['poetry-fill', 'antonym', 'synonym'], emoji: '👑' },
 ];
 
+const TOTAL_FLOORS = 150;
+
 // Level names per tier for variety
 const LEVEL_NAMES: Record<string, string[]> = {
   '识字启蒙': ['认一认', '学一学', '读一读', '写一写', '看一看'],
@@ -160,8 +165,6 @@ function generateAdventureLevels(): ChineseAdventureLevel[] {
   return levels;
 }
 
-const ADVENTURE_LEVELS = generateAdventureLevels();
-
 // ─── Animation ──────────────────────────────────────────────────────────────
 
 const containerVariants = {
@@ -172,6 +175,12 @@ const containerVariants = {
 const itemVariants = {
   hidden: { opacity: 0, y: 16, scale: 0.97 },
   show: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 24 } },
+};
+
+const tabContentVariants = {
+  enter: (direction: number) => ({ opacity: 0, x: direction * 30 }),
+  center: { opacity: 1, x: 0 },
+  exit: (direction: number) => ({ opacity: 0, x: -direction * 30 }),
 };
 
 // ─── Component ──────────────────────────────────────────────────────────────
@@ -188,6 +197,7 @@ export default function ChineseHome() {
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<ChineseTab>('free');
+  const [tabDirection, setTabDirection] = useState(0);
 
   // Free practice state
   const [selectedMode, setSelectedMode] = useState<ChineseMode>('recognize-pinyin');
@@ -197,12 +207,53 @@ export default function ChineseHome() {
   // Speed challenge state
   const [speedMode, setSpeedMode] = useState<ChineseMode>('recognize-pinyin');
 
+  // ── Adventure computed values ──
+  const ALL_LEVELS = useMemo(() => generateAdventureLevels(), []);
+
+  const highestCompletedFloor = useMemo(() => {
+    return Object.entries(chineseAdventureStars)
+      .filter(([, stars]) => stars >= 1)
+      .reduce((max, [floor]) => Math.max(max, Number(floor)), 0);
+  }, [chineseAdventureStars]);
+
+  const nextFloor = Math.min(highestCompletedFloor + 1, TOTAL_FLOORS);
+  const isFloorUnlocked = useCallback(
+    (floor: number) => floor <= nextFloor,
+    [nextFloor]
+  );
+
+  const totalAdventureStars = useMemo(
+    () => Object.values(chineseAdventureStars).reduce((sum, s) => sum + s, 0),
+    [chineseAdventureStars]
+  );
+
+  // ── Auto-expand the tier containing the next floor ──
+  const [expandedTiers, setExpandedTiers] = useState<Set<string>>(() => {
+    const highest = Object.entries(chineseAdventureStars)
+      .filter(([, s]) => s >= 1)
+      .reduce((max, [f]) => Math.max(max, Number(f)), 0);
+    const next = highest + 1;
+    const tier = TIERS.find(
+      (t) => next >= t.startFloor && next <= t.endFloor
+    );
+    return tier ? new Set([tier.name]) : new Set([TIERS[0].name]);
+  });
+
   const availableModes = getModesForGrade(selectedGrade);
   const isModeAvailable = (mode: ChineseMode) => availableModes.some((m) => m.mode === mode);
   const activeMode = isModeAvailable(selectedMode) ? selectedMode : (availableModes[0]?.mode ?? 'recognize-char');
 
+  // ── Handlers ──
   const handleBack = () => { playClickSound(); setCurrentView('home'); };
   const handleHelp = () => { playClickSound(); setCurrentView('help'); };
+
+  const handleTabSwitch = (tab: ChineseTab) => {
+    const tabIndex = TABS.findIndex((t) => t.key === tab);
+    const currentIndex = TABS.findIndex((t) => t.key === activeTab);
+    setTabDirection(tabIndex > currentIndex ? 1 : -1);
+    setActiveTab(tab);
+    playClickSound();
+  };
 
   // ── Free Practice ──
   const handleFreeStart = () => {
@@ -222,7 +273,7 @@ export default function ChineseHome() {
 
   // ── Adventure Mode ──
   const handleStartLevel = (level: ChineseAdventureLevel) => {
-    if (chineseAdventureLevel < level.id - 1 && level.id > 1) return; // sequential unlock
+    if (!isFloorUnlocked(level.id)) return;
     playClickSound();
     resumeAudioContext();
     setChinesePlayConfig({
@@ -242,13 +293,392 @@ export default function ChineseHome() {
     setCurrentView('chinese-play');
   };
 
+  const handleContinueAdventure = () => {
+    const level = ALL_LEVELS.find((l) => l.id === nextFloor);
+    if (level) handleStartLevel(level);
+  };
+
+  const toggleTier = (tierName: string) => {
+    playClickSound();
+    setExpandedTiers((prev) => {
+      const next = new Set(prev);
+      if (next.has(tierName)) {
+        next.delete(tierName);
+      } else {
+        next.add(tierName);
+      }
+      return next;
+    });
+  };
+
+  // ── Render helpers ──
+  const renderFreeTab = () => (
+    <div className="space-y-5">
+      {/* Mode Selection — 2-row compact grid */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
+        <div className="grid grid-cols-2 gap-2">
+          {(Object.values(MODE_CONFIG) as typeof MODE_CONFIG[ChineseMode][]).map((modeConfig) => {
+            const available = isModeAvailable(modeConfig.mode);
+            const isSelected = activeMode === modeConfig.mode;
+            return (
+              <button
+                key={modeConfig.mode}
+                onClick={() => { if (available) { setSelectedMode(modeConfig.mode); playClickSound(); } }}
+                disabled={!available}
+                className={`flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
+                  !available
+                    ? 'bg-gray-50 text-gray-300 cursor-not-allowed border border-gray-100'
+                    : isSelected
+                      ? 'bg-gradient-to-r from-rose-400 to-orange-400 text-white shadow-sm'
+                      : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-rose-200'
+                }`}
+              >
+                <span className="text-lg">{modeConfig.emoji}</span>
+                <div className="min-w-0">
+                  <p className={`text-xs font-bold truncate ${!available ? 'text-gray-300' : ''}`}>
+                    {modeConfig.name}
+                  </p>
+                  {!available && (
+                    <p className="text-[10px] text-gray-300">{modeConfig.minGrade}年级+</p>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Grade Selection — horizontal scroll */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">选择年级</p>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {GRADES.map((g) => (
+            <button
+              key={g.value}
+              onClick={() => { setSelectedGrade(g.value); playClickSound(); }}
+              className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all active:scale-95 ${
+                selectedGrade === g.value
+                  ? 'bg-gradient-to-r from-rose-400 to-orange-400 text-white shadow-sm'
+                  : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-rose-200'
+              }`}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Question Count */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">题目数量</p>
+        <div className="grid grid-cols-4 gap-2">
+          {COUNTS.map((c) => (
+            <button
+              key={c}
+              onClick={() => { setSelectedCount(c); playClickSound(); }}
+              className={`py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                selectedCount === c
+                  ? 'bg-gradient-to-r from-rose-400 to-orange-400 text-white shadow-sm'
+                  : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-rose-200'
+              }`}
+            >
+              {c}题
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderSpeedTab = () => (
+    <div className="space-y-5">
+      {/* Time Selection */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">挑战时长</p>
+        <div className="grid grid-cols-2 gap-2">
+          {TIME_OPTIONS.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => { setChineseSpeedTimeLimit(t.value); playClickSound(); }}
+              className={`flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                chineseSpeedTimeLimit === t.value
+                  ? 'bg-gradient-to-r from-red-400 to-rose-400 text-white shadow-sm'
+                  : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-rose-200'
+              }`}
+            >
+              {t.emoji} {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Speed Mode Selection */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
+        <div className="grid grid-cols-2 gap-2">
+          {SPEED_MODES.map((mode) => {
+            const modeConfig = MODE_CONFIG[mode];
+            const isSelected = speedMode === mode;
+            return (
+              <button
+                key={mode}
+                onClick={() => { setSpeedMode(mode); playClickSound(); }}
+                className={`flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
+                  isSelected
+                    ? 'bg-gradient-to-r from-red-400 to-rose-400 text-white shadow-sm'
+                    : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-rose-200'
+                }`}
+              >
+                <span className="text-lg">{modeConfig.emoji}</span>
+                <span className="text-xs font-bold">{modeConfig.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Rules hint card */}
+      <div className="bg-rose-50 border border-rose-100 rounded-xl p-3">
+        <p className="text-xs text-rose-700 leading-relaxed">
+          ⏱️ 在限定时间内尽量多答题，答对自动跳题，限时挑战金币奖励×1.5！
+        </p>
+      </div>
+    </div>
+  );
+
+  const renderAdventureTab = () => {
+    const progressPercent = (highestCompletedFloor / TOTAL_FLOORS) * 100;
+
+    return (
+      <div className="space-y-4">
+        {/* Progress Banner */}
+        <div className="bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 rounded-2xl p-4 border border-rose-200/60">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs font-semibold text-rose-600/70">闯关进度</p>
+              <p className="text-xl font-bold text-rose-800">
+                第 {highestCompletedFloor > 0 ? highestCompletedFloor : 0} 层
+                <span className="text-sm font-normal text-rose-500 ml-1">/ {TOTAL_FLOORS}</span>
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-1 bg-white/70 rounded-full px-2 py-0.5">
+                <Star className="w-3.5 h-3.5 fill-rose-400 text-rose-400" />
+                <span className="text-xs font-bold text-rose-700">{totalAdventureStars}</span>
+              </div>
+              {highestCompletedFloor > 0 && (
+                <Badge className="bg-rose-500/15 text-rose-700 border-rose-200 text-[10px] px-1.5 py-0">
+                  下层: {nextFloor}
+                </Badge>
+              )}
+            </div>
+          </div>
+          <Progress value={progressPercent} className="h-2 bg-rose-200/50" />
+          <p className="text-[10px] text-rose-600/60 mt-1.5">
+            {highestCompletedFloor === 0
+              ? '🌱 开始你的语文冒险之旅吧！'
+              : highestCompletedFloor >= 150
+                ? '🌟 恭喜通关全部关卡！'
+                : `距离下一层还有 ${nextFloor} 层，继续加油！`}
+          </p>
+        </div>
+
+        {/* Quick Continue Button */}
+        {nextFloor <= TOTAL_FLOORS && (
+          <Button
+            onClick={handleContinueAdventure}
+            className="w-full h-12 text-base font-bold bg-gradient-to-r from-rose-400 to-orange-500 text-white border-0 shadow-lg shadow-rose-200/60 hover:shadow-xl hover:shadow-rose-200/80 transition-shadow active:scale-[0.98]"
+          >
+            <Play className="w-5 h-5 mr-2" />
+            {highestCompletedFloor === 0 ? '开始冒险' : `挑战第 ${nextFloor} 层`}
+          </Button>
+        )}
+
+        {/* Tier Sections */}
+        <div className="space-y-2">
+          {TIERS.map((tier) => {
+            const isExpanded = expandedTiers.has(tier.name);
+            const tierFloors = ALL_LEVELS.filter((l) => l.id >= tier.startFloor && l.id <= tier.endFloor);
+            const completedInTier = tierFloors.filter(
+              (l) => (chineseAdventureStars[l.id] ?? 0) >= 1
+            ).length;
+            const totalInTier = tier.endFloor - tier.startFloor + 1;
+            const isFullyLocked = nextFloor < tier.startFloor;
+            const isFullyCompleted = completedInTier === totalInTier;
+            const isCurrentTier =
+              nextFloor >= tier.startFloor && nextFloor <= tier.endFloor;
+            const hasBossFloor = tierFloors.some((l) => l.isBoss);
+
+            return (
+              <div
+                key={tier.name}
+                className={cn(
+                  'bg-white rounded-xl border overflow-hidden transition-all',
+                  isCurrentTier
+                    ? 'border-orange-200 shadow-sm shadow-orange-100/50'
+                    : isFullyCompleted
+                      ? 'border-emerald-100'
+                      : 'border-gray-100'
+                )}
+              >
+                {/* Tier Header */}
+                <button
+                  onClick={() => toggleTier(tier.name)}
+                  className="w-full flex items-center justify-between px-3 py-3 text-left active:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-lg flex-shrink-0">{tier.emoji}</span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-sm text-gray-800 truncate">
+                          {tier.name}
+                        </span>
+                        {hasBossFloor && (
+                          <span className="text-xs">👑</span>
+                        )}
+                        {isFullyCompleted && (
+                          <span className="text-[10px] text-emerald-500 font-medium">✓</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-gray-400">
+                        第{tier.startFloor}-{tier.endFloor}层
+                        {!isFullyLocked && ` · ${completedInTier}/${totalInTier}`}
+                      </p>
+                    </div>
+                  </div>
+                  <ChevronDown
+                    className={cn(
+                      'w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ml-2',
+                      isExpanded && 'rotate-180'
+                    )}
+                  />
+                </button>
+
+                {/* Tier Body (Collapsible) */}
+                <AnimatePresence initial={false}>
+                  {isExpanded && (
+                    <motion.div
+                      key={`${tier.name}-body`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                    >
+                      <div className="px-3 pb-3">
+                        {/* Mini progress bar */}
+                        {!isFullyLocked && totalInTier > 0 && (
+                          <div className="mb-2.5">
+                            <Progress
+                              value={(completedInTier / totalInTier) * 100}
+                              className={cn(
+                                'h-1',
+                                isFullyCompleted
+                                  ? 'bg-emerald-100'
+                                  : 'bg-gray-100'
+                              )}
+                            />
+                          </div>
+                        )}
+
+                        {/* Floor badges */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {tierFloors.map((floor) => {
+                            const unlocked = isFloorUnlocked(floor.id);
+                            const stars = chineseAdventureStars[floor.id] ?? 0;
+                            const completed = stars >= 1;
+                            const isCurrent = floor.id === nextFloor;
+                            const bossFloor = floor.isBoss;
+
+                            return (
+                              <button
+                                key={floor.id}
+                                onClick={() => handleStartLevel(floor)}
+                                disabled={!unlocked}
+                                className={cn(
+                                  'relative flex-shrink-0 w-[42px] h-[42px] rounded-xl flex items-center justify-center text-sm font-bold transition-all',
+                                  unlocked && 'active:scale-90 cursor-pointer',
+                                  !unlocked && 'cursor-not-allowed',
+                                  // Locked
+                                  !unlocked && 'bg-gray-50 text-gray-300',
+                                  // Unlocked but not completed and not current
+                                  unlocked && !completed && !isCurrent && 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300',
+                                  // Current floor (pulsing highlight)
+                                  isCurrent && 'bg-white border-2 border-orange-400 text-orange-600 shadow-md shadow-orange-200/60 ring-2 ring-orange-200/40',
+                                  // Completed 3 stars
+                                  completed && stars === 3 && !isCurrent && 'bg-emerald-50 border border-emerald-200 text-emerald-700',
+                                  // Completed 1-2 stars
+                                  completed && stars > 0 && stars < 3 && !isCurrent && 'bg-amber-50 border border-amber-200 text-amber-700',
+                                  // Boss floor accent
+                                  bossFloor && unlocked && !isCurrent && 'ring-1 ring-rose-300'
+                                )}
+                                title={
+                                  !unlocked
+                                    ? `需要先通过第${floor.id - 1}层`
+                                    : `${floor.name}`
+                                }
+                              >
+                                {/* Boss crown badge */}
+                                {bossFloor && unlocked && (
+                                  <span className="absolute -top-2 -right-1 text-[10px] leading-none drop-shadow-sm">
+                                    👑
+                                  </span>
+                                )}
+
+                                {/* Floor number or lock */}
+                                {unlocked ? (
+                                  <span className={cn(
+                                    'text-[13px]',
+                                    bossFloor && 'font-black'
+                                  )}>
+                                    {floor.id}
+                                  </span>
+                                ) : (
+                                  <Lock className="w-3.5 h-3.5" />
+                                )}
+
+                                {/* Star count badge for completed floors */}
+                                {completed && (
+                                  <span className={cn(
+                                    'absolute -bottom-1 -right-1 rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-black shadow-sm border',
+                                    stars === 3
+                                      ? 'bg-emerald-500 text-white border-emerald-400'
+                                      : 'bg-amber-400 text-white border-amber-300'
+                                  )}>
+                                    {stars}
+                                  </span>
+                                )}
+
+                                {/* Current floor pulse indicator */}
+                                {isCurrent && (
+                                  <span className="absolute inset-0 rounded-xl animate-ping bg-orange-200/30 pointer-events-none" />
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Spacer for bottom button area */}
+        <div className="h-8" />
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 via-orange-50/30 to-white">
       {/* Header */}
       <div className="bg-gradient-to-r from-rose-500 to-orange-500 px-4 pb-5 text-white">
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between mb-3">
-            <button onClick={handleBack} className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors">
+            <button onClick={handleBack} className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95">
               <ArrowLeft className="w-4 h-4" />
               返回
             </button>
@@ -290,10 +720,10 @@ export default function ChineseHome() {
             {TABS.map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => { setActiveTab(tab.key); playClickSound(); }}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                onClick={() => handleTabSwitch(tab.key)}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
                   activeTab === tab.key
-                    ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-md'
+                    ? 'bg-gradient-to-r from-rose-400 to-orange-400 text-white shadow-md'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -303,252 +733,26 @@ export default function ChineseHome() {
           </div>
         </motion.div>
 
-        <AnimatePresence mode="wait">
-          {/* ═══════════════════ Free Practice ═══════════════════ */}
-          {activeTab === 'free' && (
-            <motion.div key="free" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} className="mt-5 space-y-5">
-              {/* Mode Selection — 2-row compact grid */}
-              <motion.div variants={itemVariants}>
-                <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {(Object.values(MODE_CONFIG) as typeof MODE_CONFIG[ChineseMode][]).map((modeConfig) => {
-                    const available = isModeAvailable(modeConfig.mode);
-                    const isSelected = activeMode === modeConfig.mode;
-                    return (
-                      <button
-                        key={modeConfig.mode}
-                        onClick={() => { if (available) { setSelectedMode(modeConfig.mode); playClickSound(); } }}
-                        disabled={!available}
-                        className={`flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
-                          !available
-                            ? 'bg-gray-50 text-gray-300 cursor-not-allowed border border-gray-100'
-                            : isSelected
-                              ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-sm'
-                              : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-rose-200'
-                        }`}
-                      >
-                        <span className="text-lg">{modeConfig.emoji}</span>
-                        <div className="min-w-0">
-                          <p className={`text-xs font-bold truncate ${!available ? 'text-gray-300' : ''}`}>
-                            {modeConfig.name}
-                          </p>
-                          {!available && (
-                            <p className="text-[10px] text-gray-300">{modeConfig.minGrade}年级+</p>
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-
-              {/* Grade Selection — horizontal scroll */}
-              <motion.div variants={itemVariants}>
-                <p className="text-xs font-semibold text-gray-400 mb-2 px-1">选择年级</p>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {GRADES.map((g) => (
-                    <button
-                      key={g.value}
-                      onClick={() => { setSelectedGrade(g.value); playClickSound(); }}
-                      className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all active:scale-95 ${
-                        selectedGrade === g.value
-                          ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-sm'
-                          : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-rose-200'
-                      }`}
-                    >
-                      {g.label}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Question Count */}
-              <motion.div variants={itemVariants}>
-                <p className="text-xs font-semibold text-gray-400 mb-2 px-1">题目数量</p>
-                <div className="grid grid-cols-4 gap-2">
-                  {COUNTS.map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => { setSelectedCount(c); playClickSound(); }}
-                      className={`py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-                        selectedCount === c
-                          ? 'bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-sm'
-                          : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-rose-200'
-                      }`}
-                    >
-                      {c}题
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* ═══════════════════ Speed Challenge ═══════════════════ */}
-          {activeTab === 'speed' && (
-            <motion.div key="speed" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} className="mt-5 space-y-5">
-              {/* Time Selection */}
-              <motion.div variants={itemVariants}>
-                <p className="text-xs font-semibold text-gray-400 mb-2 px-1">挑战时长</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {TIME_OPTIONS.map((t) => (
-                    <button
-                      key={t.value}
-                      onClick={() => { setChineseSpeedTimeLimit(t.value); playClickSound(); }}
-                      className={`flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-                        chineseSpeedTimeLimit === t.value
-                          ? 'bg-gradient-to-r from-red-400 to-rose-500 text-white shadow-sm'
-                          : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-rose-200'
-                      }`}
-                    >
-                      {t.emoji} {t.label}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Speed Mode Selection */}
-              <motion.div variants={itemVariants}>
-                <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {SPEED_MODES.map((mode) => {
-                    const modeConfig = MODE_CONFIG[mode];
-                    const isSelected = speedMode === mode;
-                    return (
-                      <button
-                        key={mode}
-                        onClick={() => { setSpeedMode(mode); playClickSound(); }}
-                        className={`flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
-                          isSelected
-                            ? 'bg-gradient-to-r from-red-400 to-rose-500 text-white shadow-sm'
-                            : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-rose-200'
-                        }`}
-                      >
-                        <span className="text-lg">{modeConfig.emoji}</span>
-                        <span className="text-xs font-bold">{modeConfig.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-
-              {/* Rules hint card */}
-              <motion.div variants={itemVariants} className="bg-rose-50 border border-rose-100 rounded-xl p-3">
-                <p className="text-xs text-rose-700 leading-relaxed">
-                  ⏱️ 在限定时间内尽量多答题，答对自动跳题，限时挑战金币奖励×1.5！
-                </p>
-              </motion.div>
-            </motion.div>
-          )}
-
-          {/* ═══════════════════ Adventure Mode ═══════════════════ */}
-          {activeTab === 'adventure' && (
-            <motion.div key="adventure" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} className="mt-5">
-              {/* Progress Banner */}
-              <motion.div variants={itemVariants} className="bg-gradient-to-r from-rose-500 to-orange-500 rounded-2xl p-4 mb-4 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-bold">🗺️ 语文闯关之旅</p>
-                    <p className="text-xs text-white/80 mt-0.5">
-                      已通过 <span className="font-bold text-white">{chineseAdventureLevel}</span> / {ADVENTURE_LEVELS.length} 关
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 bg-white/20 rounded-full px-3 py-1">
-                    <Star className="w-3.5 h-3.5 fill-white" />
-                    <span className="text-sm font-bold">{chineseAdventureLevel}</span>
-                  </div>
-                </div>
-                {/* Progress bar */}
-                <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-white/80 rounded-full transition-all duration-500"
-                    style={{ width: `${(chineseAdventureLevel / ADVENTURE_LEVELS.length) * 100}%` }}
-                  />
-                </div>
-              </motion.div>
-
-              {/* Tier Sections */}
-              <div className="space-y-5">
-                {TIERS.map((tier) => {
-                  const tierLevels = ADVENTURE_LEVELS.filter((l) => l.id >= tier.startFloor && l.id <= tier.endFloor);
-                  return (
-                    <div key={tier.name}>
-                      {/* Tier Header */}
-                      <div className="flex items-center justify-between mb-2 px-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-base">{tier.emoji}</span>
-                          <span className="text-xs font-bold text-gray-600">{tier.name}</span>
-                          <span className="text-[10px] text-gray-400">第{tier.startFloor}-{tier.endFloor}关</span>
-                        </div>
-                        <span className="text-[10px] text-gray-400">
-                          {tierLevels.filter((l) => chineseAdventureLevel >= l.id).length}/{tierLevels.length} ✓
-                        </span>
-                      </div>
-
-                      {/* Floor Grid */}
-                      <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-                        {tierLevels.map((level) => {
-                          const unlocked = chineseAdventureLevel >= level.id - 1 || level.id === 1;
-                          const completed = chineseAdventureLevel >= level.id;
-                          const stars = chineseAdventureStars[level.id] ?? 0;
-
-                          return (
-                            <motion.button
-                              key={level.id}
-                              whileTap={unlocked ? { scale: 0.88 } : {}}
-                              onClick={() => handleStartLevel(level)}
-                              disabled={!unlocked}
-                              className={`relative flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl border-2 transition-all min-h-[52px] sm:min-h-[60px] ${
-                                level.isBoss && unlocked
-                                  ? 'bg-gradient-to-br from-rose-50 to-orange-50 border-rose-300 shadow-sm'
-                                  : completed
-                                    ? 'bg-emerald-50 border-emerald-200'
-                                    : unlocked
-                                      ? 'bg-white border-rose-100 shadow-sm hover:border-rose-300 hover:shadow-md'
-                                      : 'bg-gray-50 border-gray-100 opacity-40 cursor-not-allowed'
-                              }`}
-                            >
-                              {/* Floor number */}
-                              <span className={`text-[10px] font-bold ${
-                                completed
-                                  ? 'text-emerald-600'
-                                  : unlocked
-                                    ? level.isBoss ? 'text-rose-600' : 'text-gray-600'
-                                    : 'text-gray-300'
-                              }`}>
-                                {level.id}
-                              </span>
-
-                              {/* Emoji */}
-                              <span className="text-sm sm:text-base leading-none mt-0.5">
-                                {unlocked ? level.emoji : '🔒'}
-                              </span>
-
-                              {/* Stars for completed levels */}
-                              {completed && stars > 0 && (
-                                <div className="flex gap-px mt-0.5">
-                                  {[1, 2, 3].map((s) => (
-                                    <Star
-                                      key={s}
-                                      className={`w-1.5 h-1.5 sm:w-2 sm:h-2 ${s <= stars ? 'fill-amber-400 text-amber-400' : 'text-gray-200'}`}
-                                    />
-                                  ))}
-                                </div>
-                              )}
-                            </motion.button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
+        {/* Tab Content - Single animated wrapper for reliable switching */}
+        <AnimatePresence mode="wait" custom={tabDirection}>
+          <motion.div
+            key={activeTab}
+            custom={tabDirection}
+            variants={tabContentVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="mt-5"
+          >
+            {activeTab === 'free' && renderFreeTab()}
+            {activeTab === 'speed' && renderSpeedTab()}
+            {activeTab === 'adventure' && renderAdventureTab()}
+          </motion.div>
         </AnimatePresence>
       </motion.div>
 
-      {/* ── Floating Start Button ── */}
+      {/* ── Floating Start Button (Free / Speed only) ── */}
       {activeTab !== 'adventure' && (
         <div className="fixed bottom-20 left-0 right-0 z-30 px-4 pb-2">
           <div className="max-w-md mx-auto">
@@ -557,8 +761,8 @@ export default function ChineseHome() {
                 onClick={activeTab === 'free' ? handleFreeStart : handleSpeedStart}
                 className={`w-full h-13 text-base font-bold text-white border-0 shadow-lg transition-shadow ${
                   activeTab === 'free'
-                    ? 'bg-gradient-to-r from-rose-500 to-orange-500 shadow-rose-200/60'
-                    : 'bg-gradient-to-r from-red-500 to-rose-600 shadow-rose-300/60'
+                    ? 'bg-gradient-to-r from-rose-400 to-orange-500 shadow-rose-200/60'
+                    : 'bg-gradient-to-r from-red-400 to-rose-400 shadow-rose-200/60'
                 }`}
               >
                 {activeTab === 'free' ? (

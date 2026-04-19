@@ -65,4 +65,9 @@ server.log
 /agent-ctx/
 
 # Mini services runtime
-mini-services/*/node_modules
+mini-services/*/node_modulesnode_modules/
+out/
+android/app/build/
+.next/
+xuexidaoren-v1.0.apk
+*.apk

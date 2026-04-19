@@ -155,3 +155,41 @@ Stage Summary:
 - EnglishPlay.tsx now properly supports speed challenge mode
 - Speed mode: countdown timer, auto-advance on correct, stay on wrong for retry, infinite questions, confetti
 - Free/adventure mode: unchanged behavior (elapsed timer, fixed questions, 1.2s delay, progress bar)
+
+---
+Task ID: 2
+Agent: full-stack-developer
+Task: Rewrite ChineseHome.tsx - Fix tab switching & adventure UI to match MathHome
+
+Work Log:
+- Fixed AnimatePresence pattern to use single wrapper with key={activeTab} (was causing blank tabs)
+- Added tabDirection state and tabContentVariants for smooth directional transitions
+- Rewrote adventure tab with collapsible tier sections (ChevronDown), progress banner, quick continue button
+- Added per-floor star tracking display with 42x42px badges, boss crowns, star count badges, current floor pulse
+- Used useMemo for highestCompletedFloor, nextFloor, totalAdventureStars, isFloorUnlocked
+- Free and speed tabs unchanged content, just moved to render functions
+- Verified: bun run lint 0 errors
+
+Stage Summary:
+- ChineseHome tab switching now works reliably (no more blank screens)
+- Adventure mode UI now matches MathHome's collapsible tier pattern
+- All existing functionality preserved
+
+---
+Task ID: 3
+Agent: full-stack-developer
+Task: Rewrite EnglishHome.tsx - Fix tab switching & adventure UI to match MathHome
+
+Work Log:
+- Fixed AnimatePresence pattern to use single wrapper with key={activeTab}
+- Added tabDirection state and tabContentVariants for smooth transitions
+- Rewrote adventure tab with collapsible tiers, progress banner, quick continue button
+- Added per-floor star tracking with 42x42px badges, boss crowns, star count badges, current floor pulse
+- Used useMemo for adventure state computations
+- Free and speed tabs unchanged content, moved to render functions
+- Verified: bun run lint 0 errors
+
+Stage Summary:
+- EnglishHome tab switching now works reliably
+- Adventure mode UI matches MathHome's collapsible tier pattern
+- All existing functionality preserved
