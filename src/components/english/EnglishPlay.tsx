@@ -237,16 +237,8 @@ export default function EnglishPlay() {
     [currentQuestion, hasAnswered, feedback, combo, maxCombo, soundEnabled, currentIndex, questions.length, addFloatingXP, isSpeedMode, config.mode, config.grade]
   );
 
-  // Auto-speak for listening mode
-  useEffect(() => {
-    if (!currentQuestion || config.mode !== 'listening') return;
-    setIsSpeaking(true);
-    speakEnglish(currentQuestion.prompt, 0.8).finally(() => setIsSpeaking(false));
-    return () => {
-      stopSpeaking();
-      setIsSpeaking(false);
-    };
-  }, [currentIndex, currentQuestion, config.mode]);
+  // Auto-speak for listening mode - skipped on mobile to avoid autoplay restrictions
+  // User needs to tap the play button to hear the word (more reliable)
 
   // Keyboard support (1-4 keys)
   useEffect(() => {
@@ -540,11 +532,22 @@ export default function EnglishPlay() {
                   }
                   transition={{ duration: 0.4 }}
                 >
-                  <p className="text-3xl sm:text-4xl font-bold text-gray-800 my-4 sm:my-6 leading-relaxed">
-                    {config.mode === 'listening'
-                      ? '🎧 听一听...'
-                      : currentQuestion.prompt}
-                  </p>
+                  {config.mode === 'listening' ? (
+                    <div className="my-4 sm:my-6 flex flex-col items-center gap-3">
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={handleSpeak}
+                        className={`flex items-center justify-center w-20 h-20 rounded-full shadow-lg transition-all ${isSpeaking ? 'bg-emerald-500 shadow-emerald-200' : 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-200/50 hover:shadow-emerald-300'}`}
+                      >
+                        <Volume2 className={`w-8 h-8 text-white ${isSpeaking ? 'animate-pulse' : ''}`} />
+                      </motion.button>
+                      <p className="text-sm text-gray-500 font-medium">点击播放发音</p>
+                    </div>
+                  ) : (
+                    <p className="text-3xl sm:text-4xl font-bold text-gray-800 my-4 sm:my-6 leading-relaxed">
+                      {currentQuestion.prompt}
+                    </p>
+                  )}
                 </motion.div>
 
                 {/* Feedback Icons */}
@@ -756,11 +759,22 @@ export default function EnglishPlay() {
                 }
                 transition={{ duration: 0.4 }}
               >
-                <p className="text-3xl sm:text-4xl font-bold text-gray-800 my-4 sm:my-6 leading-relaxed">
-                  {config.mode === 'listening'
-                    ? '🎧 听一听...'
-                    : currentQuestion.prompt}
-                </p>
+                {config.mode === 'listening' ? (
+                    <div className="my-4 sm:my-6 flex flex-col items-center gap-3">
+                      <motion.button
+                        whileTap={{ scale: 0.9 }}
+                        onClick={handleSpeak}
+                        className={`flex items-center justify-center w-20 h-20 rounded-full shadow-lg transition-all ${isSpeaking ? 'bg-emerald-500 shadow-emerald-200' : 'bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-200/50 hover:shadow-emerald-300'}`}
+                      >
+                        <Volume2 className={`w-8 h-8 text-white ${isSpeaking ? 'animate-pulse' : ''}`} />
+                      </motion.button>
+                      <p className="text-sm text-gray-500 font-medium">点击播放发音</p>
+                    </div>
+                  ) : (
+                    <p className="text-3xl sm:text-4xl font-bold text-gray-800 my-4 sm:my-6 leading-relaxed">
+                      {currentQuestion.prompt}
+                    </p>
+                  )}
               </motion.div>
 
               {/* Feedback Icons */}

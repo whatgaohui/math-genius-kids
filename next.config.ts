@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
+  // Note: Do NOT use output: 'export' - API routes (e.g. TTS) require server runtime
   images: {
     unoptimized: true,
   },

@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
       return new NextResponse(cached.data, {
         headers: {
-          'Content-Type': 'audio/mpeg',
+          'Content-Type': 'audio/wav',
           'Cache-Control': 'public, max-age=300',
           'X-Cache': 'HIT',
         },
@@ -50,19 +50,20 @@ export async function POST(request: NextRequest) {
 
     const client = await getClient();
 
-    // Pick voice based on language
-    let voice = 'zh-CN-XiaoxiaoNeural'; // default Chinese voice
-    if (lang === 'en') {
-      voice = 'en-US-JennyNeural';
-    } else if (lang === 'zh') {
-      voice = 'zh-CN-XiaoxiaoNeural';
+    // Pick voice based on language (use SDK-supported voice names)
+    let voice = 'tongtong'; // default Chinese voice - warm and friendly
+    if (lang === 'en' || lang === 'en-US') {
+      voice = 'kazi'; // English - clear and standard
+    } else if (lang === 'zh' || lang === 'zh-CN') {
+      voice = 'tongtong'; // Chinese - warm and friendly
     }
 
     const response = await client.audio.tts.create({
       input: text,
       voice,
       speed: speedValue,
-      response_format: 'mp3',
+      response_format: 'wav',
+      stream: false,
     });
 
     // The TTS API returns a raw Response object
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
 
     return new NextResponse(arrayBuffer, {
       headers: {
-        'Content-Type': 'audio/mpeg',
+        'Content-Type': 'audio/wav',
         'Cache-Control': 'public, max-age=300',
         'X-Cache': 'MISS',
       },

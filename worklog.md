@@ -193,3 +193,48 @@ Stage Summary:
 - EnglishHome tab switching now works reliably
 - Adventure mode UI matches MathHome's collapsible tier pattern
 - All existing functionality preserved
+
+---
+Task ID: Mobile Adaptation & Bug Fixes
+Agent: Main
+Task: Fix mobile UI adaptation issues - bottom nav, English listening audio, pet page tabs
+
+Work Log:
+- Analyzed user screenshot showing bottom nav "设置" tab cut off on Honor phone
+- Fixed BottomNav.tsx: removed min-w-[56px], changed to flex-1 items-stretch layout, added safe-area-inset-bottom, reduced height from h-16 to h-14
+- Fixed PetPage.tsx tabs: simplified "我的宠物" → "宠物", "换宠物" → "领养", "房间" emoji 🏠→🏡, added min-w-0 and truncate for text
+- Fixed EnglishPlay.tsx listening mode: replaced auto-play (which fails on mobile) with a prominent green play button (w-20 h-20), user taps to hear
+- Fixed TTS API route (/api/tts): changed voice from Azure names to SDK-supported voices (kazi for English, tongtong for Chinese), changed response_format from mp3 to wav
+- Updated tts.ts: mobile devices now use backend TTS API first (more reliable), desktop tries Web Speech API first then falls back to backend
+- Updated layout.tsx: added viewport export with viewport-fit=cover, maximum-scale=1, changed lang to zh-CN
+- Updated globals.css: added safe-area-inset CSS, overscroll-behavior none, tap-highlight transparent for app-like feel
+- Removed output: 'export' from next.config.ts (was breaking API routes)
+- Verified all fixes via agent-browser testing at 375px mobile viewport
+- Verified TTS API returns 200 with valid audio data (~96KB WAV for English)
+
+Stage Summary:
+- 7 files modified: BottomNav.tsx, PetPage.tsx, EnglishPlay.tsx, tts.ts, layout.tsx, globals.css, next.config.ts, api/tts/route.ts
+- Bottom nav: 4 tabs fully visible at 375px width, evenly distributed with flex-1
+- Pet tabs: labels simplified, no wrapping on mobile
+- English listening: prominent play button, backend TTS API working (kazi voice, wav format)
+- Mobile viewport: safe-area support, no overscroll, proper viewport-fit=cover
+- Dev server: compiled OK, all API routes working
+
+---
+项目当前状态描述/判断:
+- 项目运行正常，dev server编译无错误
+- 所有页面在375px手机宽度下适配良好
+- TTS语音合成功能已修复，英语听力模式可用
+- API路由正常工作（已移除output: export配置）
+
+当前目标/已完成的修改/验证结果:
+- ✅ 底部导航栏在小屏手机上完整显示4个tab（首页/统计/宠物/设置）
+- ✅ 英语听力模式：添加大号播放按钮，修复TTS后端API（voice: kazi, format: wav）
+- ✅ 宠物页tab导航：精简文字，防止换行
+- ✅ 全局移动端适配：viewport-fit=cover, safe-area, 禁止overscroll
+
+未解决问题或风险，建议下一阶段优先事项:
+- 语文和英语限时挑战之前报告仍有空白问题（需重新验证当前状态）
+- 语文和英语闯关模式UI/交互与数学对齐（待实现）
+- APK打包（Capacitor已配置，需next build后执行）
+- GitHub推送（token已提供）

@@ -223,11 +223,11 @@ export default function PetPage() {
 
   // Has pet view
   const tabs: { key: Tab; label: string; emoji: string }[] = [
-    { key: 'home', label: '我的宠物', emoji: '🏠' },
+    { key: 'home', label: '宠物', emoji: '🏠' },
     { key: 'skills', label: '技能', emoji: '⚡' },
-    { key: 'adopt', label: '换宠物', emoji: '🐾' },
+    { key: 'adopt', label: '领养', emoji: '🐾' },
     { key: 'shop', label: '商店', emoji: '🛒' },
-    { key: 'room', label: '房间', emoji: '🏠' },
+    { key: 'room', label: '房间', emoji: '🏡' },
   ];
 
   return (
@@ -256,14 +256,15 @@ export default function PetPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 rounded-lg py-2 text-xs font-medium transition-all ${
+              className={`flex-1 min-w-0 rounded-lg py-2 px-1 text-xs font-medium transition-all ${
                 activeTab === tab.key
                   ? 'bg-white text-gray-800 shadow-sm dark:bg-gray-700 dark:text-gray-100'
                   : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
               }`}
             >
-              <span className="mr-1">{tab.emoji}</span>
-              {tab.label}
+              <span className="block text-center truncate">
+                <span className="mr-0.5">{tab.emoji}</span>{tab.label}
+              </span>
             </button>
           ))}
         </div>
