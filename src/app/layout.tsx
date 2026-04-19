@@ -23,24 +23,22 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Z.ai Code Scaffold - AI-Powered Development",
-  description: "Modern Next.js scaffold optimized for AI-powered development with Z.ai. Built with TypeScript, Tailwind CSS, and shadcn/ui.",
-  keywords: ["Z.ai", "Next.js", "TypeScript", "Tailwind CSS", "shadcn/ui", "AI development", "React"],
-  authors: [{ name: "Z.ai Team" }],
+  title: "知识小勇士 - 闯关答题，快乐成长",
+  description: "专为小朋友设计的趣味学习应用，包含数学、语文、英语三大科目练习。养宠物、赚金币、解锁成就，让学习变得更有趣！",
+  keywords: ["知识小勇士", "儿童学习", "数学练习", "语文学习", "英语学习", "闯关答题", "宠物养成"],
+  authors: [{ name: "知识小勇士" }],
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/miniprogram-avatar.png",
   },
   openGraph: {
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
-    url: "https://chat.z.ai",
-    siteName: "Z.ai",
+    title: "知识小勇士 - 闯关答题，快乐成长",
+    description: "专为小朋友设计的趣味学习应用，包含数学、语文、英语三大科目练习。",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Z.ai Code Scaffold",
-    description: "AI-powered development with modern React stack",
+    title: "知识小勇士 - 闯关答题，快乐成长",
+    description: "专为小朋友设计的趣味学习应用，包含数学、语文、英语三大科目练习。",
   },
 };
 

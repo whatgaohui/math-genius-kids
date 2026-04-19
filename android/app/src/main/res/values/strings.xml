@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">学习小达人</string>
-    <string name="title_activity_main">学习小达人</string>
+    <string name="app_name">知识小勇士</string>
+    <string name="title_activity_main">知识小勇士</string>
     <string name="package_name">com.xuexidaoren.app</string>
     <string name="custom_url_scheme">com.xuexidaoren.app</string>
 </resources>

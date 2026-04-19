@@ -138,7 +138,7 @@ function GettingStartedTab() {
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           >🎓</motion.span>
-          <h2 className="text-base font-black text-gray-800">欢迎来到学习小达人！</h2>
+          <h2 className="text-base font-black text-gray-800">欢迎来到知识小勇士！</h2>
           <p className="text-xs text-gray-500 mt-1 leading-relaxed">
             这是一个集数学、语文、英语于一体的学习乐园，<br />还有可爱的宠物伙伴陪你一起成长！
           </p>
@@ -520,7 +520,7 @@ function CoinSystemTab() {
       <GuideCard>
         <div className="space-y-3">
           <p className="text-[11px] text-gray-600 leading-relaxed">
-            金币是学习小达人中最重要的货币！每次答题都能获得金币，金币可以用来养宠物和买道具。
+            金币是知识小勇士中最重要的货币！每次答题都能获得金币，金币可以用来养宠物和买道具。
           </p>
 
           <h4 className="text-xs font-bold text-gray-700 flex items-center gap-1">
@@ -1207,7 +1207,7 @@ function TipsTab() {
         <div className="text-center py-2 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50">
           <p className="text-2xl mb-1">💪</p>
           <p className="text-xs font-bold text-gray-700">坚持就是胜利！</p>
-          <p className="text-[11px] text-gray-500 mt-0.5">每天进步一点点，你就是学习小达人！</p>
+          <p className="text-[11px] text-gray-500 mt-0.5">每天进步一点点，你就是知识小勇士！</p>
         </div>
       </GuideCard>
     </motion.div>
@@ -1260,7 +1260,7 @@ export default function HelpGuide() {
               <span className="text-xs font-medium">攻略百科</span>
             </div>
           </div>
-          <h1 className="text-xl font-bold">📖 学习小达人攻略</h1>
+          <h1 className="text-xl font-bold">📖 知识小勇士攻略</h1>
           <p className="text-white/80 text-xs mt-0.5">
             {TABS.find(t => t.id === activeTab)?.emoji}{' '}
             {activeTab === 'start' && '新手入门指南'}

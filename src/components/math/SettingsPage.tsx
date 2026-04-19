@@ -597,17 +597,18 @@ export default function SettingsPage() {
           <Card className="overflow-hidden border-0 py-0">
             <CardContent className="bg-white p-4 dark:bg-gray-800/50">
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 shadow-sm">
-                  <span className="text-2xl">📚</span>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl overflow-hidden shadow-sm">
+                  <img src="/miniprogram-avatar.png" alt="知识小勇士" className="w-full h-full object-cover" />
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-gray-800 dark:text-gray-100">
-                    学习小达人
+                    知识小勇士
                   </h4>
-                  <p className="text-[11px] text-gray-400">v1.0.0</p>
+                  <p className="text-[11px] text-gray-400">v1.1.0</p>
                 </div>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                知识小勇士 —— 闯关答题，快乐成长！
                 专为小朋友设计的趣味学习应用，包含数学、语文、英语三大科目练习。
                 养宠物、赚金币、解锁成就，让学习变得更有趣！
               </p>
