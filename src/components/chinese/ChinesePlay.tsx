@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Volume2, Zap, Check, X, Flame } from 'lucide-react';
+import { ArrowLeft, Volume2, Zap, Check, X, Flame, Trophy } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { usePetStore, getCoinBonusPercent, getCriticalHitChance } from '@/lib/pet-store';
 import {
@@ -30,6 +30,16 @@ interface FloatingXP {
   y: number;
 }
 
+// ─── Confetti Particles for Speed Mode ───────────────────────────────────
+
+const CONFETTI = Array.from({ length: 12 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  delay: Math.random() * 0.2,
+  color: ['#f59e0b', '#ef4444', '#10b981', '#8b5cf6', '#ec4899'][i % 5],
+  size: 6 + Math.random() * 6,
+}));
+
 export default function ChinesePlay() {
   const { setCurrentView, completeSubjectSession, soundEnabled } = useGameStore();
   const [rewardInfo, setRewardInfo] = useState<{
@@ -53,6 +63,7 @@ export default function ChinesePlay() {
 
   // Read config from shared mutable object
   const config = chinesePlayConfig;
+  const isSpeedMode = config.isSpeed === true;
 
   const [questions, setQuestions] = useState<ChineseQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -70,9 +81,18 @@ export default function ChinesePlay() {
   const xpIdRef = useRef(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  // Speed mode specific state
+  const [timeLeft, setTimeLeft] = useState(isSpeedMode ? config.speedTimeLimit : 0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const modeConfig = MODE_CONFIG[config.mode as ChineseMode];
   const currentQuestion = questions[currentIndex];
-  const progress = questions.length > 0 ? ((currentIndex) / questions.length) * 100 : 0;
+  const progress = isSpeedMode
+    ? 100
+    : questions.length > 0
+      ? ((currentIndex) / questions.length) * 100
+      : 0;
 
   // Generate questions on mount
   useEffect(() => {
@@ -86,14 +106,42 @@ export default function ChinesePlay() {
     setStartTime(Date.now());
   }, [config.mode, config.grade, config.count]);
 
-  // Timer
+  // Timer — speed mode uses countdown, normal mode uses elapsed
   useEffect(() => {
     if (isFinished || !startTime) return;
-    const interval = setInterval(() => {
-      setElapsed(Date.now() - startTime);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [startTime, isFinished]);
+
+    if (isSpeedMode) {
+      // Countdown timer for speed mode
+      const interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            setIsFinished(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      // Elapsed timer for normal mode
+      const interval = setInterval(() => {
+        setElapsed(Date.now() - startTime);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [startTime, isFinished, isSpeedMode]);
+
+  // Speed mode: infinite question generation when approaching end of array
+  useEffect(() => {
+    if (!isSpeedMode || questions.length === 0) return;
+    const remaining = questions.length - currentIndex;
+    if (remaining <= 5) {
+      const resolvedMode = getAvailableMode(config.mode as ChineseMode, config.grade as ChineseGrade);
+      const more = generateChineseQuestions(resolvedMode, config.grade as ChineseGrade, 20);
+      setQuestions((prev) => [...prev, ...more]);
+    }
+  }, [currentIndex, isSpeedMode, config.mode, config.grade, questions.length]);
 
   const addFloatingXP = useCallback(() => {
     if (!cardRef.current) return;
@@ -123,6 +171,7 @@ export default function ChinesePlay() {
         if (newCombo >= 3 && soundEnabled) playComboSound(newCombo);
         setFeedback('correct');
         addFloatingXP();
+        if (isSpeedMode) setShowConfetti(true);
       } else {
         if (soundEnabled) playWrongSound();
         setWrong((w) => w + 1);
@@ -130,19 +179,36 @@ export default function ChinesePlay() {
         setFeedback('wrong');
       }
 
-      // Move to next question after feedback
-      setTimeout(() => {
-        const nextIndex = currentIndex + 1;
-        if (nextIndex >= questions.length) {
-          setIsFinished(true);
-        } else {
-          setCurrentIndex(nextIndex);
-          setFeedback('idle');
-          setHasAnswered(false);
-        }
-      }, 1200);
+      if (isSpeedMode) {
+        // Speed mode: fast advance on correct, retry on wrong
+        feedbackTimerRef.current = setTimeout(() => {
+          setShowConfetti(false);
+          if (isCorrect) {
+            // Advance to next question immediately
+            setCurrentIndex((prev) => prev + 1);
+            setFeedback('idle');
+            setHasAnswered(false);
+          } else {
+            // Stay on same question — clear feedback so user can retry
+            setFeedback('idle');
+            setHasAnswered(false);
+          }
+        }, isCorrect ? 300 : 800);
+      } else {
+        // Normal mode: fixed delay then advance
+        setTimeout(() => {
+          const nextIndex = currentIndex + 1;
+          if (nextIndex >= questions.length) {
+            setIsFinished(true);
+          } else {
+            setCurrentIndex(nextIndex);
+            setFeedback('idle');
+            setHasAnswered(false);
+          }
+        }, 1200);
+      }
     },
-    [currentQuestion, hasAnswered, feedback, combo, maxCombo, soundEnabled, currentIndex, questions.length, addFloatingXP]
+    [currentQuestion, hasAnswered, feedback, combo, maxCombo, soundEnabled, currentIndex, questions.length, addFloatingXP, isSpeedMode]
   );
 
   // TTS for dictation mode on question appear
@@ -175,13 +241,22 @@ export default function ChinesePlay() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFinished, currentQuestion, hasAnswered, currentIndex, handleAnswer]);
 
+  // Cleanup feedback timer on unmount
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    };
+  }, []);
+
   const handleBack = () => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     stopSpeaking();
     playClickSound();
     setCurrentView('chinese-home');
   };
 
   const handleRetry = () => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     stopSpeaking();
     playClickSound();
     setIsFinished(false);
@@ -194,6 +269,10 @@ export default function ChinesePlay() {
     setCurrentIndex(0);
     setStartTime(Date.now());
     setElapsed(0);
+    setShowConfetti(false);
+    if (isSpeedMode) {
+      setTimeLeft(config.speedTimeLimit);
+    }
     const resolvedMode = getAvailableMode(config.mode as ChineseMode, config.grade as ChineseGrade);
     const qs = generateChineseQuestions(
       resolvedMode,
@@ -204,14 +283,15 @@ export default function ChinesePlay() {
   };
 
   const handleFinish = useCallback(() => {
-    const totalTimeMs = Date.now() - startTime;
+    const totalTimeMs = isSpeedMode ? config.speedTimeLimit * 1000 : Date.now() - startTime;
+    const totalAnswered = correct + wrong;
     const result = completeSubjectSession({
       correct,
-      total: questions.length,
+      total: totalAnswered,
       timeMs: totalTimeMs,
       maxCombo,
       subject: 'chinese',
-      mode: config.mode,
+      mode: isSpeedMode ? 'speed' : config.mode,
       difficulty: String(config.grade),
     });
     if (result) {
@@ -227,7 +307,7 @@ export default function ChinesePlay() {
         },
       });
     }
-  }, [correct, questions.length, maxCombo, startTime, config.mode, config.grade, completeSubjectSession]);
+  }, [correct, wrong, maxCombo, startTime, config.mode, config.grade, completeSubjectSession, isSpeedMode, config.speedTimeLimit]);
 
   // When finished is triggered, record the session
   useEffect(() => {
@@ -243,23 +323,30 @@ export default function ChinesePlay() {
   };
 
   if (isFinished) {
-    const totalTime = elapsed || (Date.now() - startTime);
-    const stars = calculateStars(correct, questions.length);
-    const xp = calculateXP(correct, questions.length, totalTime, stars, maxCombo);
+    const totalTime = isSpeedMode ? config.speedTimeLimit * 1000 : (elapsed || (Date.now() - startTime));
+    const totalAnswered = correct + wrong;
+    const stars = calculateStars(correct, totalAnswered);
+    const xp = calculateXP(correct, totalAnswered, totalTime, stars, maxCombo);
     return (
       <PracticeResult
         correct={correct}
-        total={questions.length}
+        wrong={wrong}
+        total={totalAnswered}
         timeMs={totalTime}
         maxCombo={maxCombo}
         stars={stars}
         xp={xp}
         subject="chinese"
-        modeName={modeConfig?.name ?? ''}
+        modeLabel={isSpeedMode ? '速度模式' : (modeConfig?.name ?? '')}
+        modeEmoji={isSpeedMode ? '⚡' : (modeConfig?.emoji)}
         coinsEarned={rewardInfo?.coins}
         petXPEarned={rewardInfo?.petXP}
         isCriticalHit={rewardInfo?.isCriticalHit ?? false}
         bonusDetails={rewardInfo?.bonusDetails}
+        speedEncouragement={isSpeedMode ? {
+          emoji: '⚡',
+          text: `限时${config.speedTimeLimit}秒内答对 ${correct} 题！`,
+        } : null}
         onBack={handleBack}
         onRetry={handleRetry}
       />
@@ -278,10 +365,33 @@ export default function ChinesePlay() {
     );
   }
 
+  // Speed mode derived values
+  const timerPercent = isSpeedMode ? (timeLeft / config.speedTimeLimit) * 100 : 0;
+  const isUrgent = isSpeedMode && timeLeft <= 10;
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 to-white relative overflow-hidden">
+      {/* Confetti for Speed Mode */}
+      <AnimatePresence>
+        {showConfetti && (
+          <div className="absolute inset-0 pointer-events-none z-50">
+            {CONFETTI.map((p) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 1, top: '40%', left: `${p.x}%`, scale: 0 }}
+                animate={{ opacity: 0, top: '120%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8, delay: p.delay }}
+                className="absolute rounded-sm"
+                style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+              />
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Top Bar — gradient banner matching GamePlay style */}
-      <div className="bg-gradient-to-r from-rose-400 to-orange-500 px-4 py-3 text-white">
+      <div className={`px-4 py-3 text-white ${isSpeedMode ? 'bg-gradient-to-r from-red-400 to-rose-500' : 'bg-gradient-to-r from-rose-400 to-orange-500'}`}>
         <div className="max-w-md mx-auto">
           {/* Row 1: Back / Mode / Volume */}
           <div className="flex items-center justify-between mb-2">
@@ -310,32 +420,96 @@ export default function ChinesePlay() {
                   <Volume2 className={`w-4 h-4 ${isSpeaking ? 'animate-pulse' : ''}`} />
                 </button>
               )}
-              <div className="flex items-center gap-1 text-sm">
-                <Zap className="w-4 h-4" />
-                <span className="font-mono font-medium">{formatTime(elapsed)}</span>
-              </div>
+              {!isSpeedMode && (
+                <div className="flex items-center gap-1 text-sm">
+                  <Zap className="w-4 h-4" />
+                  <span className="font-mono font-medium">{formatTime(elapsed)}</span>
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Speed Mode: Big Countdown Timer */}
+          {isSpeedMode && (
+            <div className="flex flex-col items-center mb-2">
+              <motion.span
+                key={timeLeft}
+                animate={{
+                  scale: isUrgent ? [1, 1.1, 1] : 1,
+                }}
+                transition={{ duration: 0.3 }}
+                className={`text-5xl font-mono font-black tabular-nums ${isUrgent ? 'text-red-100' : 'text-white'}`}
+              >
+                {timeLeft}
+              </motion.span>
+              <span className="text-xs text-white/60">秒</span>
+            </div>
+          )}
+
           {/* Progress Bar */}
-          <Progress
-            value={progress}
-            className="h-2 bg-white/30"
-          />
+          {isSpeedMode ? (
+            // Speed mode: countdown progress bar
+            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+              <motion.div
+                className={`h-full rounded-full transition-all duration-1000 ${
+                  isUrgent ? 'bg-red-300' : 'bg-white'
+                }`}
+                animate={{ width: `${timerPercent}%` }}
+              />
+            </div>
+          ) : (
+            <Progress
+              value={progress}
+              className="h-2 bg-white/30"
+            />
+          )}
 
           {/* Row 2: Stats */}
           <div className="flex items-center justify-between text-xs text-white/70 mt-1">
-            <span>{currentIndex + 1}/{questions.length}</span>
-            <div className="flex items-center gap-3">
-              <span className="text-emerald-200">✓ {correct}</span>
-              <span className="text-red-200">✗ {wrong}</span>
-            </div>
+            {isSpeedMode ? (
+              <>
+                <div className="flex items-center gap-1">
+                  <Trophy className="w-3 h-3" />
+                  <span className="font-bold">{correct} 题</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-200">✓ {correct}</span>
+                  <span className="text-red-200">✗ {wrong}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <span>{currentIndex + 1}/{questions.length}</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-200">✓ {correct}</span>
+                  <span className="text-red-200">✗ {wrong}</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 max-w-lg mx-auto w-full">
+        {/* Speed Mode Badge */}
+        {isSpeedMode && (
+          <AnimatePresence>
+            {correct > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-3"
+              >
+                <Badge className="bg-gradient-to-r from-rose-400 to-red-500 text-white border-none px-3 py-1.5 text-sm gap-1 shadow-lg">
+                  <Zap className="w-4 h-4" />
+                  速度模式
+                </Badge>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+
         {/* Combo Popup */}
         <AnimatePresence>
           {combo >= 3 && (
@@ -357,7 +531,7 @@ export default function ChinesePlay() {
 
         {/* Question Card */}
         <motion.div
-          key={currentIndex}
+          key={isSpeedMode ? currentQuestion.id : currentIndex}
           initial={{ x: 60, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -470,7 +644,7 @@ export default function ChinesePlay() {
 
             return (
               <motion.button
-                key={`${currentIndex}-${idx}`}
+                key={`${isSpeedMode ? currentQuestion.id : currentIndex}-${idx}`}
                 whileTap={{ scale: 0.95 }}
                 disabled={hasAnswered}
                 className={`rounded-xl py-4 px-3 min-h-[44px] text-center transition-all duration-200 shadow-sm ${optionStyle}`}

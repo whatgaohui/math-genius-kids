@@ -104,3 +104,54 @@ Stage Summary:
 - Tab switching bug fixed, answer page width fixed
 - App name: 学习小达人
 - bun run lint: 0 errors, dev server compiled OK
+
+---
+Task ID: 10a
+Agent: full-stack-developer
+Task: Refactor ChinesePlay.tsx to support Speed Challenge mode
+
+Work Log:
+- Added isSpeedMode detection based on config.isSpeed
+- Added countdown timer with setInterval (decrements timeLeft state, auto-finish at 0)
+- Implemented auto-advance on correct (300ms), stay on wrong (800ms then retry)
+- Added infinite question generation when within 5 questions of end of array
+- Added speed-specific UI: big countdown timer (5xl font), progress bar (decreasing), confetti particles on correct answers, speed badge
+- Timer turns red when <= 10 seconds (isUrgent)
+- Confetti array with 12 particles using framer-motion animations
+- Top bar uses red gradient in speed mode vs rose/orange in normal mode
+- Completion screen passes modeLabel "速度模式", modeEmoji "⚡", speedEncouragement with time limit and correct count
+- handleFinish passes mode: 'speed' and total: correct + wrong to completeSubjectSession
+- handleRetry resets timeLeft to speedTimeLimit in speed mode
+- Feedback timer cleanup on unmount and handleBack
+- Verified: bun run lint passes (0 errors)
+
+Stage Summary:
+- ChinesePlay.tsx now properly supports speed challenge mode
+- Speed mode: countdown timer, auto-advance on correct, stay on wrong for retry, infinite questions, confetti
+- Free/adventure mode: unchanged behavior (elapsed timer, fixed questions, 1.2s delay, progress bar)
+
+---
+Task ID: 10b
+Agent: full-stack-developer
+Task: Refactor EnglishPlay.tsx to support Speed Challenge mode
+
+Work Log:
+- Added isSpeedMode detection based on config.isSpeed
+- Added countdown timer with setInterval (decrements timeLeft state, auto-finish at 0)
+- Implemented auto-advance on correct (300ms), stay on wrong (800ms then retry)
+- Added infinite question generation when within 5 questions of end of array
+- Added speed-specific UI: big countdown timer (5xl font), progress bar (decreasing), confetti particles on correct answers, speed badge
+- Timer turns red when <= 10 seconds (isUrgent) with red gradient top bar
+- Confetti array with 12 particles using framer-motion animations
+- Top bar shows Trophy + correct count in speed mode vs elapsed time in normal mode
+- Completion screen passes modeName "速度模式 · {mode}", modeEmoji "⚡", speedEncouragement based on performance rate
+- handleFinish passes mode: 'speed' and total: correct + wrong to completeSubjectSession
+- handleRetry resets timeLeft to speedTimeLimit in speed mode
+- Feedback timer cleanup on unmount and handleBack
+- Separate render paths for speed mode vs normal mode to keep normal mode completely unchanged
+- Verified: bun run lint passes (0 errors), dev server compiled OK
+
+Stage Summary:
+- EnglishPlay.tsx now properly supports speed challenge mode
+- Speed mode: countdown timer, auto-advance on correct, stay on wrong for retry, infinite questions, confetti
+- Free/adventure mode: unchanged behavior (elapsed timer, fixed questions, 1.2s delay, progress bar)
