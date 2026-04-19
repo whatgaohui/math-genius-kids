@@ -315,7 +315,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50 via-amber-50/30 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+    <div className="relative min-h-screen bg-gradient-to-b from-slate-50 via-amber-50/30 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Decorative blobs */}
       <div className="pointer-events-none absolute -top-24 -left-16 h-56 w-56 rounded-full bg-amber-200/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-28 -right-16 h-64 w-64 rounded-full bg-rose-200/15 blur-3xl" />

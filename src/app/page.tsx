@@ -61,7 +61,7 @@ export default function Home() {
         animate={{ opacity: 1, x: 0 }}
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.2 }}
-        className="overflow-x-hidden max-w-[100vw]"
+        className="w-full"
       >
         <PageComponent />
       </motion.div>

@@ -127,12 +127,18 @@
     padding-right: env(safe-area-inset-right, 0px);
   }
   /* Prevent overscroll bounce on iOS and horizontal scroll */
-  html, body {
+  html {
+    overflow: hidden;
+    height: 100%;
+    width: 100%;
+  }
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    height: 100%;
+    width: 100%;
     overscroll-behavior: none;
     -webkit-overflow-scrolling: touch;
-    overflow-x: hidden;
-    width: 100%;
-    max-width: 100vw;
   }
   /* Prevent text selection on UI elements for app-like feel */
   button, nav, [role="tablist"] {
