@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Zap, Flame, ChevronRight, Trophy, Coins, Gift, X } from 'lucide-react';
+import { Star, Zap, Flame, ChevronRight, Trophy, Coins, Gift, X, BookOpen } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { usePetStore, PET_CONFIGS, getPetEmoji, PET_ABILITIES } from '@/lib/pet-store';
 import { getXPForNextLevel } from '@/lib/math-utils';
+import { playClickSound } from '@/lib/sound';
 import { Card, CardContent } from '@/components/ui/card';
 import BottomNav from './BottomNav';
 
@@ -155,6 +156,13 @@ export default function HomePage() {
                 </span>
               )}
             </div>
+            <button
+              onClick={() => { playClickSound(); setCurrentView('help'); }}
+              className="flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-100 to-purple-100 px-3 py-1.5 text-xs font-bold text-violet-600 shadow-sm hover:shadow-md transition-all active:scale-95"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              攻略
+            </button>
           </div>
         </motion.div>
 

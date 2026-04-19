@@ -16,8 +16,8 @@ import {
   Divide,
   Shuffle,
   GitCompareArrows,
-  HelpCircle,
   Zap,
+  BookOpen,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { playClickSound } from '@/lib/sound';
@@ -155,8 +155,9 @@ export default function MathHome() {
               <ArrowLeft className="w-4 h-4" />
               返回
             </button>
-            <button onClick={handleHelp} className="text-white/70 hover:text-white transition-colors">
-              <HelpCircle className="w-5 h-5" />
+            <button onClick={handleHelp} className="flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-1 text-xs font-medium text-white/90 hover:bg-white/30 transition-colors active:scale-95">
+              <BookOpen className="w-3.5 h-3.5" />
+              攻略
             </button>
           </div>
           <div className="flex items-center justify-between">
