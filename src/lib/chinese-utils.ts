@@ -1,4 +1,4 @@
-// Chinese practice utilities for 数学小达人
+// Chinese practice utilities for 学习小达人
 // Supports grades 1-6 with curriculum-appropriate content
 
 // ─── Types ──────────────────────────────────────────────────────────────────

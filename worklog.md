@@ -45,3 +45,62 @@ Stage Summary:
 - Prominent "攻略" buttons added to home and all 3 subject pages
 - bun run lint: 0 errors, 0 warnings
 - Dev server: compiled OK
+
+---
+Task ID: 15 (Triple-Subject Adventure + Speed Rewards + Achievements Backend)
+Agent: Main
+Task: Update core backend stores for triple-subject adventure, speed reward multiplier, and achievement overhaul
+
+Work Log:
+- Read all 5 critical files: game-store.ts, achievements.ts, pet-store.ts, chinese-utils.ts, english-utils.ts
+- Updated pet-store.ts:
+  - Added `modeMultiplier: number` to `PracticeReward` interface
+  - Added `modeMultiplier: number` to `bonuses` sub-object
+  - Added `mode?: string` and `floorLevel?: number` params to `calculatePracticeReward`
+  - Implemented mode-based multiplier: speed=1.5x, adventure=floor/10+1 (capped 10x)
+  - Mode bonus calculated before critical hit and applied to totalCoins
+- Updated achievements.ts:
+  - Added `adventureMaxFloor`, `chineseAdventureMaxFloor`, `englishAdventureMaxFloor` to `AchievementContext`
+  - Added 15 new achievements (total now 33):
+    - 3 speed challenge achievements (speed-first, speed-10, speed-perfect)
+    - 4 math adventure milestones (10/50/100/150 floors)
+    - 4 chinese adventure milestones (10/25/50/100 floors)
+    - 4 english adventure milestones (10/25/50/100 floors)
+    - 2 multi-subject achievements (all-subject-10, all-subject-50)
+- Updated game-store.ts:
+  - Added 6 new state fields: chineseAdventureLevel, chineseAdventureStars, englishAdventureLevel, englishAdventureStars, chineseSpeedTimeLimit, englishSpeedTimeLimit (all with safe defaults)
+  - Added 6 new actions: setChineseAdventureLevel/Stars, setEnglishAdventureLevel/Stars, setChineseSpeedTimeLimit, setEnglishSpeedTimeLimit
+  - Updated completeSubjectSession to accept optional `floorLevel` param
+  - completeSubjectSession now passes `mode` and `floorLevel` to pet store's calculatePracticeReward
+  - Updated refreshAchievements to pass adventureMaxFloor (math), chineseAdventureMaxFloor, englishAdventureMaxFloor
+  - Updated partialize config to persist all 6 new fields
+- Verified: `bun run lint` passes with 0 errors
+
+Stage Summary:
+- 3 files modified: game-store.ts, achievements.ts, pet-store.ts
+- 15 new achievements added (speed + adventure milestones for all 3 subjects)
+- Mode-based reward multipliers: speed 1.5x, adventure scaled by floor (1x-10x)
+- Full backward compatibility maintained (default values for all new persisted fields)
+- bun run lint: 0 errors
+
+---
+Task ID: 2
+Agent: Main
+Task: Massive UI overhaul - MathHome 150-level adventure, ChineseHome/EnglishHome 3-mode tabs, width fixes, app name change
+
+Work Log:
+- Dispatched 3 parallel sub-agents for UI changes
+- MathHome: Fixed tab switching bug with restructured AnimatePresence, upgraded 12→150 adventure levels (10 tiers, Greater Rift style), sequential unlocking, boss floors every 25, collapsible tier sections
+- ChineseHome: Added 3-tab architecture (free/speed/adventure), 150 levels across 8 Chinese-specific tiers, speed challenge with time selection
+- EnglishHome: Added 3-tab architecture (free/speed/adventure), 150 levels across 7 English-specific tiers, speed challenge
+- Fixed width on ChinesePlay/EnglishPlay/SpeedGamePlay/GamePlay (max-w-md → max-w-lg)
+- Changed app name "数学小达人" → "学习小达人" in all comments and visible text
+- Updated HelpGuide.tsx with all new features (150 levels, 3 modes, speed rewards, new achievements)
+
+Stage Summary:
+- All 3 subjects now have Free Practice + Speed Challenge + Adventure Mode (150 levels)
+- Speed mode gives 1.5x coin reward, Adventure gives floor-based multiplier (up to 10x)
+- 33 total achievements
+- Tab switching bug fixed, answer page width fixed
+- App name: 学习小达人
+- bun run lint: 0 errors, dev server compiled OK

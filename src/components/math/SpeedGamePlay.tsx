@@ -284,7 +284,7 @@ export default function SpeedGamePlay() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 max-w-lg mx-auto w-full">
         {/* Speed indicator */}
         <AnimatePresence>
           {session.sessionCorrect > 0 && (

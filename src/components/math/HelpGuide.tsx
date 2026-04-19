@@ -292,42 +292,38 @@ function MathGuideTab() {
         </div>
       </GuideCard>
 
-      <SectionTitle emoji="🗺️" title="闯关模式" subtitle="一关一关，勇往直前！" />
+      <SectionTitle emoji="🗺️" title="冒险闯关" subtitle="150层无限挑战！" />
       <GuideCard>
         <div className="space-y-2">
           <p className="text-[11px] text-gray-600 leading-relaxed">
-            闯关模式有12个关卡，需要用星星解锁。每关都有不同的运算和难度！
+            冒险模式借鉴"大秘境"玩法，共有<b>150层</b>挑战！越往高层难度越大，但奖励也越丰厚！
           </p>
           <div className="mt-2 rounded-lg bg-emerald-50 p-2.5">
             <p className="text-[11px] text-emerald-700 leading-relaxed">
-              ⭐ <b>解锁条件：</b>每关需要一定数量的星星。完成前面的关卡可以获得星星哦！
+              🏔️ <b>玩法：</b>从第1层开始，答对一组题即可进入下一层。每10层为一个难度阶段，数字越来越大、运算越来越复杂！
             </p>
           </div>
           <div className="grid grid-cols-4 gap-1.5 mt-2">
             {[
-              { name: '数字启蒙', stars: 0, emoji: '🌱' },
-              { name: '减法入门', stars: 1, emoji: '📝' },
-              { name: '加法达人', stars: 3, emoji: '⭐' },
-              { name: '减法达人', stars: 5, emoji: '🎯' },
-              { name: '乘法口诀', stars: 7, emoji: '🔢' },
-              { name: '除法初探', stars: 10, emoji: '🧩' },
-              { name: '混合运算', stars: 13, emoji: '🔄' },
-              { name: '大小比较', stars: 16, emoji: '⚖️' },
-              { name: '进阶加法', stars: 20, emoji: '🚀' },
-              { name: '进阶减法', stars: 24, emoji: '🌟' },
-              { name: '乘法高手', stars: 28, emoji: '💪' },
-              { name: '终极挑战', stars: 33, emoji: '👑' },
+              { name: '第1层', desc: '个位数加法', emoji: '🌱' },
+              { name: '第10层', desc: '两位数加减', emoji: '📝' },
+              { name: '第30层', desc: '乘法挑战', emoji: '🔢' },
+              { name: '第50层', desc: '除法初探', emoji: '🧩' },
+              { name: '第70层', desc: '混合运算', emoji: '🔄' },
+              { name: '第100层', desc: '大数挑战', emoji: '💪' },
+              { name: '第130层', desc: '极限考验', emoji: '🌟' },
+              { name: '第150层', desc: '终极传说', emoji: '👑' },
             ].map((lvl) => (
               <div key={lvl.name} className="rounded-lg bg-gray-50 border border-gray-100 p-1.5 text-center">
                 <span className="text-sm">{lvl.emoji}</span>
                 <p className="text-[10px] font-bold text-gray-700 truncate">{lvl.name}</p>
-                <p className="text-[9px] text-gray-400">⭐{lvl.stars}</p>
+                <p className="text-[9px] text-gray-400">{lvl.desc}</p>
               </div>
             ))}
           </div>
           <div className="rounded-lg bg-orange-50 p-2.5 mt-2">
             <p className="text-[11px] text-orange-700 leading-relaxed">
-              💡 <b>小技巧：</b>每关最多可获得3颗星。正确率越高星星越多！建议先在自由练习中打好基础再闯关。
+              💡 <b>奖励加成：</b>冒险模式有楼层倍率加成！公式为 <b>min(⌊层数/10⌋+1, 10)倍</b>，层数越高倍率越大，最高10倍！
             </p>
           </div>
         </div>
@@ -339,7 +335,38 @@ function MathGuideTab() {
 function ChineseGuideTab() {
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-3">
-      <SectionTitle emoji="📖" title="语文练习模式" subtitle="从1年级到6年级，越学越有趣！" />
+      <SectionTitle emoji="📖" title="语文三种模式" subtitle="自由练习、限时挑战、冒险闯关" />
+
+      <GuideCard>
+        <div className="space-y-2.5">
+          <div className="rounded-xl bg-gradient-to-r from-rose-50/80 to-orange-50/80 p-3 border border-rose-100/60">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">✏️</span>
+              <span className="text-xs font-bold text-gray-800">自由练习</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-600">8种题型</span>
+            </div>
+            <p className="text-[11px] text-gray-500 leading-relaxed">按自己的节奏做题，选择年级和题型，随时开始。</p>
+          </div>
+          <div className="rounded-xl bg-gradient-to-r from-orange-50/80 to-red-50/80 p-3 border border-orange-100/60">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">⚡</span>
+              <span className="text-xs font-bold text-gray-800">限时挑战</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600">1.5x金币</span>
+            </div>
+            <p className="text-[11px] text-gray-500 leading-relaxed">30/60/90/120秒限时，答对自动跳下一题。速度模式金币奖励<b>1.5倍</b>加成！</p>
+          </div>
+          <div className="rounded-xl bg-gradient-to-r from-emerald-50/80 to-teal-50/80 p-3 border border-emerald-100/60">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">🏔️</span>
+              <span className="text-xs font-bold text-gray-800">冒险闯关</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600">150层</span>
+            </div>
+            <p className="text-[11px] text-gray-500 leading-relaxed">大秘境式150层挑战，楼层倍率加成最高<b>10倍</b>！每10层解锁更高难度。</p>
+          </div>
+        </div>
+      </GuideCard>
+
+      <SectionTitle emoji="📝" title="八种题型" subtitle="从1年级到6年级，越学越有趣！" />
 
       <GuideCard>
         <div className="space-y-2.5">
@@ -400,7 +427,38 @@ function ChineseGuideTab() {
 function EnglishGuideTab() {
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-3">
-      <SectionTitle emoji="🔤" title="英语练习模式" subtitle="从字母到单词，快乐学英语！" />
+      <SectionTitle emoji="🔤" title="英语三种模式" subtitle="自由练习、限时挑战、冒险闯关" />
+
+      <GuideCard>
+        <div className="space-y-2.5">
+          <div className="rounded-xl bg-gradient-to-r from-emerald-50/80 to-teal-50/80 p-3 border border-emerald-100/60">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">✏️</span>
+              <span className="text-xs font-bold text-gray-800">自由练习</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600">4种题型</span>
+            </div>
+            <p className="text-[11px] text-gray-500 leading-relaxed">按自己的节奏做题，从1年级到6年级循序渐进。</p>
+          </div>
+          <div className="rounded-xl bg-gradient-to-r from-orange-50/80 to-red-50/80 p-3 border border-orange-100/60">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">⚡</span>
+              <span className="text-xs font-bold text-gray-800">限时挑战</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-600">1.5x金币</span>
+            </div>
+            <p className="text-[11px] text-gray-500 leading-relaxed">30/60/90/120秒限时模式，速度越快答题越多，金币奖励<b>1.5倍</b>加成！</p>
+          </div>
+          <div className="rounded-xl bg-gradient-to-r from-emerald-50/80 to-teal-50/80 p-3 border border-emerald-100/60">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">🏔️</span>
+              <span className="text-xs font-bold text-gray-800">冒险闯关</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600">150层</span>
+            </div>
+            <p className="text-[11px] text-gray-500 leading-relaxed">大秘境式150层挑战，楼层倍率加成最高<b>10倍</b>！词汇难度随楼层递增。</p>
+          </div>
+        </div>
+      </GuideCard>
+
+      <SectionTitle emoji="📝" title="四种题型" subtitle="从字母到单词，快乐学英语！" />
 
       <GuideCard>
         <div className="space-y-2.5">
@@ -538,6 +596,27 @@ function CoinSystemTab() {
               </div>
               <span className="text-xs font-bold text-rose-600">每天 ×3，上限30</span>
             </div>
+          </div>
+
+          <h4 className="text-xs font-bold text-gray-700 flex items-center gap-1">
+            <Flame className="w-3.5 h-3.5 text-red-500" /> 模式加成
+          </h4>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-red-50 to-orange-50 p-2 border border-red-100">
+              <div className="flex items-center gap-2">
+                <span>⚡</span>
+                <span className="text-xs text-gray-700">限时挑战模式</span>
+              </div>
+              <span className="text-xs font-bold text-red-600">金币 ×1.5</span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 p-2 border border-emerald-100">
+              <div className="flex items-center gap-2">
+                <span>🏔️</span>
+                <span className="text-xs text-gray-700">冒险模式（楼层倍率）</span>
+              </div>
+              <span className="text-xs font-bold text-emerald-600">最高 ×10</span>
+            </div>
+            <p className="text-[10px] text-gray-500 mt-0.5">* 冒险模式倍率 = min(⌊层数/10⌋+1, 10)，第1层1倍，第10层2倍，第50层6倍...第100层+都是10倍！</p>
           </div>
 
           <h4 className="text-xs font-bold text-gray-700 flex items-center gap-1">
@@ -903,16 +982,127 @@ function AchievementTab() {
     <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-3">
       <SectionTitle emoji="🏆" title="成就大全" subtitle={`共 ${ACHIEVEMENTS.length} 个成就等你解锁`} />
 
+      {/* Speed achievements */}
+      <SectionTitle emoji="⚡" title="速度成就" subtitle="限时挑战中的荣誉" />
       <GuideCard>
         <div className="space-y-1.5">
-          {ACHIEVEMENTS.map((ach) => (
+          {ACHIEVEMENTS.filter(a => a.category === 'speed').map((ach) => (
             <motion.div key={ach.id} variants={itemVariants} className="flex items-center gap-2.5 rounded-lg bg-gray-50 p-2">
-              <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center text-lg">
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-red-100 to-orange-100 flex items-center justify-center text-lg">
                 {ach.emoji}
               </div>
               <div className="flex-1">
                 <p className="text-xs font-bold text-gray-800">{ach.name}</p>
                 <p className="text-[11px] text-gray-500">{ach.description}</p>
+              </div>
+            </motion.div>
+          ))}
+          {ACHIEVEMENTS.filter(a => a.category === 'speed').length === 0 && (
+            <div className="space-y-1.5">
+              {[
+                { emoji: '🌟', name: '速度新星', desc: '完成一次限时挑战' },
+                { emoji: '🚀', name: '速度达人', desc: '限时挑战答对20题以上' },
+                { emoji: '⚡', name: '闪电满分', desc: '限时挑战全部答对' },
+              ].map((ach) => (
+                <motion.div key={ach.name} variants={itemVariants} className="flex items-center gap-2.5 rounded-lg bg-gray-50 p-2">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-red-100 to-orange-100 flex items-center justify-center text-lg">
+                    {ach.emoji}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-gray-800">{ach.name}</p>
+                    <p className="text-[11px] text-gray-500">{ach.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </GuideCard>
+
+      {/* Math adventure */}
+      <SectionTitle emoji="🧮" title="数学冒险" subtitle="征服150层的荣耀" />
+      <GuideCard>
+        <div className="space-y-1.5">
+          {[
+            { emoji: '🏔️', name: '数学探险家', desc: '冒险模式到达第10层' },
+            { emoji: '🐉', name: '数学屠龙者', desc: '冒险模式到达第50层' },
+            { emoji: '👑', name: '数学传奇', desc: '冒险模式到达第100层' },
+            { emoji: '✨', name: '数学之神', desc: '冒险模式到达第150层（通关！）' },
+          ].map((ach) => (
+            <motion.div key={ach.name} variants={itemVariants} className="flex items-center gap-2.5 rounded-lg bg-gray-50 p-2">
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center text-lg">
+                {ach.emoji}
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-800">{ach.name}</p>
+                <p className="text-[11px] text-gray-500">{ach.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </GuideCard>
+
+      {/* Chinese adventure */}
+      <SectionTitle emoji="📖" title="语文冒险" subtitle="文字世界的探索者" />
+      <GuideCard>
+        <div className="space-y-1.5">
+          {[
+            { emoji: '🏔️', name: '语文探险家', desc: '语文冒险到达第10层' },
+            { emoji: '📜', name: '语文诗人', desc: '语文冒险到达第25层' },
+            { emoji: '🎓', name: '语文大师', desc: '语文冒险到达第50层' },
+            { emoji: '👑', name: '语文传奇', desc: '语文冒险到达第100层' },
+          ].map((ach) => (
+            <motion.div key={ach.name} variants={itemVariants} className="flex items-center gap-2.5 rounded-lg bg-gray-50 p-2">
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-rose-100 to-orange-100 flex items-center justify-center text-lg">
+                {ach.emoji}
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-800">{ach.name}</p>
+                <p className="text-[11px] text-gray-500">{ach.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </GuideCard>
+
+      {/* English adventure */}
+      <SectionTitle emoji="🔤" title="英语冒险" subtitle="征服ABC世界" />
+      <GuideCard>
+        <div className="space-y-1.5">
+          {[
+            { emoji: '🏔️', name: '英语探险家', desc: '英语冒险到达第10层' },
+            { emoji: '🌍', name: '英语旅行家', desc: '英语冒险到达第25层' },
+            { emoji: '🎓', name: '英语大师', desc: '英语冒险到达第50层' },
+            { emoji: '👑', name: '英语传奇', desc: '英语冒险到达第100层' },
+          ].map((ach) => (
+            <motion.div key={ach.name} variants={itemVariants} className="flex items-center gap-2.5 rounded-lg bg-gray-50 p-2">
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-100 to-teal-100 flex items-center justify-center text-lg">
+                {ach.emoji}
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-800">{ach.name}</p>
+                <p className="text-[11px] text-gray-500">{ach.desc}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </GuideCard>
+
+      {/* Multi-subject */}
+      <SectionTitle emoji="🌟" title="全科成就" subtitle="三科全能才是真正的大师" />
+      <GuideCard>
+        <div className="space-y-1.5">
+          {[
+            { emoji: '📖', name: '全科达人', desc: '三科冒险都到达第10层' },
+            { emoji: '🏆', name: '全科大师', desc: '三科冒险都到达第50层' },
+          ].map((ach) => (
+            <motion.div key={ach.name} variants={itemVariants} className="flex items-center gap-2.5 rounded-lg bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-100 p-2">
+              <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-100 flex items-center justify-center text-lg">
+                {ach.emoji}
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-800">{ach.name}</p>
+                <p className="text-[11px] text-gray-500">{ach.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -944,9 +1134,14 @@ function TipsTab() {
               color: 'from-orange-50 to-red-50 border-orange-100',
             },
             {
-              emoji: '⏱️', title: '速度带来额外奖励',
-              desc: '30秒内完成5题以上可以获得速度奖励+10金币！限时挑战模式更容易触发哦。先做简单的题目，快速积累正确数~',
+              emoji: '⏱️', title: '速度模式是赚金币最快的方式',
+              desc: '限时挑战模式自带1.5倍金币加成！在30秒内答完5题以上还能获得额外速度奖励。配合宠物布偶猫的天赋，收益极高！',
               color: 'from-cyan-50 to-blue-50 border-cyan-100',
+            },
+            {
+              emoji: '🏔️', title: '冒险模式奖励潜力最大',
+              desc: '冒险模式的楼层倍率加成是所有模式中最高的！第10层=2倍，第50层=6倍，第100层+=10倍！如果实力强，冒险模式的金币收益远超其他模式。',
+              color: 'from-emerald-50 to-teal-50 border-emerald-100',
             },
             {
               emoji: '💯', title: '满分奖励很丰厚',
@@ -968,6 +1163,11 @@ function TipsTab() {
               desc: '宠物升到20级后全属性+30%！这个加成非常可观。坚持答题，宠物和你的等级都会越来越高~',
               color: 'from-amber-50 to-yellow-50 border-amber-100',
             },
+            {
+              emoji: '🧗', title: '冒险模式闯关策略',
+              desc: '先从第1层开始，确保每关稳定通关。前30层打好基础，30层后再挑战更高难度。失败不要气馁，回到最近已通过的楼层继续！',
+              color: 'from-teal-50 to-cyan-50 border-teal-100',
+            },
           ].map((tip) => (
             <div key={tip.title} className={`rounded-xl bg-gradient-to-r ${tip.color} border p-3`}>
               <div className="flex items-center gap-1.5 mb-1">
@@ -987,8 +1187,8 @@ function TipsTab() {
             { step: '第1天', emoji: '🏠', desc: '领养一只宠物（推荐布偶猫或小熊猫），在设置中修改昵称和头像' },
             { step: '第1-3天', emoji: '✏️', desc: '每天做10道数学简单加法题，熟悉答题流程，争取满分' },
             { step: '第3-7天', emoji: '📖', desc: '开始做语文练习（识字认字、拼音），同时数学尝试减法和乘法' },
-            { step: '第7-14天', emoji: '🔤', desc: '加入英语练习，数学尝试闯关模式，连续学习获得额外金币' },
-            { step: '第14天+', emoji: '🚀', desc: '挑战更高难度，解锁所有成就，尝试不同宠物体验各种天赋！' },
+            { step: '第7-14天', emoji: '🔤', desc: '加入英语练习，数学尝试限时挑战模式赚取金币' },
+            { step: '第14天+', emoji: '🏔️', desc: '开始三科冒险闯关模式，冲击更高楼层获取倍率奖励！' },
           ].map((r) => (
             <div key={r.step} className="flex items-start gap-2.5">
               <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-xs">

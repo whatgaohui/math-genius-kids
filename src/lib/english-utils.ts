@@ -1,4 +1,4 @@
-// English practice utilities for 数学小达人
+// English practice utilities for 学习小达人
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 

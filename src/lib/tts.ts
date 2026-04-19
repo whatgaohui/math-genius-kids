@@ -1,4 +1,4 @@
-// Text-to-speech helper for 数学小达人
+// Text-to-speech helper for 学习小达人
 'use client';
 
 interface TTSOptions {

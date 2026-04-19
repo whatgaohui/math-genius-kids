@@ -1,4 +1,4 @@
-// Pet system store for 数学小达人 — Comprehensive pet growth & reward system
+// Pet system store for 学习小达人 — Comprehensive pet growth & reward system
 'use client';
 
 import { create } from 'zustand';
@@ -50,6 +50,7 @@ export interface PracticeReward {
   petXP: number;
   isCriticalHit: boolean;
   criticalMultiplier: number;
+  modeMultiplier: number;
   bonuses: {
     base: number;
     star: number;
@@ -59,6 +60,7 @@ export interface PracticeReward {
     streak: number;
     petBonus: number;
     critical: number;
+    modeMultiplier: number;
   };
   talentBonus: number;
   talentName?: string;
@@ -117,6 +119,9 @@ interface PetActions {
     maxCombo: number;
     timeMs: number;
     playerStreak: number;
+    subject?: string;
+    mode?: string;
+    floorLevel?: number;
   }) => PracticeReward;
   awardPracticeReward: (reward: PracticeReward) => void;
 
@@ -463,11 +468,13 @@ function calculatePracticeReward(
     timeMs: number;
     playerStreak: number;
     subject?: string;
+    mode?: string;
+    floorLevel?: number;
   },
   petLevel: number,
   petType?: string | null
 ): PracticeReward {
-  const { correct, total, stars, maxCombo, timeMs, playerStreak, subject } = params;
+  const { correct, total, stars, maxCombo, timeMs, playerStreak, subject, mode, floorLevel } = params;
   const accuracy = total > 0 ? correct / total : 0;
   const talent = getPetTalent(petType ?? null);
 
@@ -524,13 +531,22 @@ function calculatePracticeReward(
   // Subtotal before critical hit
   const beforeCritical = subtotal + petBonus + talentTotal;
 
+  // Mode multiplier
+  let modeMultiplierValue = 1;
+  if (mode === 'speed') {
+    modeMultiplierValue = 1.5;
+  } else if (mode === 'adventure' && typeof floorLevel === 'number') {
+    modeMultiplierValue = Math.min(floorLevel / 10 + 1, 10);
+  }
+  const modeBonus = Math.floor(beforeCritical * (modeMultiplierValue - 1));
+
   // Critical hit
   const critChance = getCriticalHitChance(petLevel, petType);
   const isCriticalHit = Math.random() < critChance;
   const criticalMultiplier = isCriticalHit ? 2 : 1;
-  const critical = isCriticalHit ? beforeCritical : 0;
+  const critical = isCriticalHit ? (beforeCritical + modeBonus) : 0;
 
-  const totalCoins = beforeCritical + critical;
+  const totalCoins = Math.floor((beforeCritical + modeBonus + critical));
 
   // Pet XP = correct * 3 + stars * 10
   const petXP = correct * 3 + stars * 10;
@@ -540,6 +556,7 @@ function calculatePracticeReward(
     petXP,
     isCriticalHit,
     criticalMultiplier,
+    modeMultiplier: modeMultiplierValue,
     bonuses: {
       base,
       star,
@@ -549,6 +566,7 @@ function calculatePracticeReward(
       streak,
       petBonus,
       critical,
+      modeMultiplier: modeBonus,
     },
     talentBonus: talentTotal,
   };

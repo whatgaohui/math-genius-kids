@@ -323,7 +323,7 @@ export default function EnglishPlay() {
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 max-w-md mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-4 max-w-lg mx-auto w-full">
         {/* Combo Popup */}
         <AnimatePresence>
           {combo >= 3 && (

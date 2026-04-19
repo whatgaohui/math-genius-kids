@@ -602,7 +602,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-gray-800 dark:text-gray-100">
-                    数学小达人
+                    学习小达人
                   </h4>
                   <p className="text-[11px] text-gray-400">v1.0.0</p>
                 </div>

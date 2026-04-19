@@ -1,4 +1,4 @@
-// Achievement definitions for 数学小达人 (Math Genius)
+// Achievement definitions for 学习小达人 (Learning Genius)
 
 export interface Achievement {
   id: string;
@@ -17,6 +17,9 @@ export interface AchievementContext {
   unlockedAchievements: string[];
   petLevel: number;
   maxCombo: number;
+  adventureMaxFloor: number;
+  chineseAdventureMaxFloor: number;
+  englishAdventureMaxFloor: number;
 }
 
 export interface PracticeRecordSummary {
@@ -169,6 +172,135 @@ export const ACHIEVEMENTS: Achievement[] = [
     name: '宠物伙伴',
     description: '宠物达到5级',
     check: (ctx) => ctx.petLevel >= 5,
+  },
+
+  // ── Speed Challenge Achievements ──
+  {
+    id: 'speed-first',
+    emoji: '⚡',
+    name: '速度新星',
+    description: '完成第一次限时挑战',
+    check: (ctx) => ctx.practiceHistory.some(r => r.mode === 'speed'),
+  },
+  {
+    id: 'speed-10',
+    emoji: '🚀',
+    name: '速度达人',
+    description: '累计完成10次限时挑战',
+    check: (ctx) => ctx.practiceHistory.filter(r => r.mode === 'speed').length >= 10,
+  },
+  {
+    id: 'speed-perfect',
+    emoji: '💨',
+    name: '闪电满分',
+    description: '限时挑战中获得满分',
+    check: (ctx) => ctx.practiceHistory.some(r => r.mode === 'speed' && r.correct === r.total && r.total >= 5),
+  },
+
+  // ── Adventure Achievements - Math ──
+  {
+    id: 'math-adventure-10',
+    emoji: '🏰',
+    name: '数学探险家',
+    description: '数学闯关到达第10层',
+    check: (ctx) => ctx.adventureMaxFloor >= 10,
+  },
+  {
+    id: 'math-adventure-50',
+    emoji: '🐉',
+    name: '数学屠龙者',
+    description: '数学闯关到达第50层',
+    check: (ctx) => ctx.adventureMaxFloor >= 50,
+  },
+  {
+    id: 'math-adventure-100',
+    emoji: '👑',
+    name: '数学传奇',
+    description: '数学闯关到达第100层',
+    check: (ctx) => ctx.adventureMaxFloor >= 100,
+  },
+  {
+    id: 'math-adventure-150',
+    emoji: '🌟',
+    name: '数学之神',
+    description: '数学通关全部150层',
+    check: (ctx) => ctx.adventureMaxFloor >= 150,
+  },
+
+  // ── Adventure Achievements - Chinese ──
+  {
+    id: 'chinese-adventure-10',
+    emoji: '📖',
+    name: '语文探险家',
+    description: '语文闯关到达第10层',
+    check: (ctx) => ctx.chineseAdventureMaxFloor >= 10,
+  },
+  {
+    id: 'chinese-adventure-25',
+    emoji: '📜',
+    name: '语文诗人',
+    description: '语文闯关到达第25层',
+    check: (ctx) => ctx.chineseAdventureMaxFloor >= 25,
+  },
+  {
+    id: 'chinese-adventure-50',
+    emoji: '🐉',
+    name: '语文大师',
+    description: '语文闯关到达第50层',
+    check: (ctx) => ctx.chineseAdventureMaxFloor >= 50,
+  },
+  {
+    id: 'chinese-adventure-100',
+    emoji: '👑',
+    name: '语文传奇',
+    description: '语文闯关到达第100层',
+    check: (ctx) => ctx.chineseAdventureMaxFloor >= 100,
+  },
+
+  // ── Adventure Achievements - English ──
+  {
+    id: 'english-adventure-10',
+    emoji: '🔤',
+    name: '英语探险家',
+    description: '英语闯关到达第10层',
+    check: (ctx) => ctx.englishAdventureMaxFloor >= 10,
+  },
+  {
+    id: 'english-adventure-25',
+    emoji: '🌍',
+    name: '英语旅行家',
+    description: '英语闯关到达第25层',
+    check: (ctx) => ctx.englishAdventureMaxFloor >= 25,
+  },
+  {
+    id: 'english-adventure-50',
+    emoji: '🐉',
+    name: '英语大师',
+    description: '英语闯关到达第50层',
+    check: (ctx) => ctx.englishAdventureMaxFloor >= 50,
+  },
+  {
+    id: 'english-adventure-100',
+    emoji: '👑',
+    name: '英语传奇',
+    description: '英语闯关到达第100层',
+    check: (ctx) => ctx.englishAdventureMaxFloor >= 100,
+  },
+
+  // ── Multi-subject Achievements ──
+  {
+    id: 'all-subject-10',
+    emoji: '🎓',
+    name: '全科达人',
+    description: '三科闯关都到达第10层',
+    check: (ctx) => ctx.adventureMaxFloor >= 10 && ctx.chineseAdventureMaxFloor >= 10 && ctx.englishAdventureMaxFloor >= 10,
+  },
+  {
+    id: 'all-subject-50',
+    emoji: '🏆',
+    name: '全科大师',
+    description: '三科闯关都到达第50层',
+    check: (ctx) => ctx.adventureMaxFloor >= 50 && ctx.chineseAdventureMaxFloor >= 50 && ctx.englishAdventureMaxFloor >= 50,
   },
 ];
 

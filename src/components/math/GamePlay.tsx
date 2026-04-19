@@ -241,7 +241,7 @@ export default function GamePlay() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex flex-col relative overflow-hidden max-w-lg mx-auto">
       {/* Confetti */}
       <AnimatePresence>
         {showConfetti && (
@@ -310,7 +310,7 @@ export default function GamePlay() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 max-w-lg mx-auto w-full">
         {/* Combo Display */}
         <AnimatePresence>
           {currentCombo >= 2 && (

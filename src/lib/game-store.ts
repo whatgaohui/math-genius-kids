@@ -1,4 +1,4 @@
-// Main game store for 数学小达人 (Math Genius)
+// Main game store for 学习小达人 (Learning Genius)
 'use client';
 
 import { create } from 'zustand';
@@ -84,9 +84,21 @@ interface GameState {
   speedTimeLimit: number;
   speedOperation: Operation;
 
-  // Adventure mode
+  // Adventure mode (math)
   adventureLevel: number;
   adventureStars: Record<number, number>;
+
+  // Adventure mode (chinese)
+  chineseAdventureLevel: number;
+  chineseAdventureStars: Record<number, number>;
+
+  // Adventure mode (english)
+  englishAdventureLevel: number;
+  englishAdventureStars: Record<number, number>;
+
+  // Speed challenge config per subject
+  chineseSpeedTimeLimit: number;
+  englishSpeedTimeLimit: number;
 
   // Last game info
   lastGameSource: string;
@@ -159,9 +171,21 @@ interface GameActions {
   setSpeedTimeLimit: (seconds: number) => void;
   setSpeedOperation: (op: Operation) => void;
 
-  // Adventure
+  // Adventure (math)
   setAdventureLevel: (level: number) => void;
   setAdventureStars: (level: number, stars: number) => void;
+
+  // Adventure (chinese)
+  setChineseAdventureLevel: (level: number) => void;
+  setChineseAdventureStars: (level: number, stars: number) => void;
+
+  // Adventure (english)
+  setEnglishAdventureLevel: (level: number) => void;
+  setEnglishAdventureStars: (level: number, stars: number) => void;
+
+  // Speed challenge config per subject
+  setChineseSpeedTimeLimit: (seconds: number) => void;
+  setEnglishSpeedTimeLimit: (seconds: number) => void;
 
   // ── Math Session ──
   startMathSession: (mode: GameMode, operation?: Operation, difficulty?: Difficulty, count?: number) => void;
@@ -232,6 +256,15 @@ export const useGameStore = create<GameState & GameActions>()(
       adventureLevel: 1,
       adventureStars: {},
 
+      chineseAdventureLevel: 1,
+      chineseAdventureStars: {},
+
+      englishAdventureLevel: 1,
+      englishAdventureStars: {},
+
+      chineseSpeedTimeLimit: 60,
+      englishSpeedTimeLimit: 60,
+
       lastGameSource: '',
       lastLevelName: '',
       lastLevelEmoji: '',
@@ -262,7 +295,7 @@ export const useGameStore = create<GameState & GameActions>()(
       setSpeedTimeLimit: (seconds: number) => set({ speedTimeLimit: seconds }),
       setSpeedOperation: (op: Operation) => set({ speedOperation: op }),
 
-      // ── Adventure ──
+      // ── Adventure (Math) ──
       setAdventureLevel: (level: number) => set({ adventureLevel: level }),
       setAdventureStars: (level: number, stars: number) =>
         set((s) => ({
@@ -271,6 +304,30 @@ export const useGameStore = create<GameState & GameActions>()(
             [level]: Math.max(s.adventureStars[level] ?? 0, stars),
           },
         })),
+
+      // ── Adventure (Chinese) ──
+      setChineseAdventureLevel: (level: number) => set({ chineseAdventureLevel: level }),
+      setChineseAdventureStars: (level: number, stars: number) =>
+        set((s) => ({
+          chineseAdventureStars: {
+            ...s.chineseAdventureStars,
+            [level]: Math.max(s.chineseAdventureStars[level] ?? 0, stars),
+          },
+        })),
+
+      // ── Adventure (English) ──
+      setEnglishAdventureLevel: (level: number) => set({ englishAdventureLevel: level }),
+      setEnglishAdventureStars: (level: number, stars: number) =>
+        set((s) => ({
+          englishAdventureStars: {
+            ...s.englishAdventureStars,
+            [level]: Math.max(s.englishAdventureStars[level] ?? 0, stars),
+          },
+        })),
+
+      // ── Speed config per subject ──
+      setChineseSpeedTimeLimit: (seconds: number) => set({ chineseSpeedTimeLimit: seconds }),
+      setEnglishSpeedTimeLimit: (seconds: number) => set({ englishSpeedTimeLimit: seconds }),
 
       // ── Math Session ──
       startMathSession: (
@@ -579,9 +636,10 @@ export const useGameStore = create<GameState & GameActions>()(
         subject: Subject;
         mode: string;
         difficulty: string;
+        floorLevel?: number;
       }): { record: PracticeRecord; reward: PracticeReward } | null => {
         const state = get();
-        const { correct, total, timeMs, maxCombo, subject, mode, difficulty } = params;
+        const { correct, total, timeMs, maxCombo, subject, mode, difficulty, floorLevel } = params;
 
         if (total === 0) return null;
 
@@ -623,7 +681,7 @@ export const useGameStore = create<GameState & GameActions>()(
           }
         }
 
-        // Award coins & pet XP via pet store
+        // Award coins & pet XP via pet store (pass mode & floorLevel for multiplier)
         const petStore = usePetStore.getState();
         const reward = petStore.calculatePracticeReward({
           correct,
@@ -633,6 +691,8 @@ export const useGameStore = create<GameState & GameActions>()(
           timeMs,
           playerStreak: newStreak,
           subject,
+          mode,
+          floorLevel,
         });
         petStore.awardPracticeReward(reward);
 
@@ -697,6 +757,9 @@ export const useGameStore = create<GameState & GameActions>()(
           unlockedAchievements: state.unlockedAchievements,
           petLevel: 1, // Will be updated by pet store
           maxCombo: state.session?.sessionMaxCombo ?? state.practiceHistory.reduce((max, _r) => max, 0),
+          adventureMaxFloor: state.adventureLevel,
+          chineseAdventureMaxFloor: state.chineseAdventureLevel,
+          englishAdventureMaxFloor: state.englishAdventureLevel,
         });
 
         if (newAchievements.length > 0) {
@@ -763,6 +826,12 @@ export const useGameStore = create<GameState & GameActions>()(
         speedOperation: state.speedOperation,
         adventureLevel: state.adventureLevel,
         adventureStars: state.adventureStars,
+        chineseAdventureLevel: state.chineseAdventureLevel,
+        chineseAdventureStars: state.chineseAdventureStars,
+        englishAdventureLevel: state.englishAdventureLevel,
+        englishAdventureStars: state.englishAdventureStars,
+        chineseSpeedTimeLimit: state.chineseSpeedTimeLimit,
+        englishSpeedTimeLimit: state.englishSpeedTimeLimit,
         lastGameSource: state.lastGameSource,
         lastLevelName: state.lastLevelName,
         lastLevelEmoji: state.lastLevelEmoji,

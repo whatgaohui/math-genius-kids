@@ -1,4 +1,4 @@
-// Math question generation utilities for 数学小达人
+// Math question generation utilities for 学习小达人
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
