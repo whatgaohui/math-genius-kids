@@ -81,6 +81,9 @@ export interface PracticeResultProps {
     petLevel: number;
     coinBonusPercent: number;
     critChance: number;
+    talentBonus: number;
+    talentName?: string;
+    talentEmoji?: string;
   };
 
   // Encouragement
@@ -569,6 +572,7 @@ export function PracticeResult(props: PracticeResultProps) {
                       🐾 宠物 Lv.{bonusDetails.petLevel} 加成中
                       {bonusDetails.coinBonusPercent > 0 && ` · 金币+${bonusDetails.coinBonusPercent}%`}
                       {bonusDetails.critChance > 0 && ` · 暴击率${Math.round(bonusDetails.critChance * 100)}%`}
+                      {bonusDetails.talentName && ` · ${bonusDetails.talentEmoji} ${bonusDetails.talentName}`}
                     </p>
                   )}
                 </div>
@@ -582,6 +586,15 @@ export function PracticeResult(props: PracticeResultProps) {
                   {bonusDetails.speed > 0 && <BonusRow emoji="⚡" label="速度奖励" value={bonusDetails.speed} color="text-sky-500" />}
                   {bonusDetails.streak > 0 && <BonusRow emoji="📅" label="连续登录" value={bonusDetails.streak} color="text-violet-500" />}
                   {bonusDetails.petBonus > 0 && <BonusRow emoji="🐾" label={`宠物加成 (+${bonusDetails.coinBonusPercent}%)`} value={bonusDetails.petBonus} color="text-emerald-500" highlight />}
+                  {bonusDetails.talentBonus > 0 && (
+                    <BonusRow
+                      emoji={bonusDetails.talentEmoji || '✨'}
+                      label={`${bonusDetails.talentName || '天赋'}加成`}
+                      value={bonusDetails.talentBonus}
+                      color="text-orange-500"
+                      highlight
+                    />
+                  )}
                   {bonusDetails.critical > 0 && <BonusRow emoji="✨" label="暴击翻倍" value={bonusDetails.critical} color="text-yellow-500" highlight />}
                 </div>
               </CardContent>

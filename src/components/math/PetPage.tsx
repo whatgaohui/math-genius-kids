@@ -43,10 +43,21 @@ import {
   getCriticalHitChance,
   getComboMultiplier,
   getNextUnlock,
+  getPetTalent,
 } from '@/lib/pet-store';
 import BottomNav from './BottomNav';
 
 type Tab = 'home' | 'skills' | 'adopt' | 'shop' | 'room';
+
+function TalentTag({ emoji, label, value }: { emoji: string; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-1 rounded-full bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/50 dark:to-purple-950/50 border border-violet-100 dark:border-violet-900/50 px-2 py-0.5">
+      <span className="text-[10px]">{emoji}</span>
+      <span className="text-[10px] font-medium text-violet-700 dark:text-violet-300">{label}</span>
+      <span className="text-[10px] font-bold text-violet-600 dark:text-violet-400">{value}</span>
+    </div>
+  );
+}
 
 function BuffItem({ emoji, label, value, active }: { emoji: string; label: string; value: string; active: boolean }) {
   return (
@@ -85,6 +96,11 @@ export default function PetPage() {
 
   const petConfig = useMemo(
     () => (petType ? PET_CONFIGS.find((p) => p.id === petType) : null),
+    [petType]
+  );
+
+  const petTalent = useMemo(
+    () => (petType ? getPetTalent(petType) : null),
     [petType]
   );
 
@@ -161,26 +177,39 @@ export default function PetPage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {PET_CONFIGS.map((pet, i) => (
               <motion.div
                 key={pet.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
+                transition={{ delay: i * 0.06 }}
               >
                 <Card
                   className="cursor-pointer border-0 py-0 transition-all hover:scale-[1.02] hover:shadow-md"
                   onClick={() => handleAdopt(pet.id)}
                 >
                   <CardContent className="bg-white p-4 dark:bg-gray-800/50">
-                    <p className="text-4xl text-center mb-2">{pet.emoji}</p>
-                    <p className="text-sm font-bold text-center text-gray-800 dark:text-gray-100">
-                      {pet.name}
-                    </p>
-                    <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                      {pet.description}
-                    </p>
+                    <div className="flex items-start gap-3">
+                      <p className="text-4xl">{pet.emoji}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                            {pet.name}
+                          </p>
+                          <span className="flex items-center gap-0.5 rounded-full bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900/50 dark:to-purple-900/50 px-2 py-0.5">
+                            <span className="text-xs">{pet.talent.emoji}</span>
+                            <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300">{pet.talent.name}</span>
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {pet.description}
+                        </p>
+                        <p className="text-[11px] text-violet-600 dark:text-violet-400 mt-1 font-medium">
+                          {pet.talent.description}
+                        </p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -310,13 +339,35 @@ export default function PetPage() {
                     <span className="text-sm font-bold text-gray-700 dark:text-gray-200">当前加成</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <BuffItem emoji="💰" label="金币加成" value={`+${getCoinBonusPercent(petLevel)}%`} active={getCoinBonusPercent(petLevel) > 0} />
-                    <BuffItem emoji="📖" label="经验加成" value={`+${getXPBonusPercent(petLevel)}%`} active={getXPBonusPercent(petLevel) > 0} />
-                    <BuffItem emoji="⚡" label="暴击率" value={`${Math.round(getCriticalHitChance(petLevel) * 100)}%`} active={getCriticalHitChance(petLevel) > 0} />
-                    <BuffItem emoji="🔥" label="连击倍率" value={`×${getComboMultiplier(petLevel)}`} active={getComboMultiplier(petLevel) > 1} />
+                    <BuffItem emoji="💰" label="金币加成" value={`+${getCoinBonusPercent(petLevel, petType)}%`} active={getCoinBonusPercent(petLevel, petType) > 0} />
+                    <BuffItem emoji="📖" label="经验加成" value={`+${getXPBonusPercent(petLevel, petType)}%`} active={getXPBonusPercent(petLevel, petType) > 0} />
+                    <BuffItem emoji="⚡" label="暴击率" value={`${Math.round(getCriticalHitChance(petLevel, petType) * 100)}%`} active={getCriticalHitChance(petLevel, petType) > 0} />
+                    <BuffItem emoji="🔥" label="连击倍率" value={`×${getComboMultiplier(petLevel, petType).toFixed(1)}`} active={getComboMultiplier(petLevel, petType) > 1} />
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Pet Talent Card */}
+              {petTalent && (
+                <Card className="border-0 py-0 mb-4 overflow-hidden">
+                  <CardContent className="bg-gradient-to-r from-amber-50 via-orange-50 to-rose-50 dark:from-amber-950/30 dark:via-orange-950/30 dark:to-rose-950/30 p-4 border border-amber-100/50">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/50 dark:to-orange-900/50 shadow-sm">
+                        <span className="text-2xl">{petTalent.emoji}</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{petTalent.name}</span>
+                          <span className="text-[10px] rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 px-2 py-0.5 font-medium">天赋</span>
+                        </div>
+                        <p className="text-[11px] text-gray-600 dark:text-gray-400 mt-0.5">
+                          {petTalent.description}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Next Unlock Hint */}
               {(() => {
@@ -532,15 +583,15 @@ export default function PetPage() {
               exit={{ opacity: 0, x: 20 }}
             >
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">
-                选择一个新的小伙伴（当前宠物数据将重置）
+                选择一个新的小伙伴（当前宠物等级将重置为1）
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 {PET_CONFIGS.map((pet, i) => (
                   <motion.div
                     key={pet.id}
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: i * 0.05 }}
+                    transition={{ delay: i * 0.06 }}
                   >
                     <Card
                       className={`cursor-pointer border-0 py-0 transition-all hover:scale-[1.02] hover:shadow-md ${
@@ -551,20 +602,33 @@ export default function PetPage() {
                       onClick={() => handleAdopt(pet.id)}
                     >
                       <CardContent className="bg-white p-4 dark:bg-gray-800/50">
-                        <div className="relative">
-                          <p className="text-4xl text-center mb-2">{pet.emoji}</p>
-                          {pet.id === petType && (
-                            <Badge className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] px-1.5 py-0">
-                              当前
-                            </Badge>
-                          )}
+                        <div className="flex items-start gap-3">
+                          <div className="relative flex-shrink-0">
+                            <p className="text-4xl">{pet.emoji}</p>
+                            {pet.id === petType && (
+                              <Badge className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] px-1.5 py-0">
+                                当前
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                                {pet.name}
+                              </p>
+                              <span className="flex items-center gap-0.5 rounded-full bg-gradient-to-r from-violet-100 to-purple-100 dark:from-violet-900/50 dark:to-purple-900/50 px-2 py-0.5">
+                                <span className="text-[10px]">{pet.talent.emoji}</span>
+                                <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300">{pet.talent.name}</span>
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              {pet.description}
+                            </p>
+                            <p className="text-[11px] text-violet-600 dark:text-violet-400 mt-0.5 font-medium">
+                              {pet.talent.description}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-sm font-bold text-center text-gray-800 dark:text-gray-100">
-                          {pet.name}
-                        </p>
-                        <p className="text-xs text-center text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                          {pet.description}
-                        </p>
                       </CardContent>
                     </Card>
                   </motion.div>

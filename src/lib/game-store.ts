@@ -9,7 +9,7 @@ import type { EnglishQuestion, EnglishMode } from './english-utils';
 import { generateQuestions, calculateStars, calculateXP, calculateLevel } from './math-utils';
 import { computeUnlockedAchievements } from './achievements';
 import type { PracticeRecordSummary } from './achievements';
-import { usePetStore, type PracticeReward, getCoinBonusPercent, getCriticalHitChance } from './pet-store';
+import { usePetStore, type PracticeReward, getCoinBonusPercent, getCriticalHitChance, getPetTalent } from './pet-store';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -445,6 +445,7 @@ export const useGameStore = create<GameState & GameActions>()(
           maxCombo: session.sessionMaxCombo,
           timeMs: totalTimeMs,
           playerStreak: newStreak,
+          subject: session.sessionSubject,
         });
         petStore.awardPracticeReward(reward);
 
@@ -467,8 +468,11 @@ export const useGameStore = create<GameState & GameActions>()(
           bonusDetails: {
             ...reward.bonuses,
             petLevel: petStore.petLevel,
-            coinBonusPercent: getCoinBonusPercent(petStore.petLevel),
-            critChance: getCriticalHitChance(petStore.petLevel),
+            coinBonusPercent: getCoinBonusPercent(petStore.petLevel, petStore.petType),
+            critChance: getCriticalHitChance(petStore.petLevel, petStore.petType),
+            talentBonus: reward.talentBonus,
+            talentName: reward.talentName,
+            talentEmoji: reward.talentEmoji,
           },
         };
 
@@ -628,6 +632,7 @@ export const useGameStore = create<GameState & GameActions>()(
           maxCombo,
           timeMs,
           playerStreak: newStreak,
+          subject,
         });
         petStore.awardPracticeReward(reward);
 
@@ -650,8 +655,11 @@ export const useGameStore = create<GameState & GameActions>()(
           bonusDetails: {
             ...reward.bonuses,
             petLevel: petStore.petLevel,
-            coinBonusPercent: getCoinBonusPercent(petStore.petLevel),
-            critChance: getCriticalHitChance(petStore.petLevel),
+            coinBonusPercent: getCoinBonusPercent(petStore.petLevel, petStore.petType),
+            critChance: getCriticalHitChance(petStore.petLevel, petStore.petType),
+            talentBonus: reward.talentBonus,
+            talentName: reward.talentName,
+            talentEmoji: reward.talentEmoji,
           },
         };
 

@@ -11,6 +11,22 @@ export interface PetConfig {
   name: string;
   emoji: string;
   description: string;
+  talent: PetTalent;
+}
+
+export interface PetTalent {
+  name: string;
+  emoji: string;
+  description: string;
+  // Bonus modifiers (added on top of level bonuses)
+  coinBonusExtra: number;     // extra % coin bonus
+  critChanceExtra: number;    // extra crit chance (0.xx)
+  xpBonusExtra: number;       // extra % xp bonus
+  comboMultiplierExtra: number; // extra combo multiplier (e.g. 0.5 means +50%)
+  perfectBonusExtra: number;  // extra perfect score coins
+  speedBonusExtra: number;    // extra speed bonus coins
+  englishBonusExtra: number;  // extra % coins for english subject
+  allBonusExtra: number;      // extra % for ALL bonuses
 }
 
 export interface FurnitureItem {
@@ -44,6 +60,9 @@ export interface PracticeReward {
     petBonus: number;
     critical: number;
   };
+  talentBonus: number;
+  talentName?: string;
+  talentEmoji?: string;
 }
 
 interface PetState {
@@ -113,42 +132,133 @@ export const PET_CONFIGS: PetConfig[] = [
     name: '布偶猫',
     emoji: '🐱',
     description: '温柔可爱的小猫咪，最爱被摸摸头~',
+    talent: {
+      name: '财运亨通',
+      emoji: '💰',
+      description: '天生聚财体质，金币获取额外+20%',
+      coinBonusExtra: 20,
+      critChanceExtra: 0,
+      xpBonusExtra: 0,
+      comboMultiplierExtra: 0,
+      perfectBonusExtra: 0,
+      speedBonusExtra: 0,
+      englishBonusExtra: 0,
+      allBonusExtra: 0,
+    },
   },
   {
     id: 'shiba',
     name: '柴犬',
     emoji: '🐕',
     description: '活泼开朗的柴柴，永远元气满满！',
+    talent: {
+      name: '暴击之王',
+      emoji: '⚡',
+      description: '天生好运连连，暴击率额外+8%',
+      coinBonusExtra: 0,
+      critChanceExtra: 0.08,
+      xpBonusExtra: 0,
+      comboMultiplierExtra: 0,
+      perfectBonusExtra: 0,
+      speedBonusExtra: 0,
+      englishBonusExtra: 0,
+      allBonusExtra: 0,
+    },
   },
   {
     id: 'golden',
     name: '金毛',
     emoji: '🦮',
     description: '聪明温顺的大金毛，最好的学习伙伴！',
+    talent: {
+      name: '学霸附体',
+      emoji: '🎓',
+      description: '学习效率超高，经验获取额外+15%',
+      coinBonusExtra: 0,
+      critChanceExtra: 0,
+      xpBonusExtra: 15,
+      comboMultiplierExtra: 0,
+      perfectBonusExtra: 0,
+      speedBonusExtra: 0,
+      englishBonusExtra: 0,
+      allBonusExtra: 0,
+    },
   },
   {
     id: 'rabbit',
     name: '兔子',
     emoji: '🐰',
     description: '毛茸茸的小兔子，安安静静陪着你~',
+    talent: {
+      name: '连击达人',
+      emoji: '🔥',
+      description: '连续答对奖励更丰厚，连击加成额外+50%',
+      coinBonusExtra: 0,
+      critChanceExtra: 0,
+      xpBonusExtra: 0,
+      comboMultiplierExtra: 0.5,
+      perfectBonusExtra: 0,
+      speedBonusExtra: 0,
+      englishBonusExtra: 0,
+      allBonusExtra: 0,
+    },
   },
   {
     id: 'hamster',
     name: '仓鼠',
     emoji: '🐹',
     description: '圆滚滚的小仓鼠，吃瓜子超可爱！',
+    talent: {
+      name: '聚宝盆',
+      emoji: '🎁',
+      description: '满分奖励额外+15，速度奖励额外+8',
+      coinBonusExtra: 0,
+      critChanceExtra: 0,
+      xpBonusExtra: 0,
+      comboMultiplierExtra: 0,
+      perfectBonusExtra: 15,
+      speedBonusExtra: 8,
+      englishBonusExtra: 0,
+      allBonusExtra: 0,
+    },
   },
   {
     id: 'parrot',
     name: '鹦鹉',
     emoji: '🦜',
     description: '会说英语的小鹦鹉，帮你背单词！',
+    talent: {
+      name: '外语天才',
+      emoji: '🔤',
+      description: '英语练习金币额外+25%',
+      coinBonusExtra: 0,
+      critChanceExtra: 0,
+      xpBonusExtra: 0,
+      comboMultiplierExtra: 0,
+      perfectBonusExtra: 0,
+      speedBonusExtra: 0,
+      englishBonusExtra: 25,
+      allBonusExtra: 0,
+    },
   },
   {
     id: 'panda',
     name: '小熊猫',
     emoji: '🐼',
     description: '国宝级小伙伴，陪你一起努力！',
+    talent: {
+      name: '全能学霸',
+      emoji: '🌟',
+      description: '各方面都很优秀，所有加成额外+8%',
+      coinBonusExtra: 0,
+      critChanceExtra: 0,
+      xpBonusExtra: 0,
+      comboMultiplierExtra: 0,
+      perfectBonusExtra: 0,
+      speedBonusExtra: 0,
+      englishBonusExtra: 0,
+      allBonusExtra: 8,
+    },
   },
 ];
 
@@ -231,6 +341,12 @@ export const PET_EVOLUTION: Record<string, Record<number, string>> = {
   panda: { 1: '🐼', 8: '🐼', 15: '🐼', 20: '🐼' },
 };
 
+export function getPetTalent(petType: string | null): PetTalent | null {
+  if (!petType) return null;
+  const config = PET_CONFIGS.find(p => p.id === petType);
+  return config?.talent ?? null;
+}
+
 export function getPetEmoji(petType: string | null, petLevel: number): string {
   if (!petType) return '🐾';
   const evolutions = PET_EVOLUTION[petType];
@@ -281,31 +397,59 @@ export { getPetLevel, getPetXPForNextLevel };
 
 // ─── Pet Bonus Helpers ──────────────────────────────────────────────────────
 
-export function getCoinBonusPercent(petLevel: number): number {
-  if (petLevel >= 20) return 30; // 满级大师
-  if (petLevel >= 16) return 25; // 财富之友
-  if (petLevel >= 5) return 15;  // 金币猎人
-  return 0;
-}
+export function getCoinBonusPercent(petLevel: number, petType?: string | null): number {
+  let base = 0;
+  if (petLevel >= 20) base = 30;
+  else if (petLevel >= 16) base = 25;
+  else if (petLevel >= 5) base = 15;
 
-export function getXPBonusPercent(petLevel: number): number {
-  if (petLevel >= 20) return 30; // 满级大师
-  if (petLevel >= 13) return 20; // 经验大师
-  if (petLevel >= 3) return 10;  // 学习助手
-  return 0;
-}
-
-export function getCriticalHitChance(petLevel: number): number {
-  // Base 10%, +5% at level 10
-  const base = 0.10;
-  if (petLevel >= 10) return base + 0.05;
+  // Add talent bonus
+  const talent = getPetTalent(petType ?? null);
+  if (talent) {
+    base += talent.coinBonusExtra;
+    base += talent.allBonusExtra;
+  }
   return base;
 }
 
-export function getComboMultiplier(petLevel: number): number {
-  // Combo bonus doubled at level 8
-  if (petLevel >= 8) return 2;
-  return 1;
+export function getXPBonusPercent(petLevel: number, petType?: string | null): number {
+  let base = 0;
+  if (petLevel >= 20) base = 30;
+  else if (petLevel >= 13) base = 20;
+  else if (petLevel >= 3) base = 10;
+
+  // Add talent bonus
+  const talent = getPetTalent(petType ?? null);
+  if (talent) {
+    base += talent.xpBonusExtra;
+    base += talent.allBonusExtra;
+  }
+  return base;
+}
+
+export function getCriticalHitChance(petLevel: number, petType?: string | null): number {
+  let base = 0.10;
+  if (petLevel >= 10) base += 0.05;
+
+  // Add talent bonus
+  const talent = getPetTalent(petType ?? null);
+  if (talent) {
+    base += talent.critChanceExtra;
+  }
+  return base;
+}
+
+export function getComboMultiplier(petLevel: number, petType?: string | null): number {
+  let base: number;
+  if (petLevel >= 8) base = 2;
+  else base = 1;
+
+  // Add talent bonus
+  const talent = getPetTalent(petType ?? null);
+  if (talent) {
+    base += talent.comboMultiplierExtra;
+  }
+  return base;
 }
 
 // ─── Reward Calculation ─────────────────────────────────────────────────────
@@ -318,11 +462,14 @@ function calculatePracticeReward(
     maxCombo: number;
     timeMs: number;
     playerStreak: number;
+    subject?: string;
   },
-  petLevel: number
+  petLevel: number,
+  petType?: string | null
 ): PracticeReward {
-  const { correct, total, stars, maxCombo, timeMs, playerStreak } = params;
+  const { correct, total, stars, maxCombo, timeMs, playerStreak, subject } = params;
   const accuracy = total > 0 ? correct / total : 0;
+  const talent = getPetTalent(petType ?? null);
 
   // Base coins
   const base = correct * 2;
@@ -331,17 +478,23 @@ function calculatePracticeReward(
   const star = stars * 5;
 
   // Combo bonus
-  const comboMultiplier = getComboMultiplier(petLevel);
+  const comboMultiplier = getComboMultiplier(petLevel, petType);
   let combo = 0;
-  if (maxCombo >= 10) combo = 25 * comboMultiplier;
-  else if (maxCombo >= 5) combo = 10 * comboMultiplier;
-  else if (maxCombo >= 3) combo = 5 * comboMultiplier;
+  if (maxCombo >= 10) combo = Math.floor(25 * comboMultiplier);
+  else if (maxCombo >= 5) combo = Math.floor(10 * comboMultiplier);
+  else if (maxCombo >= 3) combo = Math.floor(5 * comboMultiplier);
 
-  // Perfect score bonus
-  const perfect = accuracy >= 1.0 && total >= 5 ? 20 : 0;
+  // Perfect score bonus (with talent extra)
+  let perfect = accuracy >= 1.0 && total >= 5 ? 20 : 0;
+  if (perfect > 0 && talent) {
+    perfect += talent.perfectBonusExtra;
+  }
 
-  // Speed bonus (< 30 seconds for 10+ questions)
-  const speed = (timeMs < 30000 && total >= 5) ? 10 : 0;
+  // Speed bonus (< 30 seconds for 10+ questions, with talent extra)
+  let speed = (timeMs < 30000 && total >= 5) ? 10 : 0;
+  if (speed > 0 && talent) {
+    speed += talent.speedBonusExtra;
+  }
 
   // Streak login bonus
   const streak = Math.min(playerStreak * 3, 30);
@@ -350,17 +503,32 @@ function calculatePracticeReward(
   const subtotal = base + star + combo + perfect + speed + streak;
 
   // Pet coin bonus
-  const coinBonusPercent = getCoinBonusPercent(petLevel);
-  const petBonus = Math.floor(subtotal * coinBonusPercent / 100);
+  const coinBonusPercent = getCoinBonusPercent(petLevel, petType);
+  let petBonus = Math.floor(subtotal * coinBonusPercent / 100);
+
+  // English talent bonus (apply as extra coins after pet bonus)
+  let englishBonus = 0;
+  if (talent && talent.englishBonusExtra > 0 && subject === 'english') {
+    englishBonus = Math.floor((subtotal + petBonus) * talent.englishBonusExtra / 100);
+  }
+
+  // All-around talent bonus
+  let allBonus = 0;
+  if (talent && talent.allBonusExtra > 0) {
+    allBonus = Math.floor((subtotal + petBonus) * talent.allBonusExtra / 100);
+  }
+
+  // Talent total
+  const talentTotal = englishBonus + allBonus;
 
   // Subtotal before critical hit
-  const beforeCritical = subtotal + petBonus;
+  const beforeCritical = subtotal + petBonus + talentTotal;
 
   // Critical hit
-  const critChance = getCriticalHitChance(petLevel);
+  const critChance = getCriticalHitChance(petLevel, petType);
   const isCriticalHit = Math.random() < critChance;
   const criticalMultiplier = isCriticalHit ? 2 : 1;
-  const critical = isCriticalHit ? beforeCritical : 0; // the extra coins from crit
+  const critical = isCriticalHit ? beforeCritical : 0;
 
   const totalCoins = beforeCritical + critical;
 
@@ -382,6 +550,7 @@ function calculatePracticeReward(
       petBonus,
       critical,
     },
+    talentBonus: talentTotal,
   };
 }
 
@@ -522,7 +691,14 @@ export const usePetStore = create<PetState & PetActions>()(
 
       calculatePracticeReward: (params) => {
         const state = get();
-        return calculatePracticeReward(params, state.petLevel);
+        const reward = calculatePracticeReward(params, state.petLevel, state.petType);
+        // Attach talent info
+        const talent = getPetTalent(state.petType);
+        if (talent) {
+          reward.talentName = talent.name;
+          reward.talentEmoji = talent.emoji;
+        }
+        return reward;
       },
 
       awardPracticeReward: (reward: PracticeReward) => {

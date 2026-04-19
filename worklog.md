@@ -360,3 +360,32 @@ Stage Summary:
 - Feature C: 12 level unlock items defined and displayed with lock/unlock states
 - Feature D: Current active buffs shown on pet home page
 - Dev server: compiled OK, no new lint errors (only pre-existing HomePage lint issue)
+
+---
+Task ID: 11 (Pet Talent System)
+Agent: Main
+Task: Design and implement unique pet talents so switching pets has meaningful gameplay impact
+
+Work Log:
+- Designed 7 unique pet talents, each affecting different bonus dimensions:
+  - 🐱 布偶猫 → 财运亨通: 金币加成额外+20%
+  - 🐕 柴犬 → 暴击之王: 暴击率额外+8%
+  - 🦮 金毛 → 学霸附体: 经验加成额外+15%
+  - 🐰 兔子 → 连击达人: 连击奖励额外+50%
+  - 🐹 仓鼠 → 聚宝盆: 满分奖励+15, 速度奖励+8
+  - 🦜 鹦鹉 → 外语天才: 英语练习金币额外+25%
+  - 🐼 小熊猫 → 全能学霸: 所有加成额外+8%
+- Added PetTalent interface and talent data to PetConfig in pet-store.ts
+- Modified all bonus calculation functions to accept optional petType parameter
+- Modified calculatePracticeReward to accept petType and subject, computing talent-specific bonuses
+- Added talentBonus, talentName, talentEmoji to PracticeReward interface and bonusDetails
+- Updated game-store.ts to pass petType/subject to reward calculation, include talent info in bonusDetails
+- Updated PetPage.tsx: adoption page to 1-column list with talent badges, home tab with talent card, adopt tab with talent info
+- Updated PracticeResult.tsx: new talent bonus row in coin breakdown, talent name in header
+
+Stage Summary:
+- 4 files modified: pet-store.ts, game-store.ts, PetPage.tsx, PracticeResult.tsx
+- All 7 pets now have unique, meaningful talents that affect gameplay
+- Switching pets now provides different strategic advantages
+- Talent effects visible in adoption UI, pet home page, and result page bonus breakdown
+- Dev server: compiled OK, no new lint errors
