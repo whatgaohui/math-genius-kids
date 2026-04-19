@@ -311,3 +311,52 @@ Stage Summary:
 - Visual feedback shows purchase success/failure for 1.5 seconds
 - Grayed-out state for items user can't afford
 - Dev server: compiled OK, no new lint errors
+
+---
+Task ID: 10 (Pet System Full Upgrade — A+B+C+D)
+Agent: Main
+Task: Comprehensive pet system upgrade — bonus breakdown display, skill tree page, level unlock content
+
+Work Log:
+
+**A. Result Page Bonus Breakdown:**
+- Added `bonusDetails` field to `lastResult` in game-store.ts (base, star, combo, perfect, speed, streak, petBonus, critical, petLevel, coinBonusPercent, critChance)
+- Updated `endSession()` and `completeSubjectSession()` to populate bonusDetails from pet-store reward calculation
+- Added `BonusRow` helper component to PracticeResult.tsx for clean bonus line display
+- New "金币明细" card shows detailed coin breakdown with color-coded rows
+- Pet level + active bonuses shown in header (e.g. "Lv.5 加成中 · 金币+15% · 暴击率10%")
+- Pet bonus and critical hit rows highlighted with green background
+- Updated ResultPage.tsx, ChinesePlay.tsx, EnglishPlay.tsx to pass bonusDetails through
+
+**B. Pet Skill Tree Page:**
+- Added new "技能" tab to PetPage (5 tabs total: home, skills, adopt, shop, room)
+- Skill tree displays all 8 PET_ABILITIES in timeline format with:
+  - Green gradient for unlocked skills
+  - Amber highlight for next-to-unlock skill
+  - Gray for locked skills
+  - Timeline connector lines between nodes
+  - "已解锁" / "即将解锁" status badges
+  - Effect description shown for unlocked skills
+
+**C. Level Unlock Content System:**
+- Added `LevelUnlock` interface and `LEVEL_UNLOCKS` data (12 unlocks across levels 3-20)
+- Unlock categories: mode (new game modes), reward (bonus multipliers), feature (cosmetics/titles)
+- Level-unlocked content displayed in "等级奖励" section of skills tab
+- Added "下一个解锁" hint card on pet home page showing next unlock + XP needed
+
+**D. Current Buffs Display on Pet Home:**
+- Added "当前加成" summary card on pet home tab
+- 4 buff indicators: 金币加成, 经验加成, 暴击率, 连击倍率
+- Active buffs shown in green, inactive in gray
+- Buff values update dynamically with pet level
+
+- Added pet-store exports: `getUnlocksForLevel`, `getNextUnlock`, `LEVEL_UNLOCKS`, `LevelUnlock`
+- Added game-store imports: `getCoinBonusPercent`, `getCriticalHitChance`
+
+Stage Summary:
+- 7 files modified: game-store.ts, pet-store.ts, PracticeResult.tsx, ResultPage.tsx, ChinesePlay.tsx, EnglishPlay.tsx, PetPage.tsx
+- Feature A: Result page now shows detailed coin breakdown (8 bonus types)
+- Feature B: New skill tree tab with timeline visualization of 8 abilities
+- Feature C: 12 level unlock items defined and displayed with lock/unlock states
+- Feature D: Current active buffs shown on pet home page
+- Dev server: compiled OK, no new lint errors (only pre-existing HomePage lint issue)

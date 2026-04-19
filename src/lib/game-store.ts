@@ -9,7 +9,7 @@ import type { EnglishQuestion, EnglishMode } from './english-utils';
 import { generateQuestions, calculateStars, calculateXP, calculateLevel } from './math-utils';
 import { computeUnlockedAchievements } from './achievements';
 import type { PracticeRecordSummary } from './achievements';
-import { usePetStore, type PracticeReward } from './pet-store';
+import { usePetStore, type PracticeReward, getCoinBonusPercent, getCriticalHitChance } from './pet-store';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -112,6 +112,20 @@ interface GameState {
     coinsEarned: number;
     petXPEarned: number;
     isCriticalHit: boolean;
+    // Bonus breakdown for display
+    bonusDetails?: {
+      base: number;
+      star: number;
+      combo: number;
+      perfect: number;
+      speed: number;
+      streak: number;
+      petBonus: number;
+      critical: number;
+      petLevel: number;
+      coinBonusPercent: number;
+      critChance: number;
+    };
   } | null;
 
   // Daily challenge
@@ -450,6 +464,12 @@ export const useGameStore = create<GameState & GameActions>()(
           coinsEarned: reward.coins,
           petXPEarned: reward.petXP,
           isCriticalHit: reward.isCriticalHit,
+          bonusDetails: {
+            ...reward.bonuses,
+            petLevel: petStore.petLevel,
+            coinBonusPercent: getCoinBonusPercent(petStore.petLevel),
+            critChance: getCriticalHitChance(petStore.petLevel),
+          },
         };
 
         set({
@@ -627,6 +647,12 @@ export const useGameStore = create<GameState & GameActions>()(
           coinsEarned: reward.coins,
           petXPEarned: reward.petXP,
           isCriticalHit: reward.isCriticalHit,
+          bonusDetails: {
+            ...reward.bonuses,
+            petLevel: petStore.petLevel,
+            coinBonusPercent: getCoinBonusPercent(petStore.petLevel),
+            critChance: getCriticalHitChance(petStore.petLevel),
+          },
         };
 
         set({

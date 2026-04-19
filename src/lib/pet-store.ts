@@ -165,6 +165,39 @@ export const PET_ABILITIES: PetAbility[] = [
   { level: 20, name: '满级大师', emoji: '🏆', description: '宠物已达到最高境界！所有加成+30%！', effect: '全属性+30%' },
 ];
 
+// ─── Level Unlock Content ──────────────────────────────────────────────────
+
+export interface LevelUnlock {
+  level: number;
+  name: string;
+  emoji: string;
+  description: string;
+  category: 'mode' | 'reward' | 'feature';
+}
+
+export const LEVEL_UNLOCKS: LevelUnlock[] = [
+  { level: 3, name: '成语填空', emoji: '📝', description: '解锁语文成语填空模式', category: 'mode' },
+  { level: 3, name: '反义词大挑战', emoji: '🔄', description: '解锁语文反义词模式', category: 'mode' },
+  { level: 3, name: '近义词连连看', emoji: '🔗', description: '解锁语文近义词模式', category: 'mode' },
+  { level: 5, name: '每日奖励翻倍', emoji: '🎁', description: '每日登录奖励金币×2', category: 'reward' },
+  { level: 5, name: '古诗填空', emoji: '📜', description: '解锁语文古诗填空模式', category: 'mode' },
+  { level: 8, name: '进阶闯关', emoji: '🏰', description: '解锁数学进阶闯关难度', category: 'mode' },
+  { level: 10, name: '暴击强化', emoji: '⚡', description: '暴击率提升到15%', category: 'reward' },
+  { level: 10, name: '宠物称号', emoji: '🏅', description: '解锁自定义宠物称号', category: 'feature' },
+  { level: 13, name: '经验大师', emoji: '🎓', description: '经验加成提升到20%', category: 'reward' },
+  { level: 15, name: '专属宠物皮肤', emoji: '🎨', description: '解锁宠物彩虹特效', category: 'feature' },
+  { level: 16, name: '财富之友', emoji: '👑', description: '金币加成提升到25%', category: 'reward' },
+  { level: 20, name: '满级大师', emoji: '🏆', description: '全属性加成+30%！传说称号', category: 'feature' },
+];
+
+export function getUnlocksForLevel(level: number): LevelUnlock[] {
+  return LEVEL_UNLOCKS.filter((u) => u.level <= level);
+}
+
+export function getNextUnlock(level: number): LevelUnlock | null {
+  return LEVEL_UNLOCKS.find((u) => u.level > level) ?? null;
+}
+
 // ─── Furniture Shop ─────────────────────────────────────────────────────────
 
 export const FURNITURE_SHOP: FurnitureItem[] = [

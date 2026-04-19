@@ -24,16 +24,41 @@ import {
   Check,
   Sparkles,
   ShoppingCart,
+  Lock,
+  Zap,
+  Shield,
+  Star,
+  TrendingUp,
+  Crown,
 } from 'lucide-react';
 import {
   usePetStore,
   PET_CONFIGS,
+  PET_ABILITIES,
   FURNITURE_SHOP,
+  LEVEL_UNLOCKS,
   getPetXPForNextLevel,
+  getCoinBonusPercent,
+  getXPBonusPercent,
+  getCriticalHitChance,
+  getComboMultiplier,
+  getNextUnlock,
 } from '@/lib/pet-store';
 import BottomNav from './BottomNav';
 
-type Tab = 'home' | 'adopt' | 'shop' | 'room';
+type Tab = 'home' | 'skills' | 'adopt' | 'shop' | 'room';
+
+function BuffItem({ emoji, label, value, active }: { emoji: string; label: string; value: string; active: boolean }) {
+  return (
+    <div className={`rounded-lg px-3 py-2 ${active ? 'bg-white/80 shadow-sm' : 'bg-white/40'}`}>
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs">{emoji}</span>
+        <span className={`text-[10px] ${active ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>{label}</span>
+      </div>
+      <p className={`text-xs font-bold mt-0.5 ${active ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-gray-500'}`}>{value}</p>
+    </div>
+  );
+}
 
 export default function PetPage() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -170,6 +195,7 @@ export default function PetPage() {
   // Has pet view
   const tabs: { key: Tab; label: string; emoji: string }[] = [
     { key: 'home', label: '我的宠物', emoji: '🏠' },
+    { key: 'skills', label: '技能', emoji: '⚡' },
     { key: 'adopt', label: '换宠物', emoji: '🐾' },
     { key: 'shop', label: '商店', emoji: '🛒' },
     { key: 'room', label: '房间', emoji: '🏠' },
@@ -276,6 +302,51 @@ export default function PetPage() {
                 </CardContent>
               </Card>
 
+              {/* Current Buffs Summary */}
+              <Card className="border-0 py-0 mb-4 overflow-hidden">
+                <CardContent className="bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/30 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrendingUp className="h-4 w-4 text-violet-500" />
+                    <span className="text-sm font-bold text-gray-700 dark:text-gray-200">当前加成</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <BuffItem emoji="💰" label="金币加成" value={`+${getCoinBonusPercent(petLevel)}%`} active={getCoinBonusPercent(petLevel) > 0} />
+                    <BuffItem emoji="📖" label="经验加成" value={`+${getXPBonusPercent(petLevel)}%`} active={getXPBonusPercent(petLevel) > 0} />
+                    <BuffItem emoji="⚡" label="暴击率" value={`${Math.round(getCriticalHitChance(petLevel) * 100)}%`} active={getCriticalHitChance(petLevel) > 0} />
+                    <BuffItem emoji="🔥" label="连击倍率" value={`×${getComboMultiplier(petLevel)}`} active={getComboMultiplier(petLevel) > 1} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Next Unlock Hint */}
+              {(() => {
+                const next = getNextUnlock(petLevel);
+                if (!next) return null;
+                const xpNeeded = petProgress.needed - petProgress.current;
+                return (
+                  <Card className="border-0 py-0 mb-4 overflow-hidden">
+                    <CardContent className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30 p-4 border border-amber-100">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/40">
+                          <Lock className="h-4 w-4 text-amber-500" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-gray-700 dark:text-gray-200">
+                            {next.emoji} {next.name}
+                          </p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                            Lv.{next.level} 解锁 · {next.description}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] border-amber-200 text-amber-600">
+                          还需 {xpNeeded} XP
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
               {/* Actions */}
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <Card className="border-0 py-0 cursor-pointer transition-all hover:scale-[1.02]">
@@ -321,6 +392,135 @@ export default function PetPage() {
               <p className="text-center text-xs text-gray-400 dark:text-gray-500">
                 {petConfig.description}
               </p>
+            </motion.div>
+          )}
+
+          {activeTab === 'skills' && (
+            <motion.div
+              key="skills"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              {/* Skill Tree */}
+              <div className="flex items-center gap-2 mb-4">
+                <Zap className="h-5 w-5 text-violet-500" />
+                <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                  技能树
+                </h2>
+                <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+                  Lv.{petLevel}
+                </Badge>
+              </div>
+
+              <div className="space-y-3">
+                {PET_ABILITIES.map((ability, idx) => {
+                  const unlocked = petLevel >= ability.level;
+                  const isNext = !unlocked && (idx === 0 || petLevel >= PET_ABILITIES[idx - 1].level);
+                  return (
+                    <motion.div
+                      key={ability.level}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                    >
+                      {/* Timeline connector */}
+                      {idx > 0 && (
+                        <div className={`ml-5 h-4 w-0.5 ${unlocked ? 'bg-emerald-300 dark:bg-emerald-700' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                      )}
+                      <Card className={`border-0 py-0 overflow-hidden transition-all ${unlocked ? 'shadow-sm' : isNext ? 'ring-1 ring-amber-200 shadow-sm' : ''}`}>
+                        <CardContent className={`p-3 ${unlocked ? 'bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-950/30' : isNext ? 'bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/30' : 'bg-gray-50 dark:bg-gray-800/30'}`}>
+                          <div className="flex items-center gap-3">
+                            {/* Level Circle */}
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${
+                              unlocked
+                                ? 'bg-emerald-500 text-white shadow-sm'
+                                : isNext
+                                  ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300 ring-2 ring-amber-300'
+                                  : 'bg-gray-200 text-gray-400 dark:bg-gray-700 dark:text-gray-500'
+                            }`}>
+                              {unlocked ? ability.emoji : <Lock className="h-4 w-4" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <p className={`text-sm font-bold ${unlocked ? 'text-gray-800 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}`}>
+                                  {ability.name}
+                                </p>
+                                {unlocked && (
+                                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">已解锁</span>
+                                )}
+                                {isNext && (
+                                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">即将解锁</span>
+                                )}
+                              </div>
+                              <p className={`text-[11px] mt-0.5 ${unlocked ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 dark:text-gray-500'}`}>
+                                {ability.description}
+                              </p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <Badge variant="outline" className={`text-[10px] ${unlocked ? 'border-emerald-200 text-emerald-600 dark:border-emerald-800 dark:text-emerald-400' : 'border-gray-200 text-gray-400 dark:border-gray-700 dark:text-gray-500'}`}>
+                                Lv.{ability.level}
+                              </Badge>
+                              {unlocked && (
+                                <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 font-medium">
+                                  {ability.effect}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Unlocked Content Section */}
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Crown className="h-5 w-5 text-amber-500" />
+                  <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">
+                    等级奖励
+                  </h2>
+                </div>
+                <div className="space-y-2">
+                  {LEVEL_UNLOCKS.map((unlock, idx) => {
+                    const unlocked = petLevel >= unlock.level;
+                    return (
+                      <motion.div
+                        key={`${unlock.level}-${unlock.name}`}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.03 }}
+                        className={`flex items-center gap-3 rounded-xl p-3 transition-all ${
+                          unlocked
+                            ? 'bg-white shadow-sm dark:bg-gray-800/50'
+                            : 'bg-gray-50 dark:bg-gray-800/30'
+                        }`}
+                      >
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-base ${
+                          unlocked
+                            ? 'bg-amber-100 dark:bg-amber-900/40'
+                            : 'bg-gray-100 dark:bg-gray-700'
+                        }`}>
+                          {unlocked ? unlock.emoji : <Lock className="h-3 w-3 text-gray-300" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-bold ${unlocked ? 'text-gray-700 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}`}>
+                            {unlock.name}
+                          </p>
+                          <p className={`text-[10px] ${unlocked ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}`}>
+                            {unlock.description}
+                          </p>
+                        </div>
+                        <Badge variant="outline" className={`text-[10px] ${unlocked ? 'border-amber-200 text-amber-600' : 'border-gray-200 text-gray-400'}`}>
+                          Lv.{unlock.level}
+                        </Badge>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
             </motion.div>
           )}
 

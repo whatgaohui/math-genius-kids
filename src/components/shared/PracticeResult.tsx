@@ -19,6 +19,9 @@ import {
   Coins,
   Gift,
   Sparkles,
+  Lock,
+  TrendingUp,
+  Shield,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -66,6 +69,19 @@ export interface PracticeResultProps {
   coinsEarned?: number
   petXPEarned?: number
   isCriticalHit?: boolean
+  bonusDetails?: {
+    base: number;
+    star: number;
+    combo: number;
+    perfect: number;
+    speed: number;
+    streak: number;
+    petBonus: number;
+    critical: number;
+    petLevel: number;
+    coinBonusPercent: number;
+    critChance: number;
+  };
 
   // Encouragement
   encouragementEmoji?: string
@@ -196,6 +212,18 @@ const fadeIn = {
 // Component
 // ══════════════════════════════════════════════════════════════════════════════
 
+function BonusRow({ emoji, label, value, color, highlight }: { emoji: string; label: string; value: number; color: string; highlight?: boolean }) {
+  return (
+    <div className={`flex items-center justify-between px-4 py-2 ${highlight ? 'bg-emerald-50/50' : ''}`}>
+      <span className="flex items-center gap-2 text-xs text-gray-500">
+        <span>{emoji}</span>
+        {label}
+      </span>
+      <span className={`text-xs font-bold ${color}`}>+{value}</span>
+    </div>
+  )
+}
+
 export function PracticeResult(props: PracticeResultProps) {
   const {
     correct,
@@ -219,6 +247,7 @@ export function PracticeResult(props: PracticeResultProps) {
     coinsEarned,
     petXPEarned,
     isCriticalHit = false,
+    bonusDetails,
     encouragementEmoji: encEmoji,
     encouragementText: encText,
     speedEncouragement,
@@ -516,6 +545,47 @@ export function PracticeResult(props: PracticeResultProps) {
                 </div>
               </div>
             </div>
+          </motion.div>
+        )}
+
+        {/* Bonus Breakdown Card */}
+        {bonusDetails && coinsEarned !== undefined && coinsEarned > 0 && (
+          <motion.div custom={2.75} initial="hidden" animate="visible" variants={cardSlideUp}>
+            <Card className="border-0 shadow-md overflow-hidden">
+              <button
+                onClick={() => setShowQuestionReview(false) || null}
+                className="w-full"
+              >
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-4 border-b border-amber-100">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm font-bold text-gray-700">金币明细</span>
+                    </div>
+                    <span className="text-sm font-black text-amber-600">+{coinsEarned} 金币</span>
+                  </div>
+                  {bonusDetails.petLevel > 1 && (
+                    <p className="text-[10px] text-gray-400">
+                      🐾 宠物 Lv.{bonusDetails.petLevel} 加成中
+                      {bonusDetails.coinBonusPercent > 0 && ` · 金币+${bonusDetails.coinBonusPercent}%`}
+                      {bonusDetails.critChance > 0 && ` · 暴击率${Math.round(bonusDetails.critChance * 100)}%`}
+                    </p>
+                  )}
+                </div>
+              </button>
+              <CardContent className="p-0">
+                <div className="divide-y divide-gray-50">
+                  <BonusRow emoji="📝" label="答对奖励" value={bonusDetails.base} color="text-gray-600" />
+                  {bonusDetails.star > 0 && <BonusRow emoji="⭐" label="星星奖励" value={bonusDetails.star} color="text-amber-500" />}
+                  {bonusDetails.combo > 0 && <BonusRow emoji="🔥" label="连击奖励" value={bonusDetails.combo} color="text-orange-500" />}
+                  {bonusDetails.perfect > 0 && <BonusRow emoji="💯" label="满分奖励" value={bonusDetails.perfect} color="text-rose-500" />}
+                  {bonusDetails.speed > 0 && <BonusRow emoji="⚡" label="速度奖励" value={bonusDetails.speed} color="text-sky-500" />}
+                  {bonusDetails.streak > 0 && <BonusRow emoji="📅" label="连续登录" value={bonusDetails.streak} color="text-violet-500" />}
+                  {bonusDetails.petBonus > 0 && <BonusRow emoji="🐾" label={`宠物加成 (+${bonusDetails.coinBonusPercent}%)`} value={bonusDetails.petBonus} color="text-emerald-500" highlight />}
+                  {bonusDetails.critical > 0 && <BonusRow emoji="✨" label="暴击翻倍" value={bonusDetails.critical} color="text-yellow-500" highlight />}
+                </div>
+              </CardContent>
+            </Card>
           </motion.div>
         )}
 

@@ -131,6 +131,7 @@ export default function ResultPage() {
       coinsEarned={lastResult?.coinsEarned}
       petXPEarned={lastResult?.petXPEarned}
       isCriticalHit={lastResult?.isCriticalHit ?? false}
+      bonusDetails={lastResult?.bonusDetails}
       encouragementEmoji={encouragement.emoji}
       encouragementText={encouragement.text}
       speedEncouragement={speedEnc}

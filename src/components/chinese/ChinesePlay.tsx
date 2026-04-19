@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Volume2, Zap, Check, X, Flame } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
+import { usePetStore, getCoinBonusPercent, getCriticalHitChance } from '@/lib/pet-store';
 import {
   generateChineseQuestions,
   getAvailableMode,
@@ -31,7 +32,24 @@ interface FloatingXP {
 
 export default function ChinesePlay() {
   const { setCurrentView, completeSubjectSession, soundEnabled } = useGameStore();
-  const [rewardInfo, setRewardInfo] = useState<{ coins: number; petXP: number; isCriticalHit: boolean } | null>(null);
+  const [rewardInfo, setRewardInfo] = useState<{
+    coins: number;
+    petXP: number;
+    isCriticalHit: boolean;
+    bonusDetails?: {
+      base: number;
+      star: number;
+      combo: number;
+      perfect: number;
+      speed: number;
+      streak: number;
+      petBonus: number;
+      critical: number;
+      petLevel: number;
+      coinBonusPercent: number;
+      critChance: number;
+    };
+  } | null>(null);
 
   // Read config from shared mutable object
   const config = chinesePlayConfig;
@@ -201,6 +219,12 @@ export default function ChinesePlay() {
         coins: result.reward.coins,
         petXP: result.reward.petXP,
         isCriticalHit: result.reward.isCriticalHit,
+        bonusDetails: {
+          ...result.reward.bonuses,
+          petLevel: usePetStore.getState().petLevel,
+          coinBonusPercent: getCoinBonusPercent(usePetStore.getState().petLevel),
+          critChance: getCriticalHitChance(usePetStore.getState().petLevel),
+        },
       });
     }
   }, [correct, questions.length, maxCombo, startTime, config.mode, config.grade, completeSubjectSession]);
@@ -235,6 +259,7 @@ export default function ChinesePlay() {
         coinsEarned={rewardInfo?.coins}
         petXPEarned={rewardInfo?.petXP}
         isCriticalHit={rewardInfo?.isCriticalHit ?? false}
+        bonusDetails={rewardInfo?.bonusDetails}
         onBack={handleBack}
         onRetry={handleRetry}
       />
