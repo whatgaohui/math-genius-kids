@@ -1,4 +1,4 @@
-// Text-to-speech helper for 学习小达人
+// Text-to-speech helper for 知识小勇士
 'use client';
 
 interface TTSOptions {
@@ -14,19 +14,25 @@ let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
 /**
  * Pre-load voices - call this early to ensure voices are available
  */
-function getVoices(): Promise<SpeechSynthesisVoice[]> {
+function getVoices(force = false): Promise<SpeechSynthesisVoice[]> {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     return Promise.resolve([]);
   }
 
-  if (voicesLoaded) {
-    return Promise.resolve(window.speechSynthesis.getVoices());
+  if (force) {
+    voicesLoaded = false;
+    voicesPromise = null;
+  }
+
+  if (voicesLoaded && voicesPromise) {
+    return voicesPromise;
   }
 
   if (voicesPromise) return voicesPromise;
 
   voicesPromise = new Promise<SpeechSynthesisVoice[]>((resolve) => {
-    const voices = window.speechSynthesis.getVoices();
+    // Try to get voices immediately
+    let voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
       voicesLoaded = true;
       resolve(voices);
@@ -42,19 +48,54 @@ function getVoices(): Promise<SpeechSynthesisVoice[]> {
 
     window.speechSynthesis.addEventListener('voiceschanged', handler);
 
-    // Timeout after 2 seconds - use whatever voices we have
+    // Timeout after 3 seconds
     setTimeout(() => {
       window.speechSynthesis.removeEventListener('voiceschanged', handler);
       voicesLoaded = true;
-      resolve(window.speechSynthesis.getVoices());
-    }, 2000);
+      voices = window.speechSynthesis.getVoices();
+      resolve(voices);
+    }, 3000);
   });
 
   return voicesPromise;
 }
 
 /**
- * Check if we're likely on a mobile device where Web Speech API is unreliable
+ * Find the best matching voice for a given language.
+ * Prioritizes exact match, then language prefix, then any available voice.
+ */
+function findBestVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | null {
+  if (voices.length === 0) return null;
+
+  const langPrefix = lang.split('-')[0]; // e.g., 'en' from 'en-US'
+
+  // 1. Exact match (e.g., 'en-US' === 'en-US')
+  const exact = voices.find((v) => v.lang === lang);
+  if (exact) return exact;
+
+  // 2. Same language, any region (e.g., 'en-GB' matches 'en-US' request)
+  const sameLang = voices.find((v) => v.lang.startsWith(langPrefix) && v.lang !== 'zh-CN' && v.lang !== 'zh-TW');
+  if (sameLang) return sameLang;
+
+  // 3. For English: look for any English voice including non-standard ones
+  if (langPrefix === 'en') {
+    const anyEnglish = voices.find((v) => {
+      const vLang = v.lang.toLowerCase();
+      return vLang.startsWith('en');
+    });
+    if (anyEnglish) return anyEnglish;
+  }
+
+  // 4. Fallback: first non-Chinese voice
+  const nonChinese = voices.find((v) => !v.lang.startsWith('zh'));
+  if (nonChinese) return nonChinese;
+
+  // 5. Last resort: first available voice
+  return voices[0];
+}
+
+/**
+ * Check if we're likely on a mobile device
  */
 function isMobileDevice(): boolean {
   if (typeof window === 'undefined') return false;
@@ -64,7 +105,7 @@ function isMobileDevice(): boolean {
 
 /**
  * Speak text using the Web Speech API (browser native).
- * Only used as fallback on desktop.
+ * Improved voice selection and error handling.
  */
 function speakWithWebSpeech(
   text: string,
@@ -77,31 +118,54 @@ function speakWithWebSpeech(
 
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = options.lang;
-      utterance.rate = options.speed;
+      utterance.rate = Math.max(0.5, Math.min(2, options.speed));
       utterance.pitch = options.pitch;
+      utterance.volume = 1;
 
-      // Get voices and find matching one
-      getVoices().then((voices) => {
-        const matchingVoice = voices.find(
-          (v) => v.lang.startsWith(options.lang.split('-')[0])
-        );
-        if (matchingVoice) {
-          utterance.voice = matchingVoice;
+      // Find best voice
+      getVoices(true).then((voices) => {
+        // Android workaround: voices may load async
+        if (voices.length === 0) {
+          // Retry once more after a short delay
+          setTimeout(() => {
+            const retryVoices = window.speechSynthesis.getVoices();
+            const voice = findBestVoice(retryVoices, options.lang);
+            if (voice) {
+              utterance.voice = voice;
+            }
+            startSpeaking();
+          }, 500);
+          return;
         }
 
-        utterance.onend = () => resolve();
-        utterance.onerror = () => {
-          reject(new Error('Web Speech API error'));
-        };
+        const voice = findBestVoice(voices, options.lang);
+        if (voice) {
+          utterance.voice = voice;
+        }
 
-        window.speechSynthesis.speak(utterance);
+        startSpeaking();
       });
 
-      // Timeout safety - resolve after 10 seconds even if not done
+      let settled = false;
+      function startSpeaking() {
+        if (settled) return;
+        utterance.onend = () => {
+          if (!settled) { settled = true; resolve(); }
+        };
+        utterance.onerror = (e) => {
+          if (!settled) { settled = true; reject(new Error(`TTS error: ${e.error}`)); }
+        };
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // Timeout safety - 15 seconds max
       setTimeout(() => {
-        window.speechSynthesis.cancel();
-        resolve();
-      }, 10000);
+        if (!settled) {
+          settled = true;
+          window.speechSynthesis.cancel();
+          resolve();
+        }
+      }, 15000);
     } catch {
       reject(new Error('Web Speech API not available'));
     }
@@ -109,61 +173,57 @@ function speakWithWebSpeech(
 }
 
 /**
- * Speak using the backend TTS API endpoint (most reliable).
+ * Speak using the backend TTS API endpoint.
  */
 async function speakWithBackend(
   text: string,
   options: { lang: string; speed: number }
 ): Promise<void> {
-  try {
-    const response = await fetch('/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text,
-        lang: options.lang,
-        speed: options.speed,
-      }),
-    });
+  const response = await fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      text,
+      lang: options.lang,
+      speed: options.speed,
+    }),
+  });
 
-    if (!response.ok) {
-      throw new Error(`TTS API error: ${response.status}`);
-    }
-
-    const blob = await response.blob();
-    const audioUrl = URL.createObjectURL(blob);
-    const audio = new Audio(audioUrl);
-
-    return new Promise((resolve, reject) => {
-      const cleanup = () => {
-        URL.revokeObjectURL(audioUrl);
-      };
-
-      audio.onended = () => {
-        cleanup();
-        resolve();
-      };
-      audio.onerror = () => {
-        cleanup();
-        reject(new Error('Audio playback failed'));
-      };
-      audio.play().catch((e) => {
-        cleanup();
-        reject(e);
-      });
-    });
-  } catch (error) {
-    console.warn('Backend TTS failed:', error);
-    throw error;
+  if (!response.ok) {
+    throw new Error(`TTS API error: ${response.status}`);
   }
+
+  const blob = await response.blob();
+  const audioUrl = URL.createObjectURL(blob);
+  const audio = new Audio(audioUrl);
+
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      URL.revokeObjectURL(audioUrl);
+    };
+
+    audio.onended = () => {
+      cleanup();
+      resolve();
+    };
+    audio.onerror = () => {
+      cleanup();
+      reject(new Error('Audio playback failed'));
+    };
+    audio.play().catch((e) => {
+      cleanup();
+      reject(e);
+    });
+  });
 }
 
 /**
  * Speak text with TTS.
  *
- * Strategy:
- * 1. On mobile: Always use backend API (more reliable, better quality)
- * 2. On desktop: Try Web Speech API first, fallback to backend
+ * Strategy (unified for all platforms):
+ * 1. Try Web Speech API first (works offline, no network needed)
+ * 2. If Web Speech API fails, fallback to backend TTS API
+ * 3. If both fail, silent resolve (no error thrown to caller)
  *
  * @param text - The text to speak
  * @param options - Optional configuration (language, speed, pitch)
@@ -175,28 +235,19 @@ export function speakWithAPI(
 ): Promise<void> {
   const { lang = 'zh-CN', speed = 1, pitch = 1 } = options;
 
-  // On mobile, always use backend TTS (more reliable)
-  if (isMobileDevice()) {
-    return speakWithBackend(text, { lang, speed }).catch(() => {
-      // Last resort: try Web Speech API even on mobile
-      if ('speechSynthesis' in window) {
-        return speakWithWebSpeech(text, { lang, speed, pitch });
-      }
-      return Promise.resolve(); // Silent fail
-    });
-  }
-
-  // On desktop: try Web Speech API first, then fallback to backend
+  // Step 1: Try Web Speech API
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     return speakWithWebSpeech(text, { lang, speed, pitch }).catch(() => {
+      // Step 2: Fallback to backend
       return speakWithBackend(text, { lang, speed }).catch(() => {
-        // Both failed, silent resolve
+        // Step 3: Both failed, silent
+        console.warn('TTS: both Web Speech and Backend failed');
         return Promise.resolve();
       });
     });
   }
 
-  // No Web Speech API, use backend
+  // No Web Speech API, try backend only
   return speakWithBackend(text, { lang, speed }).catch(() => {
     return Promise.resolve();
   });
@@ -230,5 +281,5 @@ export function stopSpeaking(): void {
  */
 export function isTTSAvailable(): boolean {
   if (typeof window === 'undefined') return false;
-  return 'speechSynthesis' in window || true; // Always true since we have backend fallback
+  return 'speechSynthesis' in window;
 }
