@@ -50,13 +50,9 @@ export default function ResultPage() {
 
   const handlePlayAgain = useCallback(() => {
     resetGame()
-    if (lastGameSource === 'math-adventure') {
-      setCurrentView('adventure')
-    } else {
-      startMathSession('free', selectedOperation, selectedDifficulty, 10)
-      setCurrentView('playing')
-    }
-  }, [resetGame, setCurrentView, startMathSession, lastGameSource, selectedOperation, selectedDifficulty])
+    // Always go to math-home which has tabs for all modes
+    setCurrentView('math-home')
+  }, [resetGame, setCurrentView])
 
   const handleGoMathHome = useCallback(() => {
     resetGame()

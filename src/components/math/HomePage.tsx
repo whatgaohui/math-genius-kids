@@ -110,16 +110,26 @@ export default function HomePage() {
   const xpInfo = getXPForNextLevel(totalXP);
   const xpPercent = Math.round(xpInfo.progress * 100);
 
-  // Check login reward on mount
+  // Check login reward on mount — delay 1.5s so user sees the page first
   useEffect(() => {
-    // Use queueMicrotask to avoid synchronous setState in effect
-    queueMicrotask(() => {
+    const timer = setTimeout(() => {
       const result = checkAndClaimLoginReward();
       if (result.isNewLogin) {
         setLoginReward(result);
       }
-    });
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
+
+  // Auto-dismiss login reward after 6 seconds
+  useEffect(() => {
+    if (loginReward?.isNewLogin) {
+      const autoDismiss = setTimeout(() => {
+        setLoginReward(null);
+      }, 6000);
+      return () => clearTimeout(autoDismiss);
+    }
+  }, [loginReward]);
 
   // Get pet abilities for display
   const unlockedAbilities = PET_ABILITIES.filter((a) => petLevel >= a.level);

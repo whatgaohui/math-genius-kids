@@ -212,7 +212,7 @@ export default function SpeedGamePlay() {
   const handleBack = () => {
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     useGameStore.getState().resetGame();
-    setCurrentView('math-speed-setup');
+    setCurrentView('math-home');
   };
 
   if (!session || !currentQuestion) {

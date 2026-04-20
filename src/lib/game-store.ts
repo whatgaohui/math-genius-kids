@@ -367,9 +367,19 @@ export const useGameStore = create<GameState & GameActions>()(
         const op = operation ?? state.selectedOperation;
         const diff = difficulty ?? state.selectedDifficulty;
 
-        // Use curriculum-aligned questions when grade/semester is set
+        // Question generation strategy:
+        // - Adventure mode: always use level-defined operation/difficulty (never curriculum)
+        // - Free/Speed mode with grade set: use curriculum-aligned questions
+        // - Free/Speed mode without grade: use operation/difficulty-based generator
         let questions: MathQuestion[];
-        if (state.selectedMathGrade > 0 && state.selectedMathSemester) {
+        const isAdventure = mode === 'adventure';
+        const gradeSet = state.selectedMathGrade > 0 && state.selectedMathSemester;
+
+        if (isAdventure) {
+          // Adventure mode always uses level-defined operation/difficulty
+          questions = generateQuestions(op, diff, count);
+        } else if (gradeSet) {
+          // Free/Speed mode: use curriculum-aligned questions when grade/semester configured
           const curriculumQuestions = generateCurriculumQuestions(
             state.selectedMathGrade as Grade,
             state.selectedMathSemester as Semester,

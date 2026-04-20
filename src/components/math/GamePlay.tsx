@@ -244,7 +244,7 @@ export default function GamePlay() {
   const handleBack = () => {
     if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     useGameStore.getState().resetGame();
-    setCurrentView(lastGameSource === 'math-adventure' ? 'math-adventure' : 'math-home');
+    setCurrentView('math-home');
   };
 
   if (!session || !currentQuestion || !display) {
