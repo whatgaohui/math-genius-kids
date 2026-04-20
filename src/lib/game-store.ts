@@ -151,6 +151,14 @@ interface GameState {
 
   // Sound
   soundEnabled: boolean;
+
+  // Curriculum settings
+  selectedMathGrade: number;    // 1-6, 0 = not set
+  selectedMathSemester: string; // '上册' | '下册' | ''
+  selectedChineseGrade: number;
+  selectedChineseSemester: string;
+  selectedEnglishGrade: number;
+  selectedEnglishSemester: string;
 }
 
 // ─── Actions ────────────────────────────────────────────────────────────────
@@ -170,6 +178,11 @@ interface GameActions {
   setSelectedDifficulty: (diff: Difficulty) => void;
   setSpeedTimeLimit: (seconds: number) => void;
   setSpeedOperation: (op: Operation) => void;
+
+  // Curriculum
+  setMathGrade: (grade: number, semester: string) => void;
+  setChineseGrade: (grade: number, semester: string) => void;
+  setEnglishGrade: (grade: number, semester: string) => void;
 
   // Adventure (math)
   setAdventureLevel: (level: number) => void;
@@ -281,6 +294,13 @@ export const useGameStore = create<GameState & GameActions>()(
 
       soundEnabled: true,
 
+      selectedMathGrade: 0,
+      selectedMathSemester: '',
+      selectedChineseGrade: 0,
+      selectedChineseSemester: '',
+      selectedEnglishGrade: 0,
+      selectedEnglishSemester: '',
+
       // ── Navigation ──
       setCurrentView: (view: string) => set({ currentView: view }),
       setCurrentSubject: (subject: Subject) => set({ currentSubject: subject }),
@@ -295,6 +315,11 @@ export const useGameStore = create<GameState & GameActions>()(
       setSelectedDifficulty: (diff: Difficulty) => set({ selectedDifficulty: diff }),
       setSpeedTimeLimit: (seconds: number) => set({ speedTimeLimit: seconds }),
       setSpeedOperation: (op: Operation) => set({ speedOperation: op }),
+
+      // ── Curriculum ──
+      setMathGrade: (grade: number, semester: string) => set({ selectedMathGrade: grade, selectedMathSemester: semester }),
+      setChineseGrade: (grade: number, semester: string) => set({ selectedChineseGrade: grade, selectedChineseSemester: semester }),
+      setEnglishGrade: (grade: number, semester: string) => set({ selectedEnglishGrade: grade, selectedEnglishSemester: semester }),
 
       // ── Adventure (Math) ──
       setAdventureLevel: (level: number) => set({ adventureLevel: level }),
@@ -872,6 +897,12 @@ export const useGameStore = create<GameState & GameActions>()(
         practiceHistory: state.practiceHistory,
         unlockedAchievements: state.unlockedAchievements,
         soundEnabled: state.soundEnabled,
+        selectedMathGrade: state.selectedMathGrade,
+        selectedMathSemester: state.selectedMathSemester,
+        selectedChineseGrade: state.selectedChineseGrade,
+        selectedChineseSemester: state.selectedChineseSemester,
+        selectedEnglishGrade: state.selectedEnglishGrade,
+        selectedEnglishSemester: state.selectedEnglishSemester,
       }),
     }
   )

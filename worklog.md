@@ -260,3 +260,51 @@ Stage Summary:
 - 语文和英语闯关模式UI/交互与数学对齐（待实现）
 - APK打包（Capacitor已配置，需next build后执行）
 - GitHub推送（token已提供）
+
+---
+Task ID: Curriculum Question Bank System
+Agent: Main
+Task: Create comprehensive curriculum-aligned question bank system for all 3 subjects (数学/语文/英语) grades 1-6, with settings page integration
+
+Work Log:
+- Searched for official Chinese Ministry of Education curriculum standards (人教版 PEP)
+- Read and analyzed existing codebase: math-utils.ts, chinese-utils.ts, english-utils.ts, game-store.ts
+- Discovered Chinese and English already have grade-based vocabulary databases (grades 1-6 each)
+- Created `/home/z/my-project/src/lib/error-book.ts` — Wrong answer tracking and review system (localStorage-based)
+- Created `/home/z/my-project/src/lib/math-curriculum.ts` — 1082 lines, 23 math curriculum topics aligned with 人教版, with constrained question generators for:
+  - No-carry addition, no-borrow subtraction (Grade 1)
+  - 9×9 multiplication/division table (Grade 2)
+  - Multi-digit multiplication/division (Grade 3-4)
+  - Four operations with parentheses (Grade 4)
+  - Decimal operations (Grade 4-5)
+  - Simple equations (Grade 5)
+  - Fraction operations (Grade 5-6)
+  - Percentage calculations (Grade 6)
+  - Negative numbers (Grade 6)
+  - Ratio/proportion (Grade 6)
+- Created `/home/z/my-project/src/lib/curriculum-config.ts` — 1403 lines, unified curriculum configuration with 126 total topics:
+  - Math: 46 topics across all grades/semesters
+  - Chinese: 42 topics (识字, 拼音, 词语, 成语, 古诗, 反义词, 近义词)
+  - English: 38 topics (vocabulary, grammar, listening, spelling, from Grade 1 optional to Grade 6 official PEP)
+- Updated `game-store.ts` with 6 new persistent state fields:
+  - selectedMathGrade/Semester, selectedChineseGrade/Semester, selectedEnglishGrade/Semester
+  - 3 new actions: setMathGrade, setChineseGrade, setEnglishGrade
+- Updated Settings page with new "📚 题库设置" section:
+  - Grade picker dialog for each subject (bottom sheet pattern)
+  - Grade 1-6 × 上册/下册 grid layout
+  - "不限" option to clear selection
+  - Color-coded subject icons (math=amber, chinese=rose, english=cyan)
+- Verified: bun run lint = 0 errors, dev server compiled successfully
+
+Stage Summary:
+- 4 new files created: error-book.ts, math-curriculum.ts, curriculum-config.ts
+- 2 files modified: game-store.ts, SettingsPage.tsx
+- 126 curriculum topics defined across 3 subjects and 12 grade-semesters
+- Grade picker UI integrated into Settings page
+- All lint clean, dev server compiling
+
+未解决问题或风险，建议下一阶段优先事项:
+- 错题本UI页面尚未创建（数据层已就绪，需要创建查看/复习UI）
+- 学科主页（MathHome/ChineseHome/EnglishHome）尚未集成年级题库选择
+- 限时挑战难度自适应尚未实现
+- 题库选择与自由练习的联动逻辑尚未打通（生成题目时读取年级设置）

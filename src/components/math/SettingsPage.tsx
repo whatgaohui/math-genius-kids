@@ -34,12 +34,14 @@ import {
   Flame,
   Sparkles,
   BookOpen,
+  GraduationCap,
   Palette,
   Shield,
   Heart,
   X,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
+import { getGradeLabel, GRADE_LABELS, GRADE_EMOJIS, type Grade, type Semester } from '@/lib/curriculum-config';
 import { usePetStore, PET_CONFIGS, getPetEmoji } from '@/lib/pet-store';
 import { getXPForNextLevel } from '@/lib/math-utils';
 import BottomNav from './BottomNav';
@@ -311,6 +313,124 @@ function AvatarPickerDialog({
   );
 }
 
+// ─── Grade Picker Dialog ─────────────────────────────────────────────────
+
+function GradePickerDialog({
+  open,
+  onClose,
+  subject,
+  currentGrade,
+  currentSemester,
+  onConfirm,
+}: {
+  open: boolean;
+  onClose: () => void;
+  subject: string;
+  currentGrade: number;
+  currentSemester: string;
+  onConfirm: (grade: number, semester: string) => void;
+}) {
+  const grades = [1, 2, 3, 4, 5, 6] as Grade[];
+  const semesters: Semester[] = ['上册', '下册'];
+
+  const handleSelect = (grade: number, semester: string) => {
+    onConfirm(grade, semester);
+    onClose();
+  };
+
+  const handleClear = () => {
+    onConfirm(0, '');
+    onClose();
+  };
+
+  const isSelected = (grade: Grade, semester: Semester) => {
+    return currentGrade === grade && currentSemester === semester;
+  };
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl safe-bottom"
+          >
+            {/* Drag handle for mobile */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
+            </div>
+            <div className="px-6 pb-6">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-gray-800">选择{subject}年级</h3>
+                <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 active:bg-gray-100 rounded-lg">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* "不限" option */}
+              <div className="mb-3">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleClear}
+                  className={`w-full flex items-center justify-center gap-2 h-11 rounded-2xl text-sm font-medium transition-all ${
+                    currentGrade === 0
+                      ? 'bg-gray-100 ring-2 ring-gray-300 text-gray-700'
+                      : 'bg-gray-50 hover:bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  <span>🌐</span>
+                  <span>不限（全部年级）</span>
+                  {currentGrade === 0 && <Check className="h-4 w-4 text-gray-500" />}
+                </motion.button>
+              </div>
+
+              {/* Grade × Semester Grid */}
+              <div className="grid grid-cols-3 gap-2.5 max-h-[60vh] overflow-y-auto">
+                {grades.map((grade) => (
+                  semesters.map((semester) => {
+                    const selected = isSelected(grade, semester);
+                    return (
+                      <motion.button
+                        key={`${grade}-${semester}`}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleSelect(grade, semester)}
+                        className={`flex flex-col items-center justify-center gap-0.5 h-auto min-h-[4.5rem] rounded-2xl px-2 py-2.5 text-center transition-all ${
+                          selected
+                            ? 'bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-400 shadow-sm'
+                            : 'bg-gray-50 hover:bg-amber-50'
+                        }`}
+                      >
+                        <span className="text-lg leading-none">{GRADE_EMOJIS[grade]}</span>
+                        <span className={`text-[11px] font-bold leading-tight ${selected ? 'text-amber-700' : 'text-gray-700'}`}>
+                          {GRADE_LABELS[grade]}
+                        </span>
+                        <span className={`text-[10px] leading-tight ${selected ? 'text-amber-600' : 'text-gray-400'}`}>
+                          {semester}
+                        </span>
+                        {selected && <Check className="h-3 w-3 text-amber-500 mt-0.5" />}
+                      </motion.button>
+                    );
+                  })
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 // ─── Main Settings Page ────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -328,8 +448,22 @@ export default function SettingsPage() {
   const petLevel = usePetStore((s) => s.petLevel);
   const coins = usePetStore((s) => s.coins);
 
+  // Curriculum settings
+  const selectedMathGrade = useGameStore((s) => s.selectedMathGrade);
+  const selectedMathSemester = useGameStore((s) => s.selectedMathSemester);
+  const selectedChineseGrade = useGameStore((s) => s.selectedChineseGrade);
+  const selectedChineseSemester = useGameStore((s) => s.selectedChineseSemester);
+  const selectedEnglishGrade = useGameStore((s) => s.selectedEnglishGrade);
+  const selectedEnglishSemester = useGameStore((s) => s.selectedEnglishSemester);
+  const setMathGrade = useGameStore((s) => s.setMathGrade);
+  const setChineseGrade = useGameStore((s) => s.setChineseGrade);
+  const setEnglishGrade = useGameStore((s) => s.setEnglishGrade);
+
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [avatarDialogOpen, setAvatarDialogOpen] = useState(false);
+  const [mathGradeDialogOpen, setMathGradeDialogOpen] = useState(false);
+  const [chineseGradeDialogOpen, setChineseGradeDialogOpen] = useState(false);
+  const [englishGradeDialogOpen, setEnglishGradeDialogOpen] = useState(false);
 
   const displayName = playerName || '小朋友';
   const xpInfo = useMemo(() => getXPForNextLevel(totalXP), [totalXP]);
@@ -559,6 +693,86 @@ export default function SettingsPage() {
           </Card>
         </motion.div>
 
+        {/* ── Question Bank Settings ── */}
+        <motion.div variants={itemVariants} className="mb-5">
+          <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2 px-1">📚 题库设置</h3>
+          <Card className="overflow-hidden border-0 py-0">
+            <CardContent className="bg-white p-2 dark:bg-gray-800/50">
+              {/* Math */}
+              <SettingRow
+                icon={<span className="text-base">🧮</span>}
+                iconBg="bg-amber-50 dark:bg-amber-900/30"
+                title="数学"
+                subtitle={selectedMathGrade
+                  ? getGradeLabel(selectedMathGrade as Grade, selectedMathSemester as Semester)
+                  : '点击选择年级和学期'
+                }
+                onClick={() => setMathGradeDialogOpen(true)}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Badge
+                    variant="secondary"
+                    className={`text-[11px] font-bold ${selectedMathGrade ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-400'}`}
+                  >
+                    {selectedMathGrade
+                      ? getGradeLabel(selectedMathGrade as Grade, selectedMathSemester as Semester)
+                      : '未设置'}
+                  </Badge>
+                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                </div>
+              </SettingRow>
+
+              {/* Chinese */}
+              <SettingRow
+                icon={<span className="text-base">📖</span>}
+                iconBg="bg-rose-50 dark:bg-rose-900/30"
+                title="语文"
+                subtitle={selectedChineseGrade
+                  ? getGradeLabel(selectedChineseGrade as Grade, selectedChineseSemester as Semester)
+                  : '点击选择年级和学期'
+                }
+                onClick={() => setChineseGradeDialogOpen(true)}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Badge
+                    variant="secondary"
+                    className={`text-[11px] font-bold ${selectedChineseGrade ? 'bg-rose-50 text-rose-700' : 'bg-gray-100 text-gray-400'}`}
+                  >
+                    {selectedChineseGrade
+                      ? getGradeLabel(selectedChineseGrade as Grade, selectedChineseSemester as Semester)
+                      : '未设置'}
+                  </Badge>
+                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                </div>
+              </SettingRow>
+
+              {/* English */}
+              <SettingRow
+                icon={<span className="text-base">🔤</span>}
+                iconBg="bg-cyan-50 dark:bg-cyan-900/30"
+                title="英语"
+                subtitle={selectedEnglishGrade
+                  ? getGradeLabel(selectedEnglishGrade as Grade, selectedEnglishSemester as Semester)
+                  : '点击选择年级和学期'
+                }
+                onClick={() => setEnglishGradeDialogOpen(true)}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Badge
+                    variant="secondary"
+                    className={`text-[11px] font-bold ${selectedEnglishGrade ? 'bg-cyan-50 text-cyan-700' : 'bg-gray-100 text-gray-400'}`}
+                  >
+                    {selectedEnglishGrade
+                      ? getGradeLabel(selectedEnglishGrade as Grade, selectedEnglishSemester as Semester)
+                      : '未设置'}
+                  </Badge>
+                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                </div>
+              </SettingRow>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* ── Danger Zone ── */}
         <motion.div variants={itemVariants} className="mb-5">
           <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2 px-1">🔒 数据管理</h3>
@@ -677,6 +891,30 @@ export default function SettingsPage() {
         open={avatarDialogOpen}
         onClose={() => setAvatarDialogOpen(false)}
         currentAvatar={playerAvatar}
+      />
+      <GradePickerDialog
+        open={mathGradeDialogOpen}
+        onClose={() => setMathGradeDialogOpen(false)}
+        subject="数学"
+        currentGrade={selectedMathGrade}
+        currentSemester={selectedMathSemester}
+        onConfirm={setMathGrade}
+      />
+      <GradePickerDialog
+        open={chineseGradeDialogOpen}
+        onClose={() => setChineseGradeDialogOpen(false)}
+        subject="语文"
+        currentGrade={selectedChineseGrade}
+        currentSemester={selectedChineseSemester}
+        onConfirm={setChineseGrade}
+      />
+      <GradePickerDialog
+        open={englishGradeDialogOpen}
+        onClose={() => setEnglishGradeDialogOpen(false)}
+        subject="英语"
+        currentGrade={selectedEnglishGrade}
+        currentSemester={selectedEnglishSemester}
+        onConfirm={setEnglishGrade}
       />
 
       <BottomNav />
