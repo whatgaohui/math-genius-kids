@@ -84,6 +84,7 @@ export default function EnglishPlay() {
   const [timeLeft, setTimeLeft] = useState(isSpeedMode ? config.speedTimeLimit : 0);
   const [showConfetti, setShowConfetti] = useState(false);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const modeConfig = getEnglishModeConfig(config.mode as EnglishMode);
   const currentQuestion = questions[currentIndex];
@@ -148,6 +149,7 @@ export default function EnglishPlay() {
   useEffect(() => {
     return () => {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
     };
   }, []);
 
@@ -187,6 +189,8 @@ export default function EnglishPlay() {
         addFloatingXP();
 
         setShowConfetti(true);
+        if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
+        confettiTimerRef.current = setTimeout(() => setShowConfetti(false), 1000);
       } else {
         if (soundEnabled) playWrongSound();
         setWrong((w) => w + 1);
@@ -195,29 +199,22 @@ export default function EnglishPlay() {
       }
 
       if (isSpeedMode) {
-        // Speed mode: different timing for correct vs wrong
+        // Speed mode: always advance to next question (racing against time)
         feedbackTimerRef.current = setTimeout(() => {
           setFeedback('idle');
           setHasAnswered(false);
-          setShowConfetti(false);
 
-          if (isCorrect) {
-            // Advance to next question immediately
-            const nextIndex = currentIndex + 1;
-            if (nextIndex >= questions.length) {
-              // Shouldn't happen with infinite generation, but handle gracefully
-              const more = generateEnglishQuestions(
-                config.mode as EnglishMode,
-                config.grade as EnglishGrade,
-                20
-              );
-              setQuestions((prev) => [...prev, ...more]);
-              setCurrentIndex(nextIndex);
-            } else {
-              setCurrentIndex(nextIndex);
-            }
+          // Always advance to next question
+          const nextIndex = currentIndex + 1;
+          if (nextIndex >= questions.length) {
+            const more = generateEnglishQuestions(
+              config.mode as EnglishMode,
+              config.grade as EnglishGrade,
+              20
+            );
+            setQuestions((prev) => [...prev, ...more]);
           }
-          // Wrong: stay on the same question, user retries
+          setCurrentIndex(nextIndex);
         }, isCorrect ? 300 : 800);
       } else {
         // Normal mode: always advance after 1.2s
@@ -428,12 +425,12 @@ export default function EnglishPlay() {
         {/* Confetti */}
         <AnimatePresence>
           {showConfetti && (
-            <div className="absolute inset-0 pointer-events-none z-50">
+            <div className="fixed inset-0 pointer-events-none z-50">
               {CONFETTI.map((p) => (
                 <motion.div
                   key={p.id}
-                  initial={{ opacity: 1, top: '40%', left: `${p.x}%`, scale: 0 }}
-                  animate={{ opacity: 0, top: '120%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
+                  initial={{ opacity: 1, top: '20%', left: `${p.x}%`, scale: 0 }}
+                  animate={{ opacity: 0, top: '110%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.8, delay: p.delay }}
                   className="absolute rounded-sm"
@@ -695,12 +692,12 @@ export default function EnglishPlay() {
       {/* Confetti for Normal Mode */}
       <AnimatePresence>
         {showConfetti && (
-          <div className="absolute inset-0 pointer-events-none z-50">
+          <div className="fixed inset-0 pointer-events-none z-50">
             {CONFETTI.map((p) => (
               <motion.div
                 key={p.id}
-                initial={{ opacity: 1, top: '40%', left: `${p.x}%`, scale: 0 }}
-                animate={{ opacity: 0, top: '120%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
+                initial={{ opacity: 1, top: '20%', left: `${p.x}%`, scale: 0 }}
+                animate={{ opacity: 0, top: '110%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8, delay: p.delay }}
                 className="absolute rounded-sm"

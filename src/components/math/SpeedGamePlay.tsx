@@ -52,6 +52,7 @@ export default function SpeedGamePlay() {
   const [gameStarted, setGameStarted] = useState(false);
   const currentCombo = session?.sessionCurrentCombo ?? 0;
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Resume audio
   useEffect(() => {
@@ -110,6 +111,7 @@ export default function SpeedGamePlay() {
   useEffect(() => {
     return () => {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
     };
   }, []);
 
@@ -140,6 +142,15 @@ export default function SpeedGamePlay() {
     setInputValue((prev) => prev.slice(0, -1));
   }, [showFeedback, isFinished]);
 
+  const handleToggleNegative = useCallback(() => {
+    if (showFeedback || isFinished || !currentQuestion) return;
+    if (currentQuestion.operation === 'compare') return;
+    setInputValue((prev) => {
+      if (prev.startsWith('-')) return prev.slice(1);
+      return '-' + prev;
+    });
+  }, [currentQuestion, showFeedback, isFinished]);
+
   const handleSubmit = useCallback((answer: number | boolean) => {
     if (!session || !currentQuestion || showFeedback || isFinished) return;
 
@@ -162,52 +173,49 @@ export default function SpeedGamePlay() {
     }
 
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
-    if (isCorrect) setShowConfetti(true);
+    if (isCorrect) {
+      setShowConfetti(true);
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
+      confettiTimerRef.current = setTimeout(() => setShowConfetti(false), 1000);
+    }
 
     feedbackTimerRef.current = setTimeout(() => {
       setShowFeedback(null);
-      setShowConfetti(false);
       setInputValue('');
 
-      if (isCorrect) {
-        // IMPORTANT: Use getState() to get the latest session state, not the stale closure.
-        // answerQuestion() has already updated sessionCorrect/sessionWrong synchronously,
-        // but the closure's `session` still holds pre-answer values.
-        const latestSession = useGameStore.getState().session;
-        if (!latestSession) return;
+      // Always advance to next question in speed mode (racing against time)
+      const latestSession = useGameStore.getState().session;
+      if (!latestSession) return;
 
-        // Move to next question
-        const nextIndex = latestSession.currentQuestionIndex + 1;
-        if (nextIndex < latestSession.questions.length) {
-          useGameStore.setState({
-            session: {
-              ...latestSession,
-              currentQuestionIndex: nextIndex,
-              questionStartTime: Date.now(),
-            },
-          });
-        } else {
-          // All questions exhausted - regenerate more (use curriculum if configured)
-          const newQuestions = [...(latestSession.questions as MathQuestion[])];
-          let more: MathQuestion[];
-          const mathGrade = useGameStore.getState().selectedMathGrade;
-          const mathSemester = useGameStore.getState().selectedMathSemester;
-          if (mathGrade > 0 && mathSemester) {
-            const curriculumMore = generateCurriculumQuestions(mathGrade as Grade, mathSemester as Semester, 20);
-            more = curriculumMore.length > 0 ? curriculumMore : generateQuestions(speedOperation, 'easy', 20);
-          } else {
-            more = generateQuestions(speedOperation, 'easy', 20);
-          }
-          const updatedSession = {
+      const nextIndex = latestSession.currentQuestionIndex + 1;
+      if (nextIndex < latestSession.questions.length) {
+        useGameStore.setState({
+          session: {
             ...latestSession,
-            questions: [...newQuestions, ...more],
             currentQuestionIndex: nextIndex,
             questionStartTime: Date.now(),
-          };
-          useGameStore.setState({ session: updatedSession });
+          },
+        });
+      } else {
+        // All questions exhausted - regenerate more (use curriculum if configured)
+        const newQuestions = [...(latestSession.questions as MathQuestion[])];
+        let more: MathQuestion[];
+        const mathGrade = useGameStore.getState().selectedMathGrade;
+        const mathSemester = useGameStore.getState().selectedMathSemester;
+        if (mathGrade > 0 && mathSemester) {
+          const curriculumMore = generateCurriculumQuestions(mathGrade as Grade, mathSemester as Semester, 20);
+          more = curriculumMore.length > 0 ? curriculumMore : generateQuestions(speedOperation, 'easy', 20);
+        } else {
+          more = generateQuestions(speedOperation, 'easy', 20);
         }
+        const updatedSession = {
+          ...latestSession,
+          questions: [...newQuestions, ...more],
+          currentQuestionIndex: nextIndex,
+          questionStartTime: Date.now(),
+        };
+        useGameStore.setState({ session: updatedSession });
       }
-      // Wrong answers: user stays on the same question
     }, isCorrect ? 300 : 800);
   }, [session, currentQuestion, showFeedback, isFinished, soundEnabled, answerQuestion, speedOperation]);
 
@@ -254,16 +262,16 @@ export default function SpeedGamePlay() {
   const isUrgent = timeLeft <= 10;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white flex flex-col relative overflow-x-hidden">
       {/* Confetti */}
       <AnimatePresence>
         {showConfetti && (
-          <div className="absolute inset-0 pointer-events-none z-50">
+          <div className="fixed inset-0 pointer-events-none z-50">
             {CONFETTI.map((p) => (
               <motion.div
                 key={p.id}
-                initial={{ opacity: 1, top: '40%', left: `${p.x}%`, scale: 0 }}
-                animate={{ opacity: 0, top: '120%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
+                initial={{ opacity: 1, top: '20%', left: `${p.x}%`, scale: 0 }}
+                animate={{ opacity: 0, top: '110%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8, delay: p.delay }}
                 className="absolute rounded-sm"
@@ -284,9 +292,15 @@ export default function SpeedGamePlay() {
             <ArrowLeft className="w-4 h-4" />
             退出
           </button>
-          <div className="flex items-center gap-1">
-            <Trophy className="w-4 h-4" />
-            <span className="text-sm font-bold">{session.sessionCorrect} 题</span>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1">
+              <Trophy className="w-4 h-4" />
+              <span className="text-sm font-bold">{session.sessionCorrect} 题</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-emerald-200 font-semibold">✓ {session.sessionCorrect}</span>
+              <span className="text-red-200 font-semibold">✗ {session.sessionWrong}</span>
+            </div>
           </div>
         </div>
 
@@ -458,6 +472,8 @@ export default function SpeedGamePlay() {
                   {num}
                 </button>
               ))}
+            </div>
+            <div className="grid grid-cols-4 gap-2 mt-2">
               <button
                 onClick={handleDelete}
                 disabled={!!showFeedback || isFinished}
@@ -471,6 +487,13 @@ export default function SpeedGamePlay() {
                 className="h-14 rounded-xl bg-white border-2 border-gray-200 text-gray-800 font-bold text-xl shadow-sm hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50"
               >
                 0
+              </button>
+              <button
+                onClick={handleToggleNegative}
+                disabled={!!showFeedback || isFinished}
+                className="h-14 rounded-xl bg-indigo-50 border-2 border-indigo-200 text-indigo-600 font-bold text-lg shadow-sm hover:bg-indigo-100 transition-all active:scale-95 disabled:opacity-50"
+              >
+                ±
               </button>
               <button
                 onClick={handleNumericSubmit}

@@ -1044,3 +1044,38 @@ Stage Summary:
 - 1 file updated: QA-CHECKLIST.md
 - All 12 QA issues now resolved ✅
 - Three-subject consistency fully achieved across all checklist items
+---
+Task ID: Fix 5 Speed Mode Issues
+Agent: Main
+Task: Fix 5 reported bugs in speed challenge mode across all subjects
+
+Work Log:
+- Analyzed 5 reported issues and identified root causes in 4 files
+- Fixed SpeedGamePlay.tsx (数学限时挑战):
+  1. Wrong answers now advance to next question instead of staying stuck (removed "retry" behavior)
+  2. Added ± (negative sign toggle) button to number pad with 4-column bottom row layout
+  3. Added ✓ {correct} and ✗ {wrong} display in top bar (matching English speed UI)
+  4. Changed confetti container from `absolute inset-0` to `fixed inset-0` to prevent overflow clipping
+  5. Changed overflow-hidden to overflow-x-hidden on root container
+  6. Separated confetti timer (1000ms) from feedback timer (300/800ms) for full animation
+- Fixed ChinesePlay.tsx (语文限时挑战):
+  1. Wrong answers now advance to next question (same as math fix)
+  2. Confetti container changed to `fixed inset-0`
+  3. Separated confetti timer for full animation
+- Fixed EnglishPlay.tsx (英语限时挑战):
+  1. Wrong answers now advance to next question (consistency fix)
+  2. Confetti containers (both speed and normal mode) changed to `fixed inset-0`
+  3. Separated confetti timer for full animation
+- Fixed GamePlay.tsx (数学自由练习/闯关):
+  1. Added ± (negative sign toggle) button to number pad
+  2. Confetti container changed to `fixed inset-0`
+
+Stage Summary:
+- 4 files modified: SpeedGamePlay.tsx, ChinesePlay.tsx, EnglishPlay.tsx, GamePlay.tsx
+- Issue 1 ✅: Math speed mode wrong answers now skip to next question
+- Issue 2 ✅: Negative sign (±) button added to math number pads (speed + free mode)
+- Issue 3 ✅: Chinese speed mode wrong answers now skip to next question
+- Issue 4 ✅: Math speed top bar now shows ✓ correct and ✗ wrong counts (matching English)
+- Issue 5 ✅: Confetti uses `fixed` positioning + separate 1s timer for full animation display
+- English speed mode also updated for consistency (wrong → advance)
+- bun run lint: 0 errors, dev server compiled OK

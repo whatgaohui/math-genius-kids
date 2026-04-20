@@ -186,6 +186,15 @@ export default function GamePlay() {
     setInputValue((prev) => prev.slice(0, -1));
   }, [showFeedback]);
 
+  const handleToggleNegative = useCallback(() => {
+    if (showFeedback || !currentQuestion) return;
+    if (currentQuestion.operation === 'compare') return;
+    setInputValue((prev) => {
+      if (prev.startsWith('-')) return prev.slice(1);
+      return '-' + prev;
+    });
+  }, [currentQuestion, showFeedback]);
+
   const handleSubmitAnswer = useCallback((answer: number | boolean) => {
     if (!session || !currentQuestion || showFeedback) return;
 
@@ -210,8 +219,10 @@ export default function GamePlay() {
     }
 
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
-    if (isCorrect) setShowConfetti(true);
-    if (isCorrect) addFloatingXP();
+    if (isCorrect) {
+      setShowConfetti(true);
+      addFloatingXP();
+    }
 
     feedbackTimerRef.current = setTimeout(() => {
       setShowFeedback(null);
@@ -273,19 +284,19 @@ export default function GamePlay() {
       {/* Confetti */}
       <AnimatePresence>
         {showConfetti && (
-          <div className="absolute inset-0 pointer-events-none z-50">
+          <div className="fixed inset-0 pointer-events-none z-50">
             {CONFETTI_PARTICLES.map((p) => (
               <motion.div
                 key={p.id}
                 initial={{
                   opacity: 1,
-                  top: '40%',
+                  top: '20%',
                   left: `${p.x}%`,
                   scale: 0,
                 }}
                 animate={{
                   opacity: 0,
-                  top: '120%',
+                  top: '110%',
                   left: `${p.x + (Math.random() - 0.5) * 30}%`,
                   scale: 1,
                 }}
@@ -472,8 +483,17 @@ export default function GamePlay() {
                   onClick={() => handleNumPress(String(num))}
                 />
               ))}
+            </div>
+            <div className="grid grid-cols-4 gap-2 mt-2">
               <NumPadButton label="" onClick={handleDelete} variant="delete" />
               <NumPadButton label="0" onClick={() => handleNumPress('0')} />
+              <button
+                onClick={handleToggleNegative}
+                disabled={!!showFeedback}
+                className="h-14 rounded-xl bg-indigo-50 border-2 border-indigo-200 text-indigo-600 font-bold text-lg flex items-center justify-center transition-all active:scale-95 select-none disabled:opacity-50"
+              >
+                ±
+              </button>
               <NumPadButton
                 label="✓"
                 onClick={handleNumericSubmit}

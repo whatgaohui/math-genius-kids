@@ -85,6 +85,7 @@ export default function ChinesePlay() {
   const [timeLeft, setTimeLeft] = useState(isSpeedMode ? config.speedTimeLimit : 0);
   const [showConfetti, setShowConfetti] = useState(false);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const modeConfig = MODE_CONFIG[config.mode as ChineseMode];
   const currentQuestion = questions[currentIndex];
@@ -172,6 +173,8 @@ export default function ChinesePlay() {
         setFeedback('correct');
         addFloatingXP();
         setShowConfetti(true);
+        if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
+        confettiTimerRef.current = setTimeout(() => setShowConfetti(false), 1000);
       } else {
         if (soundEnabled) playWrongSound();
         setWrong((w) => w + 1);
@@ -180,19 +183,12 @@ export default function ChinesePlay() {
       }
 
       if (isSpeedMode) {
-        // Speed mode: fast advance on correct, retry on wrong
+        // Speed mode: always advance to next question (racing against time)
         feedbackTimerRef.current = setTimeout(() => {
-          setShowConfetti(false);
-          if (isCorrect) {
-            // Advance to next question immediately
-            setCurrentIndex((prev) => prev + 1);
-            setFeedback('idle');
-            setHasAnswered(false);
-          } else {
-            // Stay on same question — clear feedback so user can retry
-            setFeedback('idle');
-            setHasAnswered(false);
-          }
+          // Advance to next question always
+          setCurrentIndex((prev) => prev + 1);
+          setFeedback('idle');
+          setHasAnswered(false);
         }, isCorrect ? 300 : 800);
       } else {
         // Normal mode: fixed delay then advance
@@ -246,6 +242,7 @@ export default function ChinesePlay() {
   useEffect(() => {
     return () => {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
     };
   }, []);
 
@@ -415,12 +412,12 @@ export default function ChinesePlay() {
       {/* Confetti */}
       <AnimatePresence>
         {showConfetti && (
-          <div className="absolute inset-0 pointer-events-none z-50">
+          <div className="fixed inset-0 pointer-events-none z-50">
             {CONFETTI.map((p) => (
               <motion.div
                 key={p.id}
-                initial={{ opacity: 1, top: '40%', left: `${p.x}%`, scale: 0 }}
-                animate={{ opacity: 0, top: '120%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
+                initial={{ opacity: 1, top: '20%', left: `${p.x}%`, scale: 0 }}
+                animate={{ opacity: 0, top: '110%', left: `${p.x + (Math.random() - 0.5) * 20}%`, scale: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8, delay: p.delay }}
                 className="absolute rounded-sm"
