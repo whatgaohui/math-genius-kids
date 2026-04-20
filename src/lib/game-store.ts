@@ -7,6 +7,7 @@ import type { MathQuestion, Operation, Difficulty } from './math-utils';
 import type { ChineseQuestion, ChineseMode } from './chinese-utils';
 import type { EnglishQuestion, EnglishMode } from './english-utils';
 import { generateQuestions, calculateStars, calculateXP, calculateLevel } from './math-utils';
+import { generateCurriculumQuestions, type Grade, type Semester } from './math-curriculum';
 import { computeUnlockedAchievements } from './achievements';
 import type { PracticeRecordSummary } from './achievements';
 import { usePetStore, type PracticeReward, getCoinBonusPercent, getCriticalHitChance, getPetTalent } from './pet-store';
@@ -366,7 +367,19 @@ export const useGameStore = create<GameState & GameActions>()(
         const op = operation ?? state.selectedOperation;
         const diff = difficulty ?? state.selectedDifficulty;
 
-        const questions = generateQuestions(op, diff, count);
+        // Use curriculum-aligned questions when grade/semester is set
+        let questions: MathQuestion[];
+        if (state.selectedMathGrade > 0 && state.selectedMathSemester) {
+          const curriculumQuestions = generateCurriculumQuestions(
+            state.selectedMathGrade as Grade,
+            state.selectedMathSemester as Semester,
+            count
+          );
+          // Fall back to standard generator if curriculum returned nothing
+          questions = curriculumQuestions.length > 0 ? curriculumQuestions : generateQuestions(op, diff, count);
+        } else {
+          questions = generateQuestions(op, diff, count);
+        }
 
         const session: GameSessionState = {
           questions,

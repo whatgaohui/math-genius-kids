@@ -16,6 +16,7 @@ import {
 import { useGameStore } from '@/lib/game-store';
 import { playCorrectSound, playWrongSound, resumeAudioContext } from '@/lib/sound';
 import { generateQuestions } from '@/lib/math-utils';
+import { generateCurriculumQuestions, type Grade, type Semester } from '@/lib/math-curriculum';
 import type { MathQuestion } from '@/lib/math-utils';
 
 // ─── Confetti Particles ─────────────────────────────────────────────────────
@@ -173,10 +174,17 @@ export default function SpeedGamePlay() {
             },
           });
         } else {
-          // All questions exhausted - regenerate more
+          // All questions exhausted - regenerate more (use curriculum if configured)
           const newQuestions = [...(session.questions as MathQuestion[])];
-          // Generate more if needed
-          const more = generateQuestions(speedOperation, 'easy', 20);
+          let more: MathQuestion[];
+          const mathGrade = useGameStore.getState().selectedMathGrade;
+          const mathSemester = useGameStore.getState().selectedMathSemester;
+          if (mathGrade > 0 && mathSemester) {
+            const curriculumMore = generateCurriculumQuestions(mathGrade as Grade, mathSemester as Semester, 20);
+            more = curriculumMore.length > 0 ? curriculumMore : generateQuestions(speedOperation, 'easy', 20);
+          } else {
+            more = generateQuestions(speedOperation, 'easy', 20);
+          }
           const updatedSession = {
             ...session,
             questions: [...newQuestions, ...more],

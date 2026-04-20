@@ -11,7 +11,10 @@ export type ChineseMode =
   | 'idiom-fill'
   | 'antonym'
   | 'poetry-fill'
-  | 'synonym';
+  | 'synonym'
+  | 'sentence-fill'
+  | 'sentence-rearrange'
+  | 'reading-comp';
 
 export type ChineseGrade = 1 | 2 | 3 | 4 | 5 | 6;
 
@@ -91,6 +94,27 @@ export const MODE_CONFIG: Record<ChineseMode, ChineseModeConfig> = {
     name: '近义词连连看',
     description: '找出意思相近的词语！',
     minGrade: 4,
+  },
+  'sentence-fill': {
+    mode: 'sentence-fill',
+    emoji: '📝',
+    name: '句子填空',
+    description: '在句子中填入正确的词语！',
+    minGrade: 3,
+  },
+  'sentence-rearrange': {
+    mode: 'sentence-rearrange',
+    emoji: '🔧',
+    name: '句子排列',
+    description: '把打乱的词语排成通顺的句子！',
+    minGrade: 5,
+  },
+  'reading-comp': {
+    mode: 'reading-comp',
+    emoji: '📖',
+    name: '阅读理解',
+    description: '读短文，回答问题！',
+    minGrade: 5,
   },
 };
 
@@ -870,6 +894,193 @@ const PROVERB_ENTRIES: ProverbEntry[] = [
   { proverb: '少壮不努力，老大徒伤悲', meaning: 'work hard while young', firstHalf: '少壮不努力', secondHalf: '老大徒伤悲' },
   { proverb: '学而不思则罔，思而不学则殆', meaning: 'learning without thinking is useless', firstHalf: '学而不思则罔', secondHalf: '思而不学则殆' },
   { proverb: '己所不欲，勿施于人', meaning: 'do not do to others what you wouldn\'t want done to you', firstHalf: '己所不欲', secondHalf: '勿施于人' },
+];
+
+// ── Sentence Fill (句子填空) for grades 3+ ──────────────────────────────────
+interface SentenceFillEntry {
+  sentence: string;
+  correctAnswer: string;
+  distractors: string[];
+}
+
+const SENTENCE_FILL_ENTRIES: Record<string, SentenceFillEntry[]> = {
+  '3': [
+    { sentence: '小明每天___学校上课。', correctAnswer: '去', distractors: '走/来/在'.split('/') },
+    { sentence: '春天来了，公园里的花都___了。', correctAnswer: '开', distractors: '落/谢/长'.split('/') },
+    { sentence: '妈妈给我买了一个新___。', correctAnswer: '书包', distractors: '铅笔/本子/玩具'.split('/') },
+    { sentence: '小鸟在树上开心地___。', correctAnswer: '唱歌', distractors: '跳舞/睡觉/吃饭'.split('/') },
+    { sentence: '老师让我们认真___课文。', correctAnswer: '朗读', distractors: '默写/抄写/背诵'.split('/') },
+    { sentence: '我最___的水果是苹果。', correctAnswer: '喜欢', distractors: '讨厌/害怕/忘记'.split('/') },
+    { sentence: '下雨了，同学们都打着___回家。', correctAnswer: '伞', distractors: '灯/扇/帽'.split('/') },
+    { sentence: '爷爷每天早上都去公园___。', correctAnswer: '散步', distractors: '跑步/跳舞/睡觉'.split('/') },
+    { sentence: '太阳___起来了，天亮了。', correctAnswer: '升', distractors: '落/下/出'.split('/') },
+    { sentence: '我们班的同学都很___。', correctAnswer: '团结', distractors: '骄傲/懒惰'.split('/') },
+    { sentence: '这道题很难，但我还是___出来了。', correctAnswer: '想', distractors: '猜/做/写'.split('/') },
+    { sentence: '秋天到了，树叶渐渐___了。', correctAnswer: '黄', distractors: '绿/红/蓝'.split('/') },
+    { sentence: '爸爸___我骑车要注意安全。', correctAnswer: '教', distractors: '让/帮/带'.split('/') },
+    { sentence: '小红是一位___的好学生。', correctAnswer: '优秀', distractors: '调皮/懒惰'.split('/') },
+    { sentence: '春天，小河里的冰都___了。', correctAnswer: '化', distractors: '结/冻/破'.split('/') },
+  ],
+  '4': [
+    { sentence: '我们要___时间，努力学习。', correctAnswer: '珍惜', distractors: '浪费/忘记/利用'.split('/') },
+    { sentence: '他___帮助别人，老师表扬了他。', correctAnswer: '经常', distractors: '偶尔/很少/从不'.split('/') },
+    { sentence: '保护环境，人人有___。', correctAnswer: '责', distractors: '权/利/力'.split('/') },
+    { sentence: '这道题的答案很___，我一下子就想到了。', correctAnswer: '简单', distractors: '困难/复杂/奇怪'.split('/') },
+    { sentence: '我们不能___别人的劳动成果。', correctAnswer: '抄袭', distractors: '学习/参考/借鉴'.split('/') },
+    { sentence: '他做事很___，从不马虎。', correctAnswer: '仔细', distractors: '粗心/随便/着急'.split('/') },
+    { sentence: '比赛前，大家都很___。', correctAnswer: '紧张', distractors: '放松/开心/无聊'.split('/') },
+    { sentence: '___的书读得越多，知识越丰富。', correctAnswer: '课外', distractors: '课内/课本/课堂'.split('/') },
+    { sentence: '考试的时候一定要___读题。', correctAnswer: '认真', distractors: '快速/马虎/粗心'.split('/') },
+    { sentence: '同学之间要互相___。', correctAnswer: '帮助', distractors: '嘲笑/欺负忽视'.split('/') },
+    { sentence: '经过___的训练，他终于成功了。', correctAnswer: '长期', distractors: '短期/偶尔/轻松'.split('/') },
+    { sentence: '教室里很___，大家都在自习。', correctAnswer: '安静', distractors: '热闹/嘈杂/混乱'.split('/') },
+    { sentence: '小红___把借来的书还给了我。', correctAnswer: '主动', distractors: '被动/勉强/忘记'.split('/') },
+    { sentence: '我们要做一个___的人。', correctAnswer: '诚实', distractors: '撒谎/骄傲'.split('/') },
+    { sentence: '这道题比想象中___得多。', correctAnswer: '难', distractors: '容易/简单/无聊'.split('/') },
+    { sentence: '___的风吹过，树叶沙沙作响。', correctAnswer: '一阵', distractors: '一丝/一场/一道'.split('/') },
+  ],
+  '5': [
+    { sentence: '他___用自己的实际行动证明了一切。', correctAnswer: '用', distractors: '靠/拿/以'.split('/') },
+    { sentence: '这篇文章的描写非常___，像一幅画。', correctAnswer: '生动', distractors: '平淡/枯燥/简单'.split('/') },
+    { sentence: '我们应该___优秀的传统文化。', correctAnswer: '传承', distractors: '丢弃/忘记/忽略'.split('/') },
+    { sentence: '面对困难，我们要有___的精神。', correctAnswer: '不屈不挠', distractors: '胆小怕事/优柔寡断'.split('/') },
+    { sentence: '他的___让我十分佩服。', correctAnswer: '才华', distractors: '懒惰/骄傲/粗心'.split('/') },
+    { sentence: '通过这次实验，我___到了很多知识。', correctAnswer: '领悟', distractors: '忘记/忽略/错过'.split('/') },
+    { sentence: '老师的___让我受益匪浅。', correctAnswer: '教诲', distractors: '批评/忽略/指责'.split('/') },
+    { sentence: '夕阳西下，天边的云彩十分___。', correctAnswer: '绚丽', distractors: '暗淡/单调/灰暗'.split('/') },
+    { sentence: '他___地表达了自己的观点。', correctAnswer: '清晰', distractors: '模糊/混乱/啰嗦'.split('/') },
+    { sentence: '这篇文章的___手法很高明。', correctAnswer: '修辞', distractors: '语法/逻辑/标点'.split('/') },
+    { sentence: '博物馆里陈列着许多___的文物。', correctAnswer: '珍贵', distractors: '普通/廉价/常见'.split('/') },
+    { sentence: '我们必须___地完成这项任务。', correctAnswer: '认真', distractors: '马虎/敷衍/随便'.split('/') },
+    { sentence: '大海___无边，令人心生敬畏。', correctAnswer: '浩瀚', distractors: '狭窄/浅薄/平静'.split('/') },
+    { sentence: '他对科学的___精神值得学习。', correctAnswer: '探索', distractors: '放弃/忽略/逃避'.split('/') },
+    { sentence: '这篇作文的___十分优美。', correctAnswer: '语言', distractors: '标点/格式/字迹'.split('/') },
+  ],
+  '6': [
+    { sentence: '这位英雄的___精神永远激励着我们。', correctAnswer: '不屈不挠', distractors: '优柔寡断/胆小怕事'.split('/') },
+    { sentence: '面对___的命运，他选择了坚持。', correctAnswer: '坎坷', distractors: '平坦/顺利/简单'.split('/') },
+    { sentence: '这首诗的意境___，令人回味无穷。', correctAnswer: '深远', distractors: '浅薄/简单/枯燥'.split('/') },
+    { sentence: '他___地面对困难，从不退缩。', correctAnswer: '坦然', distractors: '害怕/逃避/慌张'.split('/') },
+    { sentence: '___的星空下，我们围着篝火讲故事。', correctAnswer: '璀璨', distractors: '暗淡/灰暗/单调'.split('/') },
+    { sentence: '母亲的___让我释然了。', correctAnswer: '安慰', distractors: '批评/指责/嘲笑'.split('/') },
+    { sentence: '他经过反复___，终于找到了答案。', correctAnswer: '思考', distractors: '猜测/放弃/忽略'.split('/') },
+    { sentence: '这份___的友谊持续了三十年。', correctAnswer: '珍贵', distractors: '普通/虚假/短暂'.split('/') },
+    { sentence: '老舍先生的语言风格___而幽默。', correctAnswer: '朴实', distractors: '华丽/空洞/做作'.split('/') },
+    { sentence: '我们必须___地面对自己的错误。', correctAnswer: '坦然', distractors: '逃避/否认掩饰'.split('/') },
+    { sentence: '这座古桥的建筑风格十分___。', correctAnswer: '独特', distractors: '普通/常见/平淡'.split('/') },
+    { sentence: '他___的性格赢得了大家的尊重。', correctAnswer: '正直', distractors: '狡猾/懦弱'.split('/') },
+    { sentence: '夕阳余晖洒在___的水面上。', correctAnswer: '清澈', distractors: '浑浊/汹涌/平静'.split('/') },
+    { sentence: '这个故事___地反映了社会现实。 correctAnswer: '深刻', distractors: '肤浅/平淡/无聊'.split('/') },
+  ],
+};
+
+// ── Sentence Rearrange (句子排列) for grades 5+ ───────────────────────────
+interface SentenceRearrangeEntry {
+  words: string[];
+  correctAnswer: string;
+  distractors: string[];
+}
+
+const SENTENCE_REARRANGE_ENTRIES: SentenceRearrangeEntry[] = [
+  { words: ['春天', '到了', '花儿', '开了', '。'], correctAnswer: '春天到了，花儿开了。', distractors: ['花儿开了，春天到了。', '到了春天，花儿开了。'] },
+  { words: ['我', '是', '一名', '小学', '生', '。'], correctAnswer: '我是一名小学生。', distractors: ['一名我是小学生。', '我是小学生一名。'] },
+  { words: ['妈妈', '做的', '饭菜', '真', '好吃', '！'], correctAnswer: '妈妈做的饭菜真好吃！', distractors: ['做的饭菜妈妈真好吃！', '饭菜做的真好吃妈妈！'] },
+  { words: ['我们', '应该', '保护', '环境', '。'], correctAnswer: '我们应该保护环境。', distractors: ['保护我们应该环境。', '环境我们应该保护。'] },
+  { words: ['昨天', '下午', '我', '去', '了', '图书馆', '。'], correctAnswer: '昨天下午我去了图书馆。', distractors: ['我昨天下午去了图书馆。', '下午我昨天去了图书馆。'] },
+  { words: ['他', '每天', '早上', '都', '跑步', '。'], correctAnswer: '他每天早上都跑步。', distractors: ['每天他早上都跑步。', '早上他每天跑步。'] },
+  { words: ['这道', '数学题', '其实', '并不', '难', '。'], correctAnswer: '这道数学题其实并不难。', distractors: ['数学题这道并不难。', '其实这道题并不难。'] },
+  { words: ['老师', '耐心地', '解答了', '我们的', '问题', '。'], correctAnswer: '老师耐心地解答了我们的问题。', distractors: ['耐心地老师解答了问题。', '解答了老师耐心地问题。'] },
+  { words: ['秋天', '的', '校园', '里', '落叶', '纷飞', '。'], correctAnswer: '秋天的校园里落叶纷飞。', distractors: ['校园里的秋天落叶纷飞。', '秋天校园里落叶纷飞。'] },
+  { words: ['经过', '努力', '他', '终于', '成功', '了', '。'], correctAnswer: '经过努力他终于成功了。', distractors: ['他经过努力终于成功了。', '努力他终于成功了。'] },
+  { words: ['阅读', '可以', '让我们', '打开', '视野', '。'], correctAnswer: '阅读可以让我们打开视野。', distractors: ['让我们阅读可以打开视野。', '可以让我们阅读打开视野。'] },
+  { words: ['这本书', '告诉', '我们', '许多', '道理', '。'], correctAnswer: '这本书告诉我们许多道理。', distractors: ['我们这本书告诉许多道理。', '告诉我们这本书许多道理。'] },
+  { words: ['科学', '是', '一把', '打开', '未知', '的', '钥匙', '。'], correctAnswer: '科学是一把打开未知的钥匙。', distractors: ['一把科学是打开未知的钥匙。', '打开未知科学是一把钥匙。'] },
+  { words: ['风雨', '过后', '天空', '出现', '了', '彩虹', '。'], correctAnswer: '风雨过后天空出现了彩虹。', distractors: ['天空风雨过后出现彩虹。', '过后天空出现彩虹了。'] },
+  { words: ['她', '用', '自己', '的', '行动', '证明', '了', '一切', '。'], correctAnswer: '她用自己的行动证明了一切。', distractors: ['用自己的行动她证明了一切。', '她用行动证明了一切。'] },
+  { words: ['这篇', '文章', '描写', '得', '非常', '生动', '。'], correctAnswer: '这篇文章描写得非常生动。', distractors: ['文章描写得非常生动。', '描写这篇文章非常生动。'] },
+];
+
+// ── Reading Comprehension (阅读理解) for grades 5+ ───────────────────────────
+interface ReadingCompEntry {
+  passage: string;
+  question: string;
+  correctAnswer: string;
+  distractors: string[];
+}
+
+const READING_COMP_ENTRIES: ReadingCompEntry[] = [
+  {
+    passage: '蚂蚁们搬运食物时，如果遇到一条河，它们会互相抱在一起变成一个球滚过去。',
+    question: '蚂蚁过河时会变成什么形状？',
+    correctAnswer: '球',
+    distractors: ['方形', '三角形', '长条形'],
+  },
+  {
+    passage: '小猫看见河边有一条鱼，它伸出手去抓，结果扑了个空。',
+    question: '小猫抓到鱼了吗？',
+    correctAnswer: '没有',
+    distractors: ['抓到了', '抓了一条', '抓了很多'],
+  },
+  {
+    passage: '公鸡每天天亮前就会打鸣，提醒人们该起床了。',
+    question: '公鸡在什么时候打鸣？',
+    correctAnswer: '天亮前',
+    distractors: ['中午', '半夜', '傍晚'],
+  },
+  {
+    passage: '乌鸦口渴了，到处找水喝。它看到一个瓶子里有水，但瓶口太小，喝不到。',
+    question: '乌鸦为什么喝不到瓶子里的水？',
+    correctAnswer: '瓶口太小',
+    distractors: ['水太少', '瓶子太高', '水太脏'],
+  },
+  {
+    passage: '春蚕到死丝方尽，蜡炬成灰泪始干。',
+    question: '这首诗表达了什么情感？',
+    correctAnswer: '无私奉献',
+    distractors: ['悲伤痛苦', '欢快喜悦', '思念家乡'],
+  },
+  {
+    passage: '月光透过竹林洒在地上，像铺了一层银霜。',
+    question: '月光像什么？',
+    correctAnswer: '银霜',
+    distractors: ['金子', '白雪', '宝石'],
+  },
+  {
+    passage: '青蛙坐井观天，以为天只有井口那么大。',
+    question: '"坐井观天"比喻什么？',
+    correctAnswer: '目光短浅',
+    distractors: ['眼高手低', '聪明伶俐', '活泼可爱'],
+  },
+  {
+    passage: '滴水穿石，不是力量大，而是功夫深。',
+    question: '"滴水穿石"告诉我们要坚持什么？',
+    correctAnswer: '持之以恒',
+    distractors: ['半途而废', '急于求成', '三天打鱼两天晒网'],
+  },
+  {
+    passage: '三个人行，必有我师焉。择其善者而从之，其不善者而改之。',
+    question: '这句话告诉我们要怎么做？',
+    correctAnswer: '学习别人长处',
+    distractors: ['只看自己', '不听别人', '独自学习'],
+  },
+  {
+    passage: '老吾老以及人之老，幼吾幼以及人之幼。',
+    question: '这句话体现了什么思想？',
+    correctAnswer: '尊老爱幼',
+    distractors: ['勤俭节约', '团结友爱', '诚实守信'],
+  },
+  {
+    passage: '一寸光阴一寸金，寸金难买寸光阴。',
+    question: '这句话告诉我们要珍惜什么？',
+    correctAnswer: '时间',
+    distractors: ['金钱', '健康', '友谊'],
+  },
+  {
+    passage: '读书破万卷，下笔如有神。',
+    question: '这句话强调了什么的重要性？',
+    correctAnswer: '多读书',
+    distractors: ['多写字', '多运动', '多睡觉'],
+  },
 ];
 
 // ── Similar Character Groups (for smart distractors) ───────────────────────

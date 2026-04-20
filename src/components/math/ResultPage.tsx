@@ -40,7 +40,7 @@ export default function ResultPage() {
   const questions = session?.questions ?? []
 
   const accuracy = resultTotal > 0 ? resultCorrect / resultTotal : 0
-  const encouragement = getEncouragement(accuracy)
+  const encouragement = getEncouragement(Math.round(accuracy * 100))
 
   const answeredQuestions = questions.filter((q: any) => q.userAnswer !== undefined)
   const avgTimeMs = answeredQuestions.length > 0
