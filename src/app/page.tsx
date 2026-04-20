@@ -23,6 +23,7 @@ const ChinesePlay = dynamic(() => import('@/components/chinese/ChinesePlay'), { 
 const EnglishHome = dynamic(() => import('@/components/english/EnglishHome'), { ssr: false })
 const EnglishPlay = dynamic(() => import('@/components/english/EnglishPlay'), { ssr: false })
 const CurriculumTestTool = dynamic(() => import('@/components/math/CurriculumTestTool'), { ssr: false })
+const QuestionBankManager = dynamic(() => import('@/components/question-bank/QuestionBankManager'), { ssr: false })
 
 // ─── View Router ────────────────────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ const viewComponents: Record<string, React.ComponentType> = {
   'english-home': EnglishHome,
   'english-play': EnglishPlay,
   'curriculum-test': CurriculumTestTool,
+  'question-bank-manager': QuestionBankManager,
 }
 
 export default function Home() {

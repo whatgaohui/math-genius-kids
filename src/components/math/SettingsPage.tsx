@@ -725,6 +725,29 @@ export default function SettingsPage() {
           </Card>
         </motion.div>
 
+        {/* ── Question Bank Manager ── */}
+        <motion.div variants={itemVariants} className="mb-5">
+          <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2 px-1">📦 扩展管理</h3>
+          <Card className="overflow-hidden border-0 py-0">
+            <CardContent className="bg-white p-2 dark:bg-gray-800/50">
+              <SettingRow
+                icon={<span className="text-base">📦</span>}
+                iconBg="bg-violet-50 dark:bg-violet-900/30"
+                title="题库管理"
+                subtitle="导入、管理和导出自定义题库"
+                onClick={() => useGameStore.getState().setCurrentView('question-bank-manager')}
+              >
+                <div className="flex items-center gap-1.5">
+                  <Badge variant="secondary" className="bg-violet-50 text-violet-700 text-[11px] font-bold">
+                    3科
+                  </Badge>
+                  <ChevronRight className="h-4 w-4 text-gray-300" />
+                </div>
+              </SettingRow>
+            </CardContent>
+          </Card>
+        </motion.div>
+
         {/* ── Question Bank Test ── */}
         <motion.div variants={itemVariants} className="mb-5">
           <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2 px-1">🔬 题库测试</h3>
