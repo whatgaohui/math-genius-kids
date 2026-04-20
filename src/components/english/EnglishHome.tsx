@@ -679,7 +679,7 @@ export default function EnglishHome() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="max-w-md mx-auto px-4 pt-4 pb-28"
+        className="max-w-md mx-auto px-4 pt-4 pb-40"
       >
         {/* Tab Bar */}
         <motion.div variants={itemVariants}>
