@@ -242,24 +242,24 @@
 ## 附录：当前已知未修复问题
 
 ### 🔴 高优先级
-| # | 问题 | 影响 |
-|---|------|------|
-| 1 | English Speed模式仍使用角落小图标而非全卡片遮罩 | 体验不一致 |
-| 2 | Math Free confetti参数与三科不统一(18粒子/w-20/1.2s) | 视觉差异 |
-| 3 | Math Speed无combo显示和combo音效 | 缺少连击激励 |
-| 4 | Math Speed正确延迟350ms vs 语英300ms | 节奏不一致 |
-| 5 | 语英完成时无playCompleteSound | 体验缺失 |
-| 6 | 语英普通模式feedback setTimeout无清理(组件卸载泄漏) | 潜在Bug |
-| 7 | Math Speed结束后有额外800ms延迟 | 语英立即显示 |
+| # | 问题 | 影响 | 状态 |
+|---|------|------|------|
+| 1 | English Speed模式仍使用角落小图标而非全卡片遮罩 | 体验不一致 | ✅ 已修复 |
+| 2 | Math Free confetti参数与三科不统一(18粒子/w-20/1.2s) | 视觉差异 | ✅ 已修复 |
+| 3 | Math Speed无combo显示和combo音效 | 缺少连击激励 | ✅ 已修复 |
+| 4 | Math Speed正确延迟350ms vs 语英300ms | 节奏不一致 | ✅ 已修复 |
+| 5 | 语英完成时无playCompleteSound | 体验缺失 | ✅ 已修复 |
+| 6 | 语英普通模式feedback setTimeout无清理(组件卸载泄漏) | 潜在Bug | ✅ 已修复 |
+| 7 | Math Speed结束后有额外800ms延迟 | 语英立即显示 | ✅ 已修复 |
 
 ### 🟡 中优先级
-| # | 问题 | 影响 |
-|---|------|------|
-| 8 | Math无Floating XP (+10 XP) | 缺少视觉奖励 |
-| 9 | Math Free combo阈值=2 vs 语英=3 | 触发标准不一致 |
-| 10 | English无年级过滤模式(1年级可选spelling) | 内容不匹配 |
-| 11 | 三科题目生成空数组时无限loading | 死胡同 |
-| 12 | Math retry回主页 vs 语英在原位重试 | 行为不一致 |
+| # | 问题 | 影响 | 状态 |
+|---|------|------|------|
+| 8 | Math无Floating XP (+10 XP) | 缺少视觉奖励 | ✅ 已修复 |
+| 9 | Math Free combo阈值=2 vs 语英=3 | 触发标准不一致 | ✅ 已修复 |
+| 10 | English无年级过滤模式(1年级可选spelling) | 内容不匹配 | ✅ 已修复 |
+| 11 | 三科题目生成空数组时无限loading | 死胡同 | ✅ 已修复 |
+| 12 | Math retry回主页 vs 语英在原位重试 | 行为不一致 | ✅ 已修复 |
 
 ### 🟢 已修复 (本轮)
 | # | 问题 | 修复 |

@@ -1015,3 +1015,32 @@ Stage Summary:
 - All 7 high-priority + 4 medium-priority issues fixed (11/12, 1 skipped)
 - QA Checklist updated with fix status
 - Three-subject consistency now significantly improved across feedback, speed, results, and edge cases
+
+---
+
+Task ID: QA Checklist Final Fixes (Issues #10, #12)
+Agent: Main
+Task: Complete the remaining 2 unfixed issues from QA-CHECKLIST.md
+
+Work Log:
+- Audited all 12 QA issues against current codebase
+- Confirmed 10/12 issues were already fixed in previous sessions
+- Issue #10: English Free tab showed ALL modes (including listening/spelling) regardless of grade
+  - Fixed EnglishHome.tsx renderFreeTab: added isLocked check, disabled styling, "X年级+" badge for locked modes
+  - Added auto-switch guard in handleFreeStart: if selected mode is locked, falls back to 'word-picture'
+  - Now consistent with Speed tab which already had grade filtering
+- Issue #12: Math retry ("再来一次") went to math-home instead of regenerating in-place
+  - Fixed ResultPage.tsx handlePlayAgain:
+    - Free mode: restart session with same operation/difficulty → go to 'playing' view
+    - Speed mode: restart session with same settings → go to 'speed' view
+    - Adventure mode: go to 'math-home' (user needs to select a level, same as before)
+  - Now consistent with Chinese/English which regenerate questions in-place
+- Updated QA-CHECKLIST.md: all 12 issues marked as ✅ 已修复
+- Ran `bun run lint`: 0 errors
+- Dev server: compiled successfully
+
+Stage Summary:
+- 2 files modified: EnglishHome.tsx, ResultPage.tsx
+- 1 file updated: QA-CHECKLIST.md
+- All 12 QA issues now resolved ✅
+- Three-subject consistency fully achieved across all checklist items

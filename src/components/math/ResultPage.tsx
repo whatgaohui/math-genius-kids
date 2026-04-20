@@ -16,6 +16,8 @@ export default function ResultPage() {
   const lastLevelEmoji = useGameStore((s) => s.lastLevelEmoji)
   const selectedOperation = useGameStore((s) => s.selectedOperation)
   const selectedDifficulty = useGameStore((s) => s.selectedDifficulty)
+  const speedTimeLimit = useGameStore((s) => s.speedTimeLimit)
+  const speedOperation = useGameStore((s) => s.speedOperation)
   const setCurrentView = useGameStore((s) => s.setCurrentView)
   const startMathSession = useGameStore((s) => s.startMathSession)
   const resetGame = useGameStore((s) => s.resetGame)
@@ -51,9 +53,22 @@ export default function ResultPage() {
 
   const handlePlayAgain = useCallback(() => {
     resetGame()
-    // Always go to math-home which has tabs for all modes
-    setCurrentView('math-home')
-  }, [resetGame, setCurrentView])
+    const mode = lastResult?.mode
+    if (mode === 'speed') {
+      // Restart speed challenge with same settings in-place
+      startMathSession('speed', speedOperation, 'easy', 50)
+      setCurrentView('speed')
+    } else if (mode === 'adventure') {
+      // Adventure mode: go back to math-home to select a level
+      setCurrentView('math-home')
+    } else {
+      // Free mode: restart with same operation/difficulty in-place
+      const op = (lastResult?.operation as any) || selectedOperation
+      const diff = (lastResult?.difficulty as any) || selectedDifficulty
+      startMathSession('free', op, diff, 10)
+      setCurrentView('playing')
+    }
+  }, [resetGame, setCurrentView, startMathSession, lastResult, selectedOperation, selectedDifficulty, speedOperation])
 
   const handleGoMathHome = useCallback(() => {
     resetGame()

@@ -222,7 +222,11 @@ export default function EnglishHome() {
   const handleFreeStart = () => {
     playClickSound();
     resumeAudioContext();
-    setEnglishPlayConfig({ mode: selectedMode, grade: effectiveGrade, count: selectedCount, isSpeed: false, isAdventure: false });
+    // Auto-switch to word-picture if selected mode is locked for current grade
+    const modeConfig = ALL_ENGLISH_MODES.find(m => m.mode === selectedMode);
+    const isLocked = modeConfig?.minGrade && effectiveGrade < modeConfig.minGrade;
+    const finalMode = isLocked ? 'word-picture' : selectedMode;
+    setEnglishPlayConfig({ mode: finalMode, grade: effectiveGrade, count: selectedCount, isSpeed: false, isAdventure: false });
     setCurrentView('english-play');
   };
 
@@ -294,24 +298,31 @@ export default function EnglishHome() {
         </div>
       )}
 
-      {/* Mode Selection — 2x2 compact grid */}
+      {/* Mode Selection — 2x2 compact grid (filtered by grade) */}
       <div>
         <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
         <div className="grid grid-cols-2 gap-2">
           {ALL_ENGLISH_MODES.map((modeConfig) => {
             const isSelected = selectedMode === modeConfig.mode;
+            const isLocked = modeConfig.minGrade && effectiveGrade < modeConfig.minGrade;
             return (
               <button
                 key={modeConfig.mode}
-                onClick={() => { setSelectedMode(modeConfig.mode as EnglishMode); playClickSound(); }}
-                className={`flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
+                onClick={() => { if (!isLocked) { setSelectedMode(modeConfig.mode as EnglishMode); playClickSound(); } }}
+                disabled={isLocked}
+                className={`relative flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
                   isSelected
                     ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm'
-                    : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-emerald-200'
+                    : isLocked
+                      ? 'bg-gray-50 text-gray-300 shadow-sm border border-gray-100 opacity-40 cursor-not-allowed'
+                      : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-emerald-200'
                 }`}
               >
                 <span className="text-lg">{modeConfig.emoji}</span>
                 <p className="text-xs font-bold truncate">{modeConfig.name}</p>
+                {isLocked && (
+                  <span className="absolute top-0.5 right-1 text-[10px] text-gray-400">{modeConfig.minGrade}年级+</span>
+                )}
               </button>
             );
           })}
