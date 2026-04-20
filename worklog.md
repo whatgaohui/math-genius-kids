@@ -891,3 +891,75 @@ Stage Summary:
 - Math speed challenge was already correct (uses same operations as free practice)
 - Chinese speed challenge confetti no longer clipped by parent container
 - Math Grade 6 下册 now has 5 diverse topics instead of 2, with only 20% comparison questions (was 50%)
+
+---
+
+Task ID: Comprehensive Bug Fix — 7 Systemic Issues Across All 3 Subjects
+Agent: Main + 3 parallel full-stack-developer sub-agents
+Task: Thoroughly analyze and fix ALL categories of problems across the 知识小勇士 app, not just individual issues
+
+Work Log:
+- Conducted comprehensive analysis of the entire project codebase across 3 subjects (math/chinese/english)
+- Dispatched 4 parallel exploration agents to analyze: Chinese module, English module, Math question bank, Result/completion logic
+- Categorized ALL findings into 4 problem categories (A: question type parity, B: feedback effects, C: question bank variety, D: structural bugs)
+- Identified 7 specific issues across the codebase
+
+Fixes Applied:
+
+**Fix 1: EnglishPlay.tsx — Grade Truncation Bug (CRITICAL)**
+- `config.grade as 1 | 2 | 3` was truncating grades 4-6 to grade 3 content
+- Changed all 4 occurrences to `config.grade as EnglishGrade` (1|2|3|4|5|6)
+- Import EnglishGrade type from english-utils
+
+**Fix 2: EnglishPlay.tsx — Confetti in Normal Mode**
+- Removed `if (isSpeedMode)` guard on confetti trigger → confetti now fires on every correct answer
+- Added confetti rendering block to normal mode UI container
+- Added `setShowConfetti(false)` in normal mode advance timeout
+
+**Fix 3: EnglishPlay.tsx — Full-Screen Feedback Overlay**
+- Added CheckCircle2/XCircle imports from lucide-react
+- Replaced small corner icon feedback (w-9 h-9) with full-card semi-transparent overlay (w-16 h-16)
+- Applied to BOTH speed and normal mode question cards
+- Consistent with math module's feedback experience
+
+**Fix 4: ChinesePlay.tsx — Confetti Overflow Clipping**
+- Root container had `overflow-y-hidden` which clipped confetti particles falling to top:120%
+- Changed to `overflow-x-hidden` only, allowing particles to animate freely
+
+**Fix 5: ChinesePlay.tsx — Confetti in Normal Mode**
+- Same fix as English: removed `isSpeedMode` guard, confetti now fires on all correct answers
+- Added `setShowConfetti(false)` in normal mode advance timeout
+
+**Fix 6: ChinesePlay.tsx — Full-Screen Feedback Overlay**
+- Added CheckCircle2/XCircle imports
+- Replaced small corner icons with full-card overlay matching math module
+- Removed unused Check/X imports
+
+**Fix 7: SpeedSetup.tsx — More Question Types for Math Speed Challenge**
+- Added 'compare' (比大小) with ArrowUpDown icon
+- Added 'equation' (解方程) with BookOpen icon
+- Now 7 total options (was 5): 加法/减法/乘法/除法/混合/比大小/解方程
+- Changed grid layout from grid-cols-5 to grid-cols-4 for better 7-item layout
+- Changed section title from "选择运算" to "选择题型"
+- Added 'equation' to Operation type in math-utils.ts
+
+**Fix 8: math-curriculum.ts — G6S2 Comparison Proportion**
+- g6s2-negative-compare changed from generateNegativeComparison() to generateNegativeArithmetic()
+- G6S2 now: 1 comparison (20%) + 2 arithmetic + 1 ratio + 1 percentage (was 2 comparison = 40%)
+
+**Fix 9: ResultPage.tsx — useMemo Bug**
+- Changed `useMemo` to `useEffect` for sound playback side effect
+- Added proper `[soundEnabled]` dependency array
+
+Verification:
+- `bun run lint`: 0 errors
+- Dev server: compiled successfully
+- All 7 fixes verified in source code
+
+Stage Summary:
+- 7 files modified: EnglishPlay.tsx, ChinesePlay.tsx, SpeedSetup.tsx, ResultPage.tsx, math-utils.ts, math-curriculum.ts
+- All fixes address systemic categories of problems, not individual symptoms
+- English grades 4-6 now correctly use their own vocabulary
+- All 3 subjects now have consistent confetti + full-screen feedback overlays
+- Math speed challenge now offers 7 question types (matching free practice more closely)
+- G6S2 comparison question proportion reduced from 40% to 20%

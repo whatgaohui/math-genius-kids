@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Volume2, Zap, Check, X, Flame, Trophy } from 'lucide-react';
+import { ArrowLeft, Volume2, Zap, Flame, Trophy, CheckCircle2, XCircle } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { usePetStore, getCoinBonusPercent, getCriticalHitChance } from '@/lib/pet-store';
 import {
@@ -171,7 +171,7 @@ export default function ChinesePlay() {
         if (newCombo >= 3 && soundEnabled) playComboSound(newCombo);
         setFeedback('correct');
         addFloatingXP();
-        if (isSpeedMode) setShowConfetti(true);
+        setShowConfetti(true);
       } else {
         if (soundEnabled) playWrongSound();
         setWrong((w) => w + 1);
@@ -204,6 +204,7 @@ export default function ChinesePlay() {
             setCurrentIndex(nextIndex);
             setFeedback('idle');
             setHasAnswered(false);
+            setShowConfetti(false);
           }
         }, 1200);
       }
@@ -395,8 +396,8 @@ export default function ChinesePlay() {
   const isUrgent = isSpeedMode && timeLeft <= 10;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 to-white relative overflow-x-hidden overflow-y-hidden">
-      {/* Confetti for Speed Mode */}
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 to-white relative overflow-x-hidden">
+      {/* Confetti */}
       <AnimatePresence>
         {showConfetti && (
           <div className="absolute inset-0 pointer-events-none z-50">
@@ -602,30 +603,30 @@ export default function ChinesePlay() {
                 </p>
               </motion.div>
 
-              {/* Feedback Icons */}
+              {/* Full-card feedback overlay */}
               <AnimatePresence>
                 {feedback === 'correct' && (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute top-3 right-3"
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0 flex items-center justify-center z-10 bg-white/70 rounded-2xl"
                   >
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-green-500 flex items-center justify-center">
-                      <Check className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
+                    <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.3 }}>
+                      <CheckCircle2 className="w-16 h-16 text-emerald-500" />
+                    </motion.div>
                   </motion.div>
                 )}
                 {feedback === 'wrong' && (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute top-3 right-3"
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1, rotate: [0, -6, 6, -4, 4, 0] }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0 flex items-center justify-center z-10 bg-white/70 rounded-2xl"
                   >
-                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500 flex items-center justify-center">
-                      <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                    </div>
+                    <XCircle className="w-16 h-16 text-red-500" />
                   </motion.div>
                 )}
               </AnimatePresence>

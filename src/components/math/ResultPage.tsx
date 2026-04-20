@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useEffect } from 'react'
 import { useGameStore } from '@/lib/game-store'
 import { usePetStore } from '@/lib/pet-store'
 import { generateQuestions, getEncouragement, getSpeedEncouragement } from '@/lib/math-utils'
@@ -25,9 +25,9 @@ export default function ResultPage() {
   const { petType, petName } = usePetStore()
 
   // Play sound on mount
-  useMemo(() => {
+  useEffect(() => {
     if (soundEnabled) playCompleteSound()
-  }, [])
+  }, [soundEnabled])
 
   // Use lastResult (saved before session cleared) as primary source
   const resultCorrect = session?.sessionCorrect ?? lastResult?.correct ?? 0

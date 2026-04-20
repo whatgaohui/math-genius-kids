@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Play, Plus, Minus, X, Divide, Shuffle, Clock } from 'lucide-react';
+import { ArrowLeft, Play, Plus, Minus, X, Divide, Shuffle, Clock, ArrowUpDown, BookOpen } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { playClickSound } from '@/lib/sound';
 import type { Operation } from '@/lib/math-utils';
@@ -26,6 +26,8 @@ const SPEED_OPERATIONS: {
   { value: 'multiply', label: '乘法', icon: <X className="w-4 h-4" /> },
   { value: 'divide', label: '除法', icon: <Divide className="w-4 h-4" /> },
   { value: 'mix', label: '混合', icon: <Shuffle className="w-4 h-4" /> },
+  { value: 'compare', label: '比大小', icon: <ArrowUpDown className="w-4 h-4" /> },
+  { value: 'equation', label: '解方程', icon: <BookOpen className="w-4 h-4" /> },
 ];
 
 // ─── Animation ──────────────────────────────────────────────────────────────
@@ -129,8 +131,8 @@ export default function SpeedSetup() {
 
         {/* Operation */}
         <motion.div variants={itemVariants}>
-          <h2 className="text-base font-semibold text-gray-700 mb-3">选择运算</h2>
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          <h2 className="text-base font-semibold text-gray-700 mb-3">选择题型</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {SPEED_OPERATIONS.map((op) => (
               <button
                 key={op.value}

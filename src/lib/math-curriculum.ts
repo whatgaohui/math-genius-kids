@@ -1093,7 +1093,7 @@ function generateForTopic(topic: CurriculumTopic): MathQuestion {
     case 'g6s2-negative-numbers':
       return generateNegativeComparison();
     case 'g6s2-negative-compare':
-      return generateNegativeComparison();
+      return generateNegativeArithmetic(Math.random() > 0.5);
     case 'g6s2-negative-arithmetic':
       return generateNegativeArithmetic(Math.random() > 0.5);
     case 'g6s2-ratio':

@@ -2,7 +2,7 @@
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-export type Operation = 'add' | 'subtract' | 'multiply' | 'divide' | 'mix' | 'compare';
+export type Operation = 'add' | 'subtract' | 'multiply' | 'divide' | 'mix' | 'compare' | 'equation';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export interface MathQuestion {
@@ -122,6 +122,45 @@ function generateCompareQuestion(range: { min: number; max: number }): MathQuest
   };
 }
 
+function generateEquationQuestion(range: { min: number; max: number }): MathQuestion {
+  // Simple equation: x + a = b, x − a = b, a + x = b, or x × a = b
+  const pattern = randInt(1, 4);
+  const a = randInt(1, Math.min(range.max, 30));
+  const b = randInt(1, Math.min(range.max, 50));
+  let expression: string;
+  let correctAnswer: number;
+  switch (pattern) {
+    case 1: // x + a = b
+      correctAnswer = b - a;
+      expression = `x + ${a} = ${b}，x = ?`;
+      break;
+    case 2: // a + x = b
+      correctAnswer = b - a;
+      expression = `${a} + x = ${b}，x = ?`;
+      break;
+    case 3: // x − a = b
+      correctAnswer = a + b;
+      expression = `x − ${a} = ${b}，x = ?`;
+      break;
+    default: { // x × a = b (clean division)
+      const factor = randInt(2, 9);
+      const x = randInt(2, Math.min(range.max, 20));
+      correctAnswer = x;
+      expression = `x × ${factor} = ${factor * x}，x = ?`;
+      break;
+    }
+  }
+  return {
+    id: genId(),
+    num1: a,
+    num2: b,
+    operation: 'equation',
+    correctAnswer,
+    displayOp: '=',
+    expression,
+  };
+}
+
 // ─── Main Generator ─────────────────────────────────────────────────────────
 
 const OPERATION_GENERATORS: Record<string, (range: { min: number; max: number }) => MathQuestion> = {
@@ -130,6 +169,7 @@ const OPERATION_GENERATORS: Record<string, (range: { min: number; max: number })
   multiply: generateMultiplyQuestion,
   divide: generateDivideQuestion,
   compare: generateCompareQuestion,
+  equation: generateEquationQuestion,
 };
 
 const MIX_OPERATIONS: Operation[] = ['add', 'subtract', 'multiply', 'divide'];
