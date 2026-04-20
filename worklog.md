@@ -308,3 +308,27 @@ Stage Summary:
 - 学科主页（MathHome/ChineseHome/EnglishHome）尚未集成年级题库选择
 - 限时挑战难度自适应尚未实现
 - 题库选择与自由练习的联动逻辑尚未打通（生成题目时读取年级设置）
+
+---
+Task ID: Curriculum Verification Test Tool
+Agent: Main + full-stack-developer
+Task: Design and implement a comprehensive testing tool to verify question bank compliance with Ministry of Education curriculum standards
+
+Work Log:
+- Analyzed existing codebase: math-curriculum.ts (23 topics, 1082 lines), chinese-utils.ts (8 modes, grades 1-6), english-utils.ts (4 modes, grades 1-6)
+- Designed test suite covering 3 subjects × 6 grades × multiple test categories
+- Created `/home/z/my-project/src/components/math/CurriculumTestTool.tsx` (1389 lines):
+  - **Math Tests**: 数值范围验证、约束条件验证(no-carry/no-borrow/withinTable/resultPositive/allowDecimals)、答案正确性验证(表达式求值对比)、表达式格式验证
+  - **Chinese Tests**: 选项完整性(4选项)、正确答案唯一性(correctIndex→correctAnswer)、选项无重复、年级适切性、模式最低年级限制(idiom≥G4, poetry≥G5)
+  - **English Tests**: 选项完整性、正确答案唯一性、选项无重复、年级词汇验证、模式覆盖度
+  - **UI Features**: SVG环形通过率图表、进度条+计时器、学科Tab切换、年级手风琴展开、失败详情折叠面板、示例题目展示
+- Updated page.tsx: added dynamic import + route `'curriculum-test': CurriculumTestTool`
+- Updated SettingsPage.tsx: added "🔬 题库测试" section with entry button
+- Verified: bun run lint = 0 errors, dev server compiled successfully
+
+Stage Summary:
+- 1 new file: CurriculumTestTool.tsx (1389 lines)
+- 2 modified files: page.tsx, SettingsPage.tsx
+- Test coverage: 23 math topics + 8 Chinese modes × 6 grades + 4 English modes × 6 grades = ~60 test items
+- Entry point: Settings → 🔬 题库测试 → 验证题库
+- All lint clean, dev server compiling
