@@ -71,3 +71,11 @@ android/app/build/
 .next/
 xuexidaoren-v1.0.apk
 *.apk
+
+# Temp/search files
+search-*.json
+ref-*.json
+--full-page
+test-*.png
+/upload/
+QA-CHECKLIST.md
