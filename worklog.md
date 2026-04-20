@@ -523,3 +523,103 @@ Stage Summary:
 - Template system provides clear data format guides for future question bank expansion
 - All banks auto-register on import via `import '@/lib/question-bank'`
 - `bun run lint`: 0 errors, dev server compiled successfully
+
+---
+
+Task ID: 2-b
+Agent: Main
+Task: Create 2 new API routes for parent-friendly question bank system — install-preset and ai-generate
+
+Work Log:
+- Analyzed existing question-bank codebase: types.ts, registry.ts, index.ts, math/index.ts, chinese/index.ts, english/index.ts, import/route.ts, list/route.ts, template/route.ts
+- Understood the QuestionBank interface, QuestionBankRegistry singleton, and the createDynamicBank pattern from import route
+- Verified z-ai-web-dev-sdk is available in package.json (v0.0.17)
+
+Created `/home/z/my-project/src/app/api/question-bank/install-preset/route.ts`:
+- POST endpoint that installs a pre-built question bank package by preset ID
+- parsePresetId() maps `{subject}-{grade}` format (e.g. `math-g1`, `cn-g3`, `en-g5`) to Subject + Grade
+- Maps subjects to built-in bank IDs: math→math-pep-v1, chinese→chinese-pep-v1, english→english-pep-v1
+- Generates 100 questions (50 per semester) from the built-in bank using generateMixedQuestions()
+- createPresetBank() creates a full QuestionBank object from pre-generated questions, indexed by grade→semester→topicId
+- Registers with priority 8 (between built-in banks at 10 and imports at 5)
+- Duplicate detection: returns error if preset bank ID already exists
+- Bank IDs follow format: `preset-{presetId}` (e.g. `preset-math-g3`)
+
+Created `/home/z/my-project/src/app/api/question-bank/ai-generate/route.ts`:
+- POST endpoint that uses z-ai-web-dev-sdk LLM to generate custom questions for parents
+- Accepts: { subject, grade, semester, topic, count } — count clamped to 1-20
+- buildSystemPrompt() creates subject-specific prompts with JSON format requirements:
+  - Math: expression, answer, options (number[]), type, difficulty
+  - Chinese: mode, prompt, correctAnswer, options (string[]), difficulty
+  - English: mode, word, meaning, emoji, options (string[]), difficulty
+- buildUserPrompt() creates detailed generation instructions with grade-appropriate constraints
+- extractJsonArray() robustly extracts JSON from LLM responses (handles markdown code blocks, raw arrays, embedded arrays)
+- validateQuestion() per-subject validation ensuring all required fields and 4-option format
+- Uses dynamic import for z-ai-web-dev-sdk (server-side only)
+- Graceful error handling: LLM failures return 502, parse failures include raw response snippet
+- Response includes meta with requestedCount, generatedCount, rawCount, skippedCount
+
+Verified:
+- `bun run lint`: 0 errors, 0 warnings
+- Dev server compiled successfully with no issues
+
+Stage Summary:
+- 2 new API route files created under /api/question-bank/
+- install-preset: generates and registers preset question banks from built-in data (100 questions per preset)
+- ai-generate: uses z-ai-web-dev-sdk LLM to generate custom questions with subject-specific formats
+- Both routes follow existing patterns (import '@/lib/question-bank', NextResponse.json, try/catch)
+- bun run lint: 0 errors, dev server compiled OK
+
+---
+
+Task ID: 2-a
+Agent: Main
+Task: Completely rewrite QuestionBankManager.tsx to be parent-friendly (NOT developer-friendly)
+
+Work Log:
+- Analyzed existing QuestionBankManager.tsx (~1100 lines): developer-oriented with JSON editors, API docs, CodeBlock, TypeScript interfaces
+- Read all related files: game-store.ts, BottomNav.tsx, use-toast.ts, shadcn/ui components (RadioGroup, Select, Progress, Label, Switch, Dialog, AlertDialog)
+- Read existing API routes: list, import, export, template, install-preset
+- Read question bank system: QuestionBankRegistry, built-in banks (math-pep-v1, chinese-pep-v1, english-pep-v1)
+
+Completely rewrote QuestionBankManager.tsx (~850 lines) with 4 parent-friendly tabs:
+
+1. 📚 题库商店: 18 preset packages (3 subjects × 6 grades), subject/grade filters, color-coded cards, one-click install
+2. ✏️ 手动出题: 4-step wizard (选科目→选年级→填题目→预览), subject-specific forms with big emoji buttons, batch save
+3. 📥 导入题目: 3 methods (upload file, paste text, advanced JSON), preview table, smart subject detection
+4. 📊 我的题库: List all banks, toggle enable/disable, delete with confirmation, export as JSON
+
+Design: warm gradients, subject color coding (amber/rose/cyan), big touch targets (44px+), emojis everywhere, no technical jargon, Framer Motion animations.
+
+Stage Summary:
+- 1 file completely rewritten: QuestionBankManager.tsx (~850 lines)
+- Updated install-preset/route.ts (simplified to check existing banks)
+- All text Chinese, no jargon, parent-friendly UX
+- bun run lint: 0 errors, dev server compiled OK
+
+---
+Task ID: Parent-Friendly Question Bank Redesign
+Agent: Main
+Task: Completely redesign the question bank management system to be parent-friendly instead of developer-oriented
+
+Work Log:
+- User feedback: "现在的导入题库不太适合普通的家长" — JSON editor too technical for parents
+- Researched question bank resources: confirmed no free downloadable structured question banks exist (小猿搜题/学而思/作业帮 are all commercial/closed)
+- Decided to solve the problem by:
+  1. Building a visual "Question Bank Store" with one-click install
+  2. Creating a form-based question editor (no JSON/code)
+  3. Supporting Excel/CSV/text paste import
+  4. Adding AI-powered question generation
+
+Files modified/created:
+- QuestionBankManager.tsx: completely rewritten (1871 lines, parent-friendly 4-tab design)
+- install-preset/route.ts: new API (105 lines) for one-click bank installation
+- ai-generate/route.ts: new API (367 lines) for AI-powered question generation
+
+Stage Summary:
+- Removed all developer-oriented UI (JSON editors, code blocks, API docs, TypeScript interfaces)
+- Added 4 parent-friendly tabs: 题库商店/手动出题/导入题目/我的题库
+- 18 pre-built packages across 3 subjects × 6 grades with one-click install
+- Visual question editor with subject-specific forms
+- AI question generation via z-ai-web-dev-sdk LLM
+- bun run lint: 0 errors, dev server compiled OK
