@@ -623,3 +623,53 @@ Stage Summary:
 - Visual question editor with subject-specific forms
 - AI question generation via z-ai-web-dev-sdk LLM
 - bun run lint: 0 errors, dev server compiled OK
+
+---
+
+Task ID: Fix 0=0=? Display Bug + Math Expression Issues
+Agent: Main
+Task: Fix "0=0=?" question display bug and similar expression rendering issues across math game components
+
+Work Log:
+- User reported: "0=0=?" appearing as a question — clearly invalid for children
+- Root cause analysis:
+  1. `GamePlay.tsx` `getQuestionDisplay()` and `SpeedGamePlay.tsx` display logic both construct display from `num1 displayOp num2 = ?`
+  2. Complex question types (four-ops with parens, equations, fractions, percentage, ratio) set `num1=0, num2=0` as placeholders
+  3. The actual question expression is stored in the `expression` field but IGNORED by display code
+  4. Example: `generateFourOpsWithParens` creates expression `(12 + 8) × 5` with num1=0, num2=0 → displays as "0 = 0 = ?"
+
+- Fixed `GamePlay.tsx` `getQuestionDisplay()`:
+  - Compare questions: now uses `expression` field (e.g., "1/4 〇 1/2" for fraction comparison)
+  - Non-compare questions: prefers `expression` when available
+    - If expression already contains '=' or '？' (equations, fractions), use as-is
+    - Otherwise append '= ?' (simple arithmetic, four-ops)
+  - Falls back to `num1 displayOp num2 = ?` only when no expression exists
+
+- Fixed `SpeedGamePlay.tsx` (same logic inline at line 354-363):
+  - Compare: uses expression or compareLeft/compareRight fallback
+  - Non-compare: uses expression with smart =? appending
+
+- Fixed `math-curriculum.ts` fraction expression:
+  - `generateFractionAddSub()`: Changed `"2/6 + 3/6"` → `"2/6 + 3/6 = ?/6"` (shows denominator hint)
+  - Both addition and subtraction now display `= ?/${b}` format
+
+- Fixed `question-bank/math/generators.ts` `generateDistractors()`:
+  - When correctAnswer=0: changed `shuffle([0, 1, -1, 2])` → `shuffle([0, 1, 2, 3])`
+  - Removes negative number options (-1) inappropriate for elementary students
+
+Affected question types verified:
+- ✅ Four-ops with parens: `(12 + 8) × 5 = ?` (was: `0 = 0 = ?`)
+- ✅ Equations: `x + 5 = 12，x = ?` (was: `0 = 0 = ?`)
+- ✅ Fractions: `2/6 + 3/6 = ?/6` (was: `0 + 0 = ?`)
+- ✅ Percentage: `25% × 200 = ?` (was: `0 = 0 = ?`)
+- ✅ Ratio: `3:5 = 9:x，x = ?` (was: `0 = 0 = ?`)
+- ✅ Fraction comparison: `1/4 〇 1/2` (was: `0 〇 0`)
+- ✅ Negative comparison: `(-3) 〇 (-7)` (correctly used compareLeft/compareRight)
+- ✅ Simple arithmetic: `3 + 5 = ?` (unchanged, expression fallback works)
+
+Stage Summary:
+- 4 files modified: GamePlay.tsx, SpeedGamePlay.tsx, math-curriculum.ts, question-bank/math/generators.ts
+- Eliminates "0=0=?" display bug for ALL complex math question types
+- Fraction expressions now show denominator hint (= ?/6)
+- Negative distractors removed from question bank generator
+- bun run lint: 0 errors, dev server compiled OK

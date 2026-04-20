@@ -129,7 +129,7 @@ function buildQuestion(
  */
 function generateDistractors(correct: number): number[] {
   if (correct === 0) {
-    return shuffle([0, 1, -1, 2]);
+    return shuffle([0, 1, 2, 3]);
   }
 
   const isInteger = Number.isInteger(correct);

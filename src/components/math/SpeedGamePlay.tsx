@@ -353,8 +353,12 @@ export default function SpeedGamePlay() {
 
             <p className="text-3xl sm:text-4xl font-bold text-gray-800 tracking-wide">
               {isCompare
-                ? `${currentQuestion.compareLeft}  ○  ${currentQuestion.compareRight}`
-                : `${currentQuestion.num1}  ${currentQuestion.displayOp}  ${currentQuestion.num2}  =  ?`
+                ? (currentQuestion.expression || `${currentQuestion.compareLeft ?? 0}  ○  ${currentQuestion.compareRight ?? 0}`)
+                : (currentQuestion.expression
+                    ? (currentQuestion.expression.includes('=') || currentQuestion.expression.includes('？')
+                      ? currentQuestion.expression
+                      : `${currentQuestion.expression} = ?`)
+                    : `${currentQuestion.num1}  ${currentQuestion.displayOp}  ${currentQuestion.num2}  =  ?`)
               }
             </p>
 

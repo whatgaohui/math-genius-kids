@@ -35,11 +35,26 @@ const CONFETTI_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
 
 function getQuestionDisplay(q: MathQuestion): { display: string; isCompare: boolean } {
   if (q.operation === 'compare') {
+    // Use expression if available (e.g., fraction comparison "1/4 〇 1/2")
+    if (q.expression) {
+      return { display: q.expression, isCompare: true };
+    }
     return {
-      display: `${q.compareLeft}  ○  ${q.compareRight}`,
+      display: `${q.compareLeft ?? q.num1}  ○  ${q.compareRight ?? q.num2}`,
       isCompare: true,
     };
   }
+  // For non-compare questions, prefer expression field (handles complex questions
+  // like four-ops with parens, equations, fractions where num1/num2 may be 0)
+  if (q.expression) {
+    // If expression already contains '=' or '？', use it as-is
+    if (q.expression.includes('=') || q.expression.includes('？')) {
+      return { display: q.expression, isCompare: false };
+    }
+    // Otherwise append '= ?'
+    return { display: `${q.expression} = ?`, isCompare: false };
+  }
+  // Fallback: construct from num1/displayOp/num2
   return {
     display: `${q.num1}  ${q.displayOp}  ${q.num2}  =  ?`,
     isCompare: false,

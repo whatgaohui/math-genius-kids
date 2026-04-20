@@ -729,34 +729,25 @@ function generateFractionAddSub(isAdd: boolean): MathQuestion {
 
     if (isAdd) {
       const numerator = a + c;
-      if (numerator < b) {
-        // Proper fraction result
-        return {
-          id: genId(), num1: 0, num2: 0, operation: 'add',
-          correctAnswer: numerator, displayOp: '+',
-          expression: `${a}/${b} + ${c}/${b}`,
-        };
-      } else {
-        // Improper → mixed number (store numerator for checking)
-        return {
-          id: genId(), num1: 0, num2: 0, operation: 'add',
-          correctAnswer: numerator, displayOp: '+',
-          expression: `${a}/${b} + ${c}/${b}`,
-        };
-      }
+      // Proper or improper fraction result — store numerator as answer
+      return {
+        id: genId(), num1: 0, num2: 0, operation: 'add',
+        correctAnswer: numerator, displayOp: '+',
+        expression: `${a}/${b} + ${c}/${b} = ?/${b}`,
+      };
     } else {
       const numerator = a - c;
       return {
         id: genId(), num1: 0, num2: 0, operation: 'subtract',
         correctAnswer: numerator, displayOp: '−',
-        expression: `${a}/${b} − ${c}/${b}`,
+        expression: `${a}/${b} − ${c}/${b} = ?/${b}`,
       };
     }
   }
   return {
     id: genId(), num1: 0, num2: 0, operation: isAdd ? 'add' : 'subtract',
     correctAnswer: isAdd ? 5 : 1, displayOp: isAdd ? '+' : '−',
-    expression: isAdd ? '2/6 + 3/6' : '3/6 − 2/6',
+    expression: isAdd ? '2/6 + 3/6 = ?/6' : '3/6 − 2/6 = ?/6',
   };
 }
 
