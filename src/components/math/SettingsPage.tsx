@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -134,6 +134,7 @@ function EditNameDialog({
 }) {
   const setPlayerName = useGameStore((s) => s.setPlayerName);
   const [tempName, setTempName] = useState(currentName);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const handleSave = () => {
     if (tempName.trim()) {
@@ -142,6 +143,15 @@ function EditNameDialog({
     }
   };
 
+  // Sync name when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      setTempName(currentName);
+      // Focus input after animation completes
+      setTimeout(() => inputRef.current?.focus(), 350);
+    }
+  }, [open, currentName]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -149,39 +159,49 @@ function EditNameDialog({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl"
+            className="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl safe-bottom"
           >
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-bold text-gray-800">修改昵称</h3>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                <X className="h-5 w-5" />
-              </button>
+            {/* Drag handle for mobile */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
             </div>
-            <Input
-              value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
-              placeholder="输入你的名字"
-              maxLength={12}
-              className="text-base h-12 rounded-xl mb-4"
-              autoFocus
-              onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            />
-            <Button
-              onClick={handleSave}
-              disabled={!tempName.trim()}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-sm shadow-md"
-            >
-              保存
-            </Button>
+            <div className="px-6 pb-6">
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-lg font-bold text-gray-800">修改昵称</h3>
+                <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 active:bg-gray-100 rounded-lg">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="mb-5">
+                <Input
+                  ref={inputRef}
+                  value={tempName}
+                  onChange={(e) => setTempName(e.target.value)}
+                  placeholder="输入你的名字"
+                  maxLength={12}
+                  className="text-base h-12 rounded-xl"
+                  onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+                  enterKeyHint="done"
+                />
+                <p className="text-[11px] text-gray-400 mt-1.5">最多12个字符</p>
+              </div>
+              <Button
+                onClick={handleSave}
+                disabled={!tempName.trim()}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 active:from-amber-500 active:to-orange-500 text-white font-bold text-sm shadow-md"
+              >
+                保存
+              </Button>
+            </div>
           </motion.div>
         </motion.div>
       )}
@@ -208,6 +228,13 @@ function AvatarPickerDialog({
     onClose();
   };
 
+  // Sync avatar when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      setSelected(currentAvatar);
+    }
+  }, [open, currentAvatar]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -215,62 +242,68 @@ function AvatarPickerDialog({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm sm:items-center"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-3xl"
+            className="w-full max-w-sm bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl safe-bottom"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-800">选择头像</h3>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                <X className="h-5 w-5" />
-              </button>
+            {/* Drag handle for mobile */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-gray-200" />
             </div>
-
-            {/* Preview */}
-            <div className="flex justify-center mb-5">
-              <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-200 to-orange-300 text-4xl shadow-lg shadow-amber-200/50">
-                {selected}
+            <div className="px-6 pb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-800">选择头像</h3>
+                <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600 active:bg-gray-100 rounded-lg">
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-            </div>
 
-            {/* Categories */}
-            <div className="space-y-4 max-h-64 overflow-y-auto">
-              {AVATAR_CATEGORIES.map((cat) => (
-                <div key={cat.label}>
-                  <p className="text-xs font-semibold text-gray-400 mb-2 px-1">{cat.label}</p>
-                  <div className="grid grid-cols-4 gap-2.5">
-                    {cat.emojis.map((emoji) => (
-                      <motion.button
-                        key={emoji}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setSelected(emoji)}
-                        className={`flex items-center justify-center h-14 rounded-2xl text-2xl transition-all ${
-                          selected === emoji
-                            ? 'bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-400 dark:from-amber-900/40 dark:to-orange-900/40 dark:ring-amber-600 shadow-sm'
-                            : 'bg-gray-50 hover:bg-amber-50 dark:bg-gray-800 dark:hover:bg-gray-700'
-                        }`}
-                      >
-                        {emoji}
-                      </motion.button>
-                    ))}
-                  </div>
+              {/* Preview */}
+              <div className="flex justify-center mb-4">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-200 to-orange-300 text-4xl shadow-lg shadow-amber-200/50">
+                  {selected}
                 </div>
-              ))}
-            </div>
+              </div>
 
-            <Button
-              onClick={handleConfirm}
-              className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-sm shadow-md mt-5"
-            >
-              确认选择
-            </Button>
+              {/* Categories */}
+              <div className="space-y-3 max-h-48 overflow-y-auto">
+                {AVATAR_CATEGORIES.map((cat) => (
+                  <div key={cat.label}>
+                    <p className="text-xs font-semibold text-gray-400 mb-1.5 px-1">{cat.label}</p>
+                    <div className="grid grid-cols-4 gap-2.5">
+                      {cat.emojis.map((emoji) => (
+                        <motion.button
+                          key={emoji}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setSelected(emoji)}
+                          className={`flex items-center justify-center h-12 rounded-2xl text-2xl transition-all ${
+                            selected === emoji
+                              ? 'bg-gradient-to-br from-amber-100 to-orange-100 ring-2 ring-amber-400 shadow-sm'
+                              : 'bg-gray-50 hover:bg-amber-50'
+                          }`}
+                        >
+                          {emoji}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                onClick={handleConfirm}
+                className="w-full h-12 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 active:from-amber-500 active:to-orange-500 text-white font-bold text-sm shadow-md mt-4"
+              >
+                确认选择
+              </Button>
+            </div>
           </motion.div>
         </motion.div>
       )}
