@@ -32,14 +32,15 @@ export default function ResultPage() {
   // Use lastResult (saved before session cleared) as primary source
   const resultCorrect = session?.sessionCorrect ?? lastResult?.correct ?? 0
   const resultWrong = session?.sessionWrong ?? lastResult?.wrong ?? 0
-  const resultTotal = session ? session.questions.length : (lastResult?.total ?? 0)
+  // Use actual answered count (correct + wrong), not the question pool size
+  const resultTotal = session ? (session.sessionCorrect + session.sessionWrong) : (lastResult?.total ?? 0)
   const resultTimeMs = lastResult?.timeMs ?? session?.sessionTimeMs ?? 0
   const resultStars = lastResult?.stars ?? session?.sessionStars ?? 0
   const resultMaxCombo = lastResult?.maxCombo ?? session?.sessionMaxCombo ?? 0
   const resultXP = lastResult?.xp ?? session?.sessionXP ?? 0
   const questions = session?.questions ?? []
 
-  const accuracy = resultTotal > 0 ? resultCorrect / resultTotal : 0
+  const accuracy = resultTotal > 0 ? Math.min(resultCorrect / resultTotal, 1) : 0
   const encouragement = getEncouragement(Math.round(accuracy * 100))
 
   const answeredQuestions = questions.filter((q: any) => q.userAnswer !== undefined)

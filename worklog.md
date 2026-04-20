@@ -778,3 +778,37 @@ Stage Summary:
 - 错题本UI页面尚未创建（数据层已就绪）
 - 英语Play中grade类型断言过窄（`as 1|2|3`应为`as EnglishGrade`，但不影响运行时）
 - Settings页面底部导航栏需要滚动才能看到（页面过长）
+
+---
+
+Task ID: Fix Math Speed Challenge Accuracy Calculation
+Agent: Main
+Task: Fix accuracy calculation bug in math speed challenge (and verify Chinese/English)
+
+Work Log:
+- User reported: "数学限时挑战正确率计算有问题"
+- Investigated all 3 subjects' accuracy calculation:
+
+**Root Cause (Math)**:
+- `endSession()` in `game-store.ts` used `total = session.questions.length` (question pool size, e.g. 50+20=70)
+- But in speed mode, user may only answer 10-15 questions before time runs out
+- Result: accuracy = 10/70 = 14% instead of correct 10/15 = 67%
+- `ResultPage.tsx` also used `session.questions.length` for total
+
+**Chinese**: ✅ Correct — uses `totalAnswered = correct + wrong`
+**English**: ✅ Correct — uses `effectiveTotal = isSpeedMode ? (correct+wrong) : questions.length`
+
+Fixed files:
+1. **game-store.ts** `endSession()`:
+   - Changed `const total = session.questions.length` → `const total = correct + wrong` (actual answered count)
+   - Added `const wrong = session.sessionWrong` to make the calculation explicit
+
+2. **ResultPage.tsx**:
+   - Changed `resultTotal = session.questions.length` → `resultTotal = session.sessionCorrect + session.sessionWrong`
+   - Added `Math.min()` guard on accuracy calculation to prevent values > 1
+
+Stage Summary:
+- 2 files modified: game-store.ts, ResultPage.tsx
+- Math accuracy now correctly uses actual answered count (correct + wrong) instead of question pool size
+- Chinese and English accuracy confirmed correct (no changes needed)
+- bun run lint: 0 errors, dev server compiled OK

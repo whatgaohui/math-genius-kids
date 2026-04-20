@@ -495,7 +495,8 @@ export const useGameStore = create<GameState & GameActions>()(
         const session = state.session;
         const totalTimeMs = Date.now() - session.sessionStartTime;
         const correct = session.sessionCorrect;
-        const total = session.questions.length;
+        const wrong = session.sessionWrong;
+        const total = correct + wrong; // Actual answered count, not pool size
         const stars = calculateStars(correct, total);
         const xp = calculateXP(correct, total, totalTimeMs, stars, session.sessionMaxCombo);
 
