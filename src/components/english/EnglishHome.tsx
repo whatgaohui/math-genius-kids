@@ -359,11 +359,42 @@ export default function EnglishHome() {
           ))}
         </div>
       </div>
+
+      {/* Inline Start Button */}
+      <div className="pt-2">
+        <motion.div whileTap={{ scale: 0.97 }}>
+          <Button
+            onClick={handleFreeStart}
+            className="w-full h-13 text-base font-bold text-white border-0 shadow-lg bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-200/60"
+          >
+            <Play className="w-5 h-5 mr-2" /> 开始练习
+          </Button>
+        </motion.div>
+      </div>
     </div>
   );
 
   const renderSpeedTab = () => (
     <div className="space-y-5">
+      {/* Grade-matched info banner (replaces grade selector when grade is set) */}
+      {englishGradeSet && (
+        <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200/60 rounded-xl px-3.5 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-base flex-shrink-0">📚</span>
+            <span className="text-xs text-emerald-800 font-medium truncate">
+              当前题库：{getGradeLabel(selectedEnglishGrade as 1|2|3|4|5|6, selectedEnglishSemester as '上册'|'下册')}
+            </span>
+          </div>
+          <button
+            onClick={handleGoSettings}
+            className="flex items-center gap-0.5 shrink-0 text-xs text-emerald-600 hover:text-emerald-800 font-medium transition-colors active:scale-95 ml-2"
+          >
+            <Settings className="w-3 h-3" />
+            去设置
+          </button>
+        </div>
+      )}
+
       {/* Time Selection */}
       <div>
         <p className="text-xs font-semibold text-gray-400 mb-2 px-1">挑战时长</p>
@@ -410,6 +441,18 @@ export default function EnglishHome() {
         <p className="text-xs text-teal-700 leading-relaxed">
           ⏱️ 在限定时间内尽量多答题，答对自动跳题，限时挑战金币奖励×1.5！
         </p>
+      </div>
+
+      {/* Inline Start Button */}
+      <div className="pt-2">
+        <motion.div whileTap={{ scale: 0.97 }}>
+          <Button
+            onClick={handleSpeedStart}
+            className="w-full h-13 text-base font-bold text-white border-0 shadow-lg bg-gradient-to-r from-teal-400 to-emerald-500 shadow-teal-200/60"
+          >
+            <Zap className="w-5 h-5 mr-2" /> 开始挑战
+          </Button>
+        </motion.div>
       </div>
     </div>
   );
@@ -679,7 +722,7 @@ export default function EnglishHome() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="max-w-md mx-auto px-4 pt-4 pb-40"
+        className="max-w-md mx-auto px-4 pt-4 pb-24"
       >
         {/* Tab Bar */}
         <motion.div variants={itemVariants}>
@@ -718,30 +761,6 @@ export default function EnglishHome() {
           </motion.div>
         </AnimatePresence>
       </motion.div>
-
-      {/* ── Floating Start Button (Free / Speed only) ── */}
-      {activeTab !== 'adventure' && (
-        <div className="fixed bottom-20 left-0 right-0 z-30 px-4 pb-2">
-          <div className="max-w-md mx-auto">
-            <motion.div whileTap={{ scale: 0.97 }}>
-              <Button
-                onClick={activeTab === 'free' ? handleFreeStart : handleSpeedStart}
-                className={`w-full h-13 text-base font-bold text-white border-0 shadow-lg transition-shadow ${
-                  activeTab === 'free'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-200/60'
-                    : 'bg-gradient-to-r from-teal-400 to-emerald-500 shadow-teal-200/60'
-                }`}
-              >
-                {activeTab === 'free' ? (
-                  <><Play className="w-5 h-5 mr-2" /> 开始练习</>
-                ) : (
-                  <><Zap className="w-5 h-5 mr-2" /> 开始挑战</>
-                )}
-              </Button>
-            </motion.div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

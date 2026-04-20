@@ -673,3 +673,43 @@ Stage Summary:
 - Fraction expressions now show denominator hint (= ?/6)
 - Negative distractors removed from question bank generator
 - bun run lint: 0 errors, dev server compiled OK
+
+---
+
+Task ID: Fix Layout Overlap + Systematic Game Mode & Question Bank Alignment
+Agent: Main + 3 sub-agents (full-stack-developer)
+Task: 1) Fix Chinese page "开始练习" overlapping with "练习模式" by removing floating button. 2) Systematically adjust all 3 game modes (free/speed/adventure) across all 3 subjects to match the question bank system.
+
+Work Log:
+- Analyzed all 3 subject home pages: MathHome.tsx, ChineseHome.tsx, EnglishHome.tsx
+- Identified root cause: all 3 pages used `fixed bottom-20` floating button that overlapped with content
+- Analyzed question generation flow for all game modes × subjects
+- Found key mismatch: Math speed challenge showed operation selector but when grade is set, questions came from curriculum ignoring the selected operation
+
+Changes made:
+
+1. **MathHome.tsx**: Removed floating button, added inline buttons in free/speed tabs, added grade banner to speed tab when grade set, hidden operation selector when grade set, pb-40→pb-24
+2. **ChineseHome.tsx**: Removed floating button, added inline buttons, added grade banner to speed tab, pb-40→pb-24
+3. **EnglishHome.tsx**: Removed floating button, added inline buttons, added grade banner to speed tab, pb-40→pb-24
+
+Systematic verification of all mode × subject combinations:
+- ✅ Math free/speed/adventure: grade → curriculum (when set), operation/difficulty (when not set)
+- ✅ Chinese free/speed/adventure: mode + grade → generateChineseQuestions()
+- ✅ English free/speed/adventure: mode + grade → generateEnglishQuestions()
+
+Stage Summary:
+- 3 files modified: MathHome.tsx, ChineseHome.tsx, EnglishHome.tsx
+- Floating buttons removed from all pages, now inline in page flow
+- Math speed challenge: operation selector hidden when grade set (eliminates mismatch)
+- Grade banners added to speed tabs for consistency
+- bun run lint: 0 errors
+
+项目当前状态描述/判断:
+- 项目运行正常，dev server编译无错误
+- 三科页面浮层问题已修复
+- 所有游戏模式与题库系统匹配关系已验证
+
+未解决问题或风险，建议下一阶段优先事项:
+- questionGenerator.ts与模块化Registry的对接
+- 错题本UI页面
+- 数学闯关模式年级设置后的关卡特定题目改进
