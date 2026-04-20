@@ -332,3 +332,35 @@ Stage Summary:
 - Test coverage: 23 math topics + 8 Chinese modes × 6 grades + 4 English modes × 6 grades = ~60 test items
 - Entry point: Settings → 🔬 题库测试 → 验证题库
 - All lint clean, dev server compiling
+
+---
+
+Task ID: Settings Cleanup + Global Grade Auto-Match + Test Tool Fixes
+Agent: Main
+Task: Fix curriculum test tool failures, remove learning stats from settings, auto-match grade/difficulty from settings globally
+
+Work Log:
+- Analyzed CurriculumTestTool.tsx failures:
+  1. Expression format test: `hasOp` check too narrow (only checked `displayOp` and specific chars), missed operators like `×`, `÷`, `+`, `−` in complex expressions
+  2. Range test: didn't skip special question types (fractions, equations, four-ops, ratios) where `num1/num2` are placeholders (0)
+  3. Answer correctness: special expression patterns incomplete
+- Fixed CurriculumTestTool.tsx:
+  - Replaced narrow `hasOp` check with comprehensive MATH_OPS array check
+  - Added SPECIAL_EXPR_PATTERNS to skip range verification for complex question types
+  - Added multiplication range flexibility (product > rangeMax allowed)
+  - Moved helper constants before usage to fix scoping
+- Removed learning statistics section ("📊 学习数据") from SettingsPage.tsx:
+  - Removed practice count, total questions, accuracy rate cards
+  - Removed unused imports (BookOpen, Heart) and unused store subscriptions
+  - Kept Quick Stats Row (星星/经验/连续/金币) intact
+- Implemented global grade auto-matching in 3 subject pages:
+  - MathHome.tsx: When math grade set, hide operation/difficulty selectors, show "当前题库：X年级X册" banner with settings link, auto-map grade to operation (G1→add, G2+→mix) and difficulty (G1-2→easy, G3-4→medium, G5-6→hard)
+  - ChineseHome.tsx: When chinese grade set, hide grade selector, show banner, auto-use effectiveGrade for mode availability and play config
+  - EnglishHome.tsx: When english grade set, hide grade selector, show banner, auto-use effectiveGrade for play config
+
+Stage Summary:
+- 5 files modified: CurriculumTestTool.tsx, SettingsPage.tsx, MathHome.tsx, ChineseHome.tsx, EnglishHome.tsx
+- Test tool: eliminated false failures for expression format and range checks
+- Settings: cleaner UI without duplicate learning stats
+- Global consistency: grade/difficulty auto-matched from settings when set
+- bun run lint: 0 errors, dev server compiled OK

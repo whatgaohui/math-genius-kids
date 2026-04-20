@@ -13,9 +13,11 @@ import {
   Zap,
   Lock,
   ChevronDown,
+  Settings,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { MODE_CONFIG, getModesForGrade, type ChineseMode, type ChineseGrade } from '@/lib/chinese-utils';
+import { getGradeLabel } from '@/lib/curriculum-config';
 import { playClickSound, resumeAudioContext } from '@/lib/sound';
 import { cn } from '@/lib/utils';
 
@@ -194,15 +196,25 @@ export default function ChineseHome() {
     chineseAdventureStars,
     chineseSpeedTimeLimit,
     setChineseSpeedTimeLimit,
+    selectedChineseGrade,
+    selectedChineseSemester,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<ChineseTab>('free');
   const [tabDirection, setTabDirection] = useState(0);
 
+  // ── Grade-based auto-match logic ──
+  const chineseGradeSet = selectedChineseGrade > 0;
+
   // Free practice state
   const [selectedMode, setSelectedMode] = useState<ChineseMode>('recognize-pinyin');
-  const [selectedGrade, setSelectedGrade] = useState<ChineseGrade>(1);
+  const [selectedGrade, setSelectedGrade] = useState<ChineseGrade>(() =>
+    chineseGradeSet ? (selectedChineseGrade as ChineseGrade) : 1
+  );
   const [selectedCount, setSelectedCount] = useState(10);
+
+  // Auto-update grade when store changes
+  const effectiveGrade = chineseGradeSet ? (selectedChineseGrade as ChineseGrade) : selectedGrade;
 
   // Speed challenge state
   const [speedMode, setSpeedMode] = useState<ChineseMode>('recognize-pinyin');
@@ -239,7 +251,7 @@ export default function ChineseHome() {
     return tier ? new Set([tier.name]) : new Set([TIERS[0].name]);
   });
 
-  const availableModes = getModesForGrade(selectedGrade);
+  const availableModes = getModesForGrade(effectiveGrade);
   const isModeAvailable = (mode: ChineseMode) => availableModes.some((m) => m.mode === mode);
   const activeMode = isModeAvailable(selectedMode) ? selectedMode : (availableModes[0]?.mode ?? 'recognize-char');
 
@@ -259,7 +271,7 @@ export default function ChineseHome() {
   const handleFreeStart = () => {
     playClickSound();
     resumeAudioContext();
-    setChinesePlayConfig({ mode: activeMode, grade: selectedGrade, count: selectedCount, isSpeed: false, speedTimeLimit: 60, isAdventure: false, adventureFloor: 0 });
+    setChinesePlayConfig({ mode: activeMode, grade: effectiveGrade, count: selectedCount, isSpeed: false, speedTimeLimit: 60, isAdventure: false, adventureFloor: 0 });
     setCurrentView('chinese-play');
   };
 
@@ -311,9 +323,30 @@ export default function ChineseHome() {
     });
   };
 
+  const handleGoSettings = () => { playClickSound(); setCurrentView('settings'); };
+
   // ── Render helpers ──
   const renderFreeTab = () => (
     <div className="space-y-5">
+      {/* Grade-matched info banner (replaces grade selector when grade is set) */}
+      {chineseGradeSet && (
+        <div className="flex items-center justify-between bg-rose-50 border border-rose-200/60 rounded-xl px-3.5 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-base flex-shrink-0">📚</span>
+            <span className="text-xs text-rose-800 font-medium truncate">
+              当前题库：{getGradeLabel(selectedChineseGrade as 1|2|3|4|5|6, selectedChineseSemester as '上册'|'下册')}
+            </span>
+          </div>
+          <button
+            onClick={handleGoSettings}
+            className="flex items-center gap-0.5 shrink-0 text-xs text-rose-600 hover:text-rose-800 font-medium transition-colors active:scale-95 ml-2"
+          >
+            <Settings className="w-3 h-3" />
+            去设置
+          </button>
+        </div>
+      )}
+
       {/* Mode Selection — 2-row compact grid */}
       <div>
         <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
@@ -349,25 +382,27 @@ export default function ChineseHome() {
         </div>
       </div>
 
-      {/* Grade Selection — horizontal scroll */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">选择年级</p>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {GRADES.map((g) => (
-            <button
-              key={g.value}
-              onClick={() => { setSelectedGrade(g.value); playClickSound(); }}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all active:scale-95 ${
-                selectedGrade === g.value
-                  ? 'bg-gradient-to-r from-rose-400 to-orange-400 text-white shadow-sm'
-                  : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-rose-200'
-              }`}
-            >
-              {g.label}
-            </button>
-          ))}
+      {/* Grade Selection — hidden when grade is set */}
+      {!chineseGradeSet && (
+        <div>
+          <p className="text-xs font-semibold text-gray-400 mb-2 px-1">选择年级</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {GRADES.map((g) => (
+              <button
+                key={g.value}
+                onClick={() => { setSelectedGrade(g.value); playClickSound(); }}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all active:scale-95 ${
+                  selectedGrade === g.value
+                    ? 'bg-gradient-to-r from-rose-400 to-orange-400 text-white shadow-sm'
+                    : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-rose-200'
+                }`}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Question Count */}
       <div>

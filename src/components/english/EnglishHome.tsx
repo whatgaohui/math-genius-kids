@@ -14,9 +14,11 @@ import {
   BookOpen,
   Trophy,
   ChevronDown,
+  Settings,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { ALL_ENGLISH_MODES, type EnglishMode, type EnglishGrade } from '@/lib/english-utils';
+import { getGradeLabel } from '@/lib/curriculum-config';
 import { playClickSound, resumeAudioContext } from '@/lib/sound';
 import { cn } from '@/lib/utils';
 
@@ -156,14 +158,22 @@ export default function EnglishHome() {
     setCurrentView, totalStars, streak,
     englishAdventureLevel, englishAdventureStars, englishSpeedTimeLimit,
     setEnglishSpeedTimeLimit,
+    selectedEnglishGrade,
+    selectedEnglishSemester,
   } = useGameStore();
 
   const [activeTab, setActiveTab] = useState<EnglishTab>('free');
   const [selectedMode, setSelectedMode] = useState<EnglishMode>('word-picture');
-  const [selectedGrade, setSelectedGrade] = useState<EnglishGrade>(1);
+  const [selectedGrade, setSelectedGrade] = useState<EnglishGrade>(() =>
+    selectedEnglishGrade > 0 ? (selectedEnglishGrade as EnglishGrade) : 1
+  );
   const [selectedCount, setSelectedCount] = useState(10);
   const [speedMode, setSpeedMode] = useState<EnglishMode>('word-picture');
   const [tabDirection, setTabDirection] = useState(0);
+
+  // ── Grade-based auto-match logic ──
+  const englishGradeSet = selectedEnglishGrade > 0;
+  const effectiveGrade = englishGradeSet ? (selectedEnglishGrade as EnglishGrade) : selectedGrade;
 
   // ── Adventure computed values ──
   const ALL_LEVELS = useMemo(() => generateAdventureLevels(), []);
@@ -212,7 +222,7 @@ export default function EnglishHome() {
   const handleFreeStart = () => {
     playClickSound();
     resumeAudioContext();
-    setEnglishPlayConfig({ mode: selectedMode, grade: selectedGrade, count: selectedCount, isSpeed: false, isAdventure: false });
+    setEnglishPlayConfig({ mode: selectedMode, grade: effectiveGrade, count: selectedCount, isSpeed: false, isAdventure: false });
     setCurrentView('english-play');
   };
 
@@ -260,9 +270,30 @@ export default function EnglishHome() {
     });
   };
 
+  const handleGoSettings = () => { playClickSound(); setCurrentView('settings'); };
+
   // ── Render helpers ──
   const renderFreeTab = () => (
     <div className="space-y-5">
+      {/* Grade-matched info banner (replaces grade selector when grade is set) */}
+      {englishGradeSet && (
+        <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200/60 rounded-xl px-3.5 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-base flex-shrink-0">📚</span>
+            <span className="text-xs text-emerald-800 font-medium truncate">
+              当前题库：{getGradeLabel(selectedEnglishGrade as 1|2|3|4|5|6, selectedEnglishSemester as '上册'|'下册')}
+            </span>
+          </div>
+          <button
+            onClick={handleGoSettings}
+            className="flex items-center gap-0.5 shrink-0 text-xs text-emerald-600 hover:text-emerald-800 font-medium transition-colors active:scale-95 ml-2"
+          >
+            <Settings className="w-3 h-3" />
+            去设置
+          </button>
+        </div>
+      )}
+
       {/* Mode Selection — 2x2 compact grid */}
       <div>
         <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
@@ -287,25 +318,27 @@ export default function EnglishHome() {
         </div>
       </div>
 
-      {/* Grade Selection */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">选择年级</p>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {GRADES.map((g) => (
-            <button
-              key={g.value}
-              onClick={() => { setSelectedGrade(g.value); playClickSound(); }}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all active:scale-95 ${
-                selectedGrade === g.value
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm'
-                  : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-emerald-200'
-              }`}
-            >
-              {g.label}
-            </button>
-          ))}
+      {/* Grade Selection — hidden when grade is set */}
+      {!englishGradeSet && (
+        <div>
+          <p className="text-xs font-semibold text-gray-400 mb-2 px-1">选择年级</p>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {GRADES.map((g) => (
+              <button
+                key={g.value}
+                onClick={() => { setSelectedGrade(g.value); playClickSound(); }}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all active:scale-95 ${
+                  selectedGrade === g.value
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm'
+                    : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-emerald-200'
+                }`}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Question Count */}
       <div>

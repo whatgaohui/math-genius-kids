@@ -33,11 +33,9 @@ import {
   Coins,
   Flame,
   Sparkles,
-  BookOpen,
   GraduationCap,
   Palette,
   Shield,
-  Heart,
   X,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
@@ -440,7 +438,6 @@ export default function SettingsPage() {
   const totalXP = useGameStore((s) => s.totalXP);
   const totalStars = useGameStore((s) => s.totalStars);
   const streak = useGameStore((s) => s.streak);
-  const practiceHistory = useGameStore((s) => s.practiceHistory);
   const soundEnabled = useGameStore((s) => s.soundEnabled);
   const toggleSound = useGameStore((s) => s.toggleSound);
 
@@ -468,12 +465,6 @@ export default function SettingsPage() {
   const displayName = playerName || '小朋友';
   const xpInfo = useMemo(() => getXPForNextLevel(totalXP), [totalXP]);
   const petConfig = petType ? PET_CONFIGS.find((p) => p.id === petType) : null;
-
-  // Stats
-  const totalPractices = practiceHistory.length;
-  const totalCorrect = practiceHistory.reduce((sum, r) => sum + r.correct, 0);
-  const totalQuestions = practiceHistory.reduce((sum, r) => sum + r.total, 0);
-  const accuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
 
   const handleClearData = () => {
     localStorage.removeItem('math-genius-game-store');
@@ -619,45 +610,6 @@ export default function SettingsPage() {
                 onClick={() => setNameDialogOpen(true)}
               >
                 <ChevronRight className="h-4 w-4 text-gray-300" />
-              </SettingRow>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* ── Learning Stats ── */}
-        <motion.div variants={itemVariants} className="mb-5">
-          <h3 className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-2 px-1">📊 学习数据</h3>
-          <Card className="overflow-hidden border-0 py-0">
-            <CardContent className="bg-white p-2 dark:bg-gray-800/50">
-              <SettingRow
-                icon={<BookOpen className="h-4 w-4 text-emerald-500" />}
-                iconBg="bg-emerald-50 dark:bg-emerald-900/30"
-                title="练习次数"
-                subtitle={`共完成 ${totalPractices} 次练习`}
-              >
-                <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 text-[11px] font-bold">
-                  {totalPractices}
-                </Badge>
-              </SettingRow>
-              <SettingRow
-                icon={<Zap className="h-4 w-4 text-orange-500" />}
-                iconBg="bg-orange-50 dark:bg-orange-900/30"
-                title="答题总数"
-                subtitle={`答对 ${totalCorrect} 题 / 共 ${totalQuestions} 题`}
-              >
-                <Badge variant="secondary" className="bg-orange-50 text-orange-700 text-[11px] font-bold">
-                  {totalCorrect}
-                </Badge>
-              </SettingRow>
-              <SettingRow
-                icon={<Heart className="h-4 w-4 text-rose-500" />}
-                iconBg="bg-rose-50 dark:bg-rose-900/30"
-                title="正确率"
-                subtitle={totalQuestions > 0 ? '继续保持哦！' : '还没有练习记录'}
-              >
-                <Badge variant="secondary" className="bg-rose-50 text-rose-700 text-[11px] font-bold">
-                  {accuracy}%
-                </Badge>
               </SettingRow>
             </CardContent>
           </Card>

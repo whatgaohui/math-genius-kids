@@ -20,8 +20,10 @@ import {
   BookOpen,
   ChevronDown,
   Trophy,
+  Settings,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
+import { getGradeLabel, GRADE_EMOJIS } from '@/lib/curriculum-config';
 import { playClickSound } from '@/lib/sound';
 import { cn } from '@/lib/utils';
 import type { Operation, Difficulty } from '@/lib/math-utils';
@@ -155,7 +157,30 @@ export default function MathHome() {
     selectedOperation, selectedDifficulty, speedTimeLimit, speedOperation,
     setSelectedOperation, setSelectedDifficulty, setSpeedTimeLimit, setSpeedOperation,
     setCurrentView, startMathSession, setAdventureLevel,
+    selectedMathGrade, selectedMathSemester,
   } = useGameStore();
+
+  // ── Grade-based auto-match logic ──
+  const mathGradeSet = selectedMathGrade > 0;
+
+  // Map grade → operation
+  const autoOperation: Operation = useMemo(() => {
+    if (!mathGradeSet) return 'add';
+    if (selectedMathGrade === 1) return 'add';
+    return 'mix';
+  }, [mathGradeSet, selectedMathGrade]);
+
+  // Map grade → difficulty
+  const autoDifficulty: Difficulty = useMemo(() => {
+    if (!mathGradeSet) return 'easy';
+    if (selectedMathGrade <= 2) return 'easy';
+    if (selectedMathGrade <= 4) return 'medium';
+    return 'hard';
+  }, [mathGradeSet, selectedMathGrade]);
+
+  // The actual operation/difficulty to use when starting free practice
+  const effectiveOperation = mathGradeSet ? autoOperation : selectedOperation;
+  const effectiveDifficulty = mathGradeSet ? autoDifficulty : selectedDifficulty;
 
   const [activeTab, setActiveTab] = useState<MathTab>('free');
   const [questionCount, setQuestionCount] = useState(10);
@@ -209,7 +234,7 @@ export default function MathHome() {
 
   const handleFreeStart = () => {
     playClickSound();
-    startMathSession('free', selectedOperation, selectedDifficulty, questionCount);
+    startMathSession('free', effectiveOperation, effectiveDifficulty, questionCount);
     setCurrentView('playing');
   };
 
@@ -255,48 +280,73 @@ export default function MathHome() {
     });
   };
 
+  const handleGoSettings = () => { playClickSound(); setCurrentView('settings'); };
+
   // ── Render helpers ──
   const renderFreeTab = () => (
     <div className="space-y-5">
-      {/* Operations */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">运算类型</p>
-        <div className="grid grid-cols-3 gap-2">
-          {OPERATIONS.map((op) => (
-            <button
-              key={op.value}
-              onClick={() => { setSelectedOperation(op.value); playClickSound(); }}
-              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-                selectedOperation === op.value
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-amber-200'
-              }`}
-            >
-              {op.icon} {op.label}
-            </button>
-          ))}
+      {/* Grade-matched info banner (replaces selectors when grade is set) */}
+      {mathGradeSet && (
+        <div className="flex items-center justify-between bg-amber-50 border border-amber-200/60 rounded-xl px-3.5 py-2.5">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-base flex-shrink-0">📚</span>
+            <span className="text-xs text-amber-800 font-medium truncate">
+              当前题库：{getGradeLabel(selectedMathGrade as 1|2|3|4|5|6, selectedMathSemester as '上册'|'下册')}
+            </span>
+          </div>
+          <button
+            onClick={handleGoSettings}
+            className="flex items-center gap-0.5 shrink-0 text-xs text-amber-600 hover:text-amber-800 font-medium transition-colors active:scale-95 ml-2"
+          >
+            <Settings className="w-3 h-3" />
+            去设置
+          </button>
         </div>
-      </div>
+      )}
 
-      {/* Difficulty */}
-      <div>
-        <p className="text-xs font-semibold text-gray-400 mb-2 px-1">难度选择</p>
-        <div className="grid grid-cols-3 gap-2">
-          {DIFFICULTIES.map((d) => (
-            <button
-              key={d.value}
-              onClick={() => { setSelectedDifficulty(d.value); playClickSound(); }}
-              className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
-                selectedDifficulty === d.value
-                  ? 'bg-amber-500 text-white shadow-sm'
-                  : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-amber-200'
-              }`}
-            >
-              {d.emoji} {d.label}
-            </button>
-          ))}
+      {/* Operations — hidden when grade is set */}
+      {!mathGradeSet && (
+        <div>
+          <p className="text-xs font-semibold text-gray-400 mb-2 px-1">运算类型</p>
+          <div className="grid grid-cols-3 gap-2">
+            {OPERATIONS.map((op) => (
+              <button
+                key={op.value}
+                onClick={() => { setSelectedOperation(op.value); playClickSound(); }}
+                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                  selectedOperation === op.value
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-amber-200'
+                }`}
+              >
+                {op.icon} {op.label}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Difficulty — hidden when grade is set */}
+      {!mathGradeSet && (
+        <div>
+          <p className="text-xs font-semibold text-gray-400 mb-2 px-1">难度选择</p>
+          <div className="grid grid-cols-3 gap-2">
+            {DIFFICULTIES.map((d) => (
+              <button
+                key={d.value}
+                onClick={() => { setSelectedDifficulty(d.value); playClickSound(); }}
+                className={`flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
+                  selectedDifficulty === d.value
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'bg-white text-gray-600 shadow-sm border border-gray-100 hover:border-amber-200'
+                }`}
+              >
+                {d.emoji} {d.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Count */}
       <div>

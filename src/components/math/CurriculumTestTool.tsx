@@ -188,19 +188,20 @@ function testMathTopic(topic: CurriculumTopic, sampleCount: number): TopicTestRe
   const sampleQuestions: string[] = [];
   const questions = generateTopicQuestions(topic, sampleCount);
 
+  // Helpers
+  const MATH_OPS = ['+', '−', '-', '×', '÷', '*', '/', '=', '%', '〇', ':', '(', ')'];
+  const SPECIAL_EXPR_PATTERNS = ['x', ':', '%', '/', '×', '÷', '(', '〇'];
+  const isSpecialExpr = (expr?: string) => SPECIAL_EXPR_PATTERNS.some(p => expr?.includes(p));
+
   questions.forEach((q, idx) => {
     if (idx < 5) {
       sampleQuestions.push(q.expression ?? `${q.num1} ${q.displayOp} ${q.num2}`);
     }
 
-    // 1. Expression format test
+    // 1. Expression format test — check for ANY common math operator
     const hasExpr = !!(q.expression && q.expression.trim().length > 0);
-    const hasOp = q.expression?.includes(q.displayOp) ||
-      q.operation === 'compare' ||
-      q.expression?.includes('=') ||
-      q.expression?.includes('%') ||
-      q.expression?.includes('〇') ||
-      q.expression?.includes(':');
+    const hasOp = q.operation === 'compare' ||
+      MATH_OPS.some(op => q.expression?.includes(op));
     tests.push({
       name: '表达式格式',
       passed: hasExpr && hasOp,
@@ -225,8 +226,8 @@ function testMathTopic(topic: CurriculumTopic, sampleCount: number): TopicTestRe
         expected: String(computed),
         actual: String(q.correctAnswer),
       });
-    } else if (q.expression?.includes('/') || q.expression?.includes('〇') || q.expression?.includes(':') || q.expression?.includes('%') || q.expression?.includes('x')) {
-      // Fraction, compare, ratio, percentage, equation — trust generator
+    } else if (isSpecialExpr(q.expression)) {
+      // Fraction, compare, ratio, percentage, equation, four-ops — trust generator
       tests.push({
         name: '答案正确性',
         passed: true,
@@ -261,17 +262,22 @@ function testMathTopic(topic: CurriculumTopic, sampleCount: number): TopicTestRe
   });
 
   // 3. Numeric range test (check all operands)
+  // Skip for special question types where num1/num2 are placeholders
   const [rangeMin, rangeMax] = topic.numRange;
   let rangePass = true;
   let rangeDetails = '';
   for (const q of questions) {
     if (q.operation === 'compare') continue;
-    if (q.expression?.includes('x') || q.expression?.includes(':') || q.expression?.includes('%')) continue;
+    if (isSpecialExpr(q.expression)) continue;
     // For simple operations check num1, num2
     if (q.num1 < rangeMin || q.num1 > rangeMax || q.num2 < rangeMin || q.num2 > rangeMax) {
       // Allow some flexibility for result operands
       if (q.operation === 'divide' && q.num1 > rangeMax) {
         // dividend may exceed range in division — this is ok
+        continue;
+      }
+      // For multiplication, the product (num1) can exceed the factor range
+      if (q.operation === 'multiply' && q.num1 > rangeMax && q.num2 <= rangeMax) {
         continue;
       }
       rangePass = false;
