@@ -279,7 +279,7 @@ export default function ChineseHome() {
   const handleSpeedStart = () => {
     playClickSound();
     resumeAudioContext();
-    setChinesePlayConfig({ mode: speedMode, grade: selectedGrade, count: 50, isSpeed: true, speedTimeLimit: chineseSpeedTimeLimit, isAdventure: false, adventureFloor: 0 });
+    setChinesePlayConfig({ mode: speedMode, grade: effectiveGrade, count: 50, isSpeed: true, speedTimeLimit: chineseSpeedTimeLimit, isAdventure: false, adventureFloor: 0 });
     setCurrentView('chinese-play');
   };
 

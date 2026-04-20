@@ -168,19 +168,72 @@ const SUBJECT_NAMES: Record<string, string> = {
   english: '英语',
 }
 
-const SUBJECT_ENCOURAGEMENT: Record<string, { emoji: string; text: string }> = {
-  math: { emoji: '🧮', text: '' },
-  chinese: { emoji: '📖', text: '' },
-  english: { emoji: '🔤', text: '' },
-}
+/**
+ * Unified, subject-specific encouragement system.
+ * Takes accuracy in 0–1 range (e.g. 1.0 = 100%).
+ * Returns fun, child-friendly messages with emojis.
+ */
+function getSubjectEncouragement(
+  acc: number,
+  subject?: 'math' | 'chinese' | 'english' | string,
+): { emoji: string; text: string } {
+  // ---- 100% : Perfect ----
+  if (acc >= 1.0) {
+    switch (subject) {
+      case 'math':    return { emoji: '🏆', text: '满分！你是数学小天才！全部答对啦！' }
+      case 'chinese': return { emoji: '🏆', text: '满分！你是语文小达人！太厉害了！' }
+      case 'english': return { emoji: '🏆', text: '满分！你是英语小高手！Perfect！' }
+      default:        return { emoji: '🏆', text: '太棒了！全部答对！你是小天才！' }
+    }
+  }
 
-function getDefaultEncouragement(acc: number, subjectName?: string): { emoji: string; text: string } {
-  const name = subjectName || '练习'
-  if (acc >= 0.95) return { emoji: '🎉', text: `太棒了！你是${name}小天才！` }
-  if (acc >= 0.8) return { emoji: '🌟', text: '非常优秀！继续保持！' }
-  if (acc >= 0.6) return { emoji: '💪', text: '不错哦！再练练会更好！' }
-  if (acc >= 0.4) return { emoji: '📚', text: '加油！多多练习就能进步！' }
-  return { emoji: '🤗', text: '没关系，我们一起来学习吧！' }
+  // ---- 90%+ : Excellent ----
+  if (acc >= 0.9) {
+    switch (subject) {
+      case 'math':    return { emoji: '🌟', text: '非常优秀！再接再厉，满分就在眼前！' }
+      case 'chinese': return { emoji: '🌟', text: '棒极了！你的语文学得真好！' }
+      case 'english': return { emoji: '🌟', text: 'Great job！你的英语真棒！' }
+      default:        return { emoji: '🌟', text: '非常优秀！继续保持！' }
+    }
+  }
+
+  // ---- 75%+ : Good ----
+  if (acc >= 0.75) {
+    switch (subject) {
+      case 'math':    return { emoji: '😊', text: '做得不错！多算几遍就更厉害了！' }
+      case 'chinese': return { emoji: '😊', text: '很好哦！多读多写，进步更快！' }
+      case 'english': return { emoji: '😊', text: '不错哦！多听多说，你会更棒的！' }
+      default:        return { emoji: '😊', text: '做得不错！再努力一下就更好了！' }
+    }
+  }
+
+  // ---- 60%+ : Passing ----
+  if (acc >= 0.6) {
+    switch (subject) {
+      case 'math':    return { emoji: '💪', text: '及格啦！算得还可以，加油哦！' }
+      case 'chinese': return { emoji: '💪', text: '及格了！多看看课文，会更好的！' }
+      case 'english': return { emoji: '💪', text: 'Keep going！继续努力就更好了！' }
+      default:        return { emoji: '💪', text: '还可以哦！多练习会更好！' }
+    }
+  }
+
+  // ---- 40%+ : Try harder ----
+  if (acc >= 0.4) {
+    switch (subject) {
+      case 'math':    return { emoji: '🤔', text: '别灰心，算错的题再算一遍吧！' }
+      case 'chinese': return { emoji: '🤔', text: '没关系，慢慢来，多复习几遍！' }
+      case 'english': return { emoji: '🤔', text: '没关系，多读几遍就记住了！' }
+      default:        return { emoji: '🤔', text: '别灰心，多练习就能进步！' }
+    }
+  }
+
+  // ---- <40% : Needs review (warm, not discouraging) ----
+  switch (subject) {
+    case 'math':    return { emoji: '🤗', text: '没关系，学习就是要多练习，我们再来一次吧！' }
+    case 'chinese': return { emoji: '🤗', text: '没关系，每一个字都是新朋友，慢慢认识它们吧！' }
+    case 'english': return { emoji: '🤗', text: '没关系，每个单词多看几遍就会了！加油！' }
+    default:        return { emoji: '🤗', text: '没关系，我们一起来学习吧！一步一步来！' }
+  }
 }
 
 // ─── Animation variants ──────────────────────────────────────────────────────
@@ -290,10 +343,10 @@ export function PracticeResult(props: PracticeResultProps) {
   const effectivePetName = petName || null
   const petConfig = effectivePetType ? PET_CONFIGS.find(p => p.id === effectivePetType) : null
 
-  // Get encouragement
+  // Get encouragement — use explicit props if provided, otherwise use unified system
   const encouragement = (encEmoji || encText)
     ? { emoji: encEmoji || '🎉', text: encText || '练习完成！' }
-    : getDefaultEncouragement(acc, resolvedSubjectName)
+    : getSubjectEncouragement(acc, subject)
 
   // Wrong answer count
   const effectiveWrong = wrong || (total - correct)

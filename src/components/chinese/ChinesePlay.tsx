@@ -328,6 +328,25 @@ export default function ChinesePlay() {
     const totalAnswered = correct + wrong;
     const stars = calculateStars(correct, totalAnswered);
     const xp = calculateXP(correct, totalAnswered, totalTime, stars, maxCombo);
+    const accuracy = totalAnswered > 0 ? correct / totalAnswered : 0;
+
+    // Explicit encouragement based on accuracy
+    let encouragementEmoji = '🎉';
+    let encouragementText = '练习完成！';
+    if (accuracy >= 1.0) {
+      encouragementEmoji = '🏆'; encouragementText = '满分！你是语文小达人！太厉害了！';
+    } else if (accuracy >= 0.9) {
+      encouragementEmoji = '🌟'; encouragementText = '棒极了！你的语文学得真好！';
+    } else if (accuracy >= 0.75) {
+      encouragementEmoji = '😊'; encouragementText = '很好哦！多读多写，进步更快！';
+    } else if (accuracy >= 0.6) {
+      encouragementEmoji = '💪'; encouragementText = '及格了！多看看课文，会更好的！';
+    } else if (accuracy >= 0.4) {
+      encouragementEmoji = '🤔'; encouragementText = '没关系，慢慢来，多复习几遍！';
+    } else {
+      encouragementEmoji = '🤗'; encouragementText = '没关系，每一个字都是新朋友，慢慢认识它们吧！';
+    }
+
     return (
       <PracticeResult
         correct={correct}
@@ -347,6 +366,8 @@ export default function ChinesePlay() {
         petXPEarned={rewardInfo?.petXP}
         isCriticalHit={rewardInfo?.isCriticalHit ?? false}
         bonusDetails={rewardInfo?.bonusDetails}
+        encouragementEmoji={encouragementEmoji}
+        encouragementText={encouragementText}
         speedEncouragement={isSpeedMode ? {
           emoji: '⚡',
           text: `限时${config.speedTimeLimit}秒内答对 ${correct} 题！`,

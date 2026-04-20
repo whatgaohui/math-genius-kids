@@ -349,6 +349,24 @@ export default function EnglishPlay() {
         })()
       : undefined;
 
+    // Explicit encouragement based on accuracy
+    const accuracy = effectiveTotal > 0 ? correct / effectiveTotal : 0;
+    let encouragementEmoji = '🎉';
+    let encouragementText = 'Practice complete!';
+    if (accuracy >= 1.0) {
+      encouragementEmoji = '🏆'; encouragementText = '满分！你是英语小高手！Perfect！';
+    } else if (accuracy >= 0.9) {
+      encouragementEmoji = '🌟'; encouragementText = 'Great job！你的英语真棒！';
+    } else if (accuracy >= 0.75) {
+      encouragementEmoji = '😊'; encouragementText = '不错哦！多听多说，你会更棒的！';
+    } else if (accuracy >= 0.6) {
+      encouragementEmoji = '💪'; encouragementText = 'Keep going！继续努力就更好了！';
+    } else if (accuracy >= 0.4) {
+      encouragementEmoji = '🤔'; encouragementText = '没关系，多读几遍就记住了！';
+    } else {
+      encouragementEmoji = '🤗'; encouragementText = '没关系，每个单词多看几遍就会了！加油！';
+    }
+
     return (
       <PracticeResult
         correct={correct}
@@ -367,6 +385,8 @@ export default function EnglishPlay() {
         petXPEarned={rewardInfo?.petXP}
         isCriticalHit={rewardInfo?.isCriticalHit ?? false}
         bonusDetails={rewardInfo?.bonusDetails}
+        encouragementEmoji={encouragementEmoji}
+        encouragementText={encouragementText}
         speedEncouragement={speedEncouragement}
         onBack={handleBack}
         onRetry={handleRetry}

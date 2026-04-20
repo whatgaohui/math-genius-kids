@@ -201,22 +201,22 @@ export function formatTimeChinese(ms: number): string {
  * Get an encouragement message based on accuracy percentage.
  */
 export function getEncouragement(accuracy: number): { emoji: string; text: string } {
-  if (accuracy === 100) {
-    return { emoji: '🎉', text: '太棒了！全部答对！完美！' };
+  if (accuracy >= 100) {
+    return { emoji: '🏆', text: '满分！你是数学小天才！全部答对啦！' };
   }
   if (accuracy >= 90) {
-    return { emoji: '🌟', text: '非常优秀！继续加油！' };
+    return { emoji: '🌟', text: '非常优秀！再接再厉，满分就在眼前！' };
   }
   if (accuracy >= 75) {
-    return { emoji: '😊', text: '做得不错！再努力一下！' };
+    return { emoji: '😊', text: '做得不错！多算几遍就更厉害了！' };
   }
   if (accuracy >= 60) {
-    return { emoji: '💪', text: '还可以哦，多练习会更好！' };
+    return { emoji: '💪', text: '及格啦！算得还可以，加油哦！' };
   }
   if (accuracy >= 40) {
-    return { emoji: '🤔', text: '别灰心，慢慢来！' };
+    return { emoji: '🤔', text: '别灰心，算错的题再算一遍吧！' };
   }
-  return { emoji: '📖', text: '让我们再复习一遍吧！' };
+  return { emoji: '🤗', text: '没关系，学习就是要多练习，我们再来一次吧！' };
 }
 
 /**

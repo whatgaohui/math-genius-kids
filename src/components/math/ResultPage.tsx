@@ -95,6 +95,8 @@ export default function ResultPage() {
   // Fallback: if no result data at all, use latest practice record
   if (total === 0 && practiceHistory.length > 0) {
     const latest = practiceHistory[0]
+    const fallbackAccuracy = latest.total > 0 ? latest.correct / latest.total : 0
+    const fallbackEncouragement = getEncouragement(Math.round(fallbackAccuracy * 100))
     return (
       <PracticeResult
         correct={latest.correct}
@@ -107,6 +109,8 @@ export default function ResultPage() {
         subject="math"
         modeLabel={modeLabel}
         modeEmoji={modeEmoji}
+        encouragementEmoji={fallbackEncouragement.emoji}
+        encouragementText={fallbackEncouragement.text}
         onReplay={handlePlayAgain}
         onHome={handleGoMathHome}
       />

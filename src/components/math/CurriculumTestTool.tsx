@@ -189,8 +189,8 @@ function testMathTopic(topic: CurriculumTopic, sampleCount: number): TopicTestRe
   const questions = generateTopicQuestions(topic, sampleCount);
 
   // Helpers
-  const MATH_OPS = ['+', '−', '-', '×', '÷', '*', '/', '=', '%', '〇', ':', '(', ')'];
-  const SPECIAL_EXPR_PATTERNS = ['x', ':', '%', '/', '×', '÷', '(', '〇'];
+  const MATH_OPS = ['+', '−', '-', '×', '÷', '*', '/', '=', '%', '〇', ':', '(', ')', '?', '？'];
+  const SPECIAL_EXPR_PATTERNS = ['x', ':', '%', '/', '×', '÷', '(', '〇', '?', '？', '−'];
   const isSpecialExpr = (expr?: string) => SPECIAL_EXPR_PATTERNS.some(p => expr?.includes(p));
 
   questions.forEach((q, idx) => {

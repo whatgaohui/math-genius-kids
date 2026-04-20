@@ -229,7 +229,7 @@ export default function EnglishHome() {
   const handleSpeedStart = () => {
     playClickSound();
     resumeAudioContext();
-    setEnglishPlayConfig({ mode: speedMode, grade: selectedGrade, count: 50, isSpeed: true, speedTimeLimit: englishSpeedTimeLimit });
+    setEnglishPlayConfig({ mode: speedMode, grade: effectiveGrade, count: 50, isSpeed: true, speedTimeLimit: englishSpeedTimeLimit });
     setCurrentView('english-play');
   };
 

@@ -364,3 +364,111 @@ Stage Summary:
 - Settings: cleaner UI without duplicate learning stats
 - Global consistency: grade/difficulty auto-matched from settings when set
 - bun run lint: 0 errors, dev server compiled OK
+
+---
+Task ID: Encouragement Text System Overhaul
+Agent: Main
+Task: Fix and overhaul the completion encouragement text system across all 3 subjects (数学/语文/英语)
+
+Work Log:
+- Analyzed the two separate encouragement systems:
+  1. `math-utils.ts` `getEncouragement(accuracy)` — used by ResultPage.tsx for math (takes percentage 0-100)
+  2. `PracticeResult.tsx` `getDefaultEncouragement(acc, subjectName)` — used as fallback for all subjects (takes 0-1 range)
+- Identified root cause of bug "全对显示'让我们再复习一遍吧'":
+  - `getEncouragement` used strict `accuracy === 100` which could miss floating point edge cases
+  - ResultPage.tsx fallback case (total===0 && practiceHistory.length>0) did NOT pass encouragement props
+  - ChinesePlay.tsx and EnglishPlay.tsx did NOT pass explicit encouragement, relying on fallback
+
+Changes made:
+1. **PracticeResult.tsx** — Replaced `getDefaultEncouragement` with `getSubjectEncouragement(acc, subject)`:
+   - Subject-specific messages for math (数学), chinese (语文), english (英语)
+   - 6 accuracy tiers: ≥100% (perfect/🏆), ≥90% (excellent/🌟), ≥75% (good/😊), ≥60% (passing/💪), ≥40% (try harder/🤔), <40% (review/🤗)
+   - All messages are fun, child-friendly, warm (ages 6-12 appropriate)
+   - Lowest tier uses warm "没关系" messages, NOT "让我们再复习一遍吧"
+
+2. **math-utils.ts** — Fixed `getEncouragement`:
+   - Changed `accuracy === 100` → `accuracy >= 100` to handle floating point edge cases
+   - Updated all messages to be more fun and consistent with the new unified system
+   - Changed default text from "让我们再复习一遍吧！" → "没关系，学习就是要多练习，我们再来一次吧！"
+
+3. **ChinesePlay.tsx** — Added explicit encouragement calculation:
+   - Calculates accuracy before PracticeResult render
+   - Explicitly sets encouragementEmoji + encouragementText with 6-tier logic
+   - Passes both to PracticeResult (no longer relies on fallback)
+
+4. **EnglishPlay.tsx** — Added explicit encouragement calculation:
+   - Same approach as ChinesePlay
+   - English-specific messages at each tier
+
+5. **ResultPage.tsx** — Fixed fallback edge case:
+   - The `total === 0 && practiceHistory.length > 0` fallback now explicitly calculates and passes encouragement
+
+6. **chinese-utils.ts** (bonus fix) — Fixed pre-existing syntax error:
+   - Line 973: missing closing quote on sentence string causing 500 errors
+
+Stage Summary:
+- 6 files modified: PracticeResult.tsx, math-utils.ts, ChinesePlay.tsx, EnglishPlay.tsx, ResultPage.tsx, chinese-utils.ts
+- Encouragement text now uses `>=` instead of `===` for 100% check (prevents floating point bugs)
+- All 3 subjects (math/chinese/english) now pass explicit encouragement with subject-specific messages
+- Fallback edge case in ResultPage.tsx now also passes encouragement
+- Default/lowest-accuracy messages are warm and encouraging, never "让我们再复习一遍吧" for perfect scores
+- bun run lint: 0 errors, dev server compiled OK
+
+---
+
+Task ID: Settings + Grade Auto-Match Verification
+Agent: Main
+Task: Verify Settings page clean, verify global grade auto-matching, fix speed mode grade bugs
+
+Work Log:
+- **SettingsPage.tsx verification**: Confirmed no "📊 学习数据" section exists. Quick Stats Row (星星/经验/连续/金币) intact. Nickname edit dialog (EditNameDialog) syncs tempName on open, focuses input after 350ms. Avatar picker dialog (AvatarPickerDialog) syncs selected on open. Both dialogs function correctly.
+- **MathHome.tsx verification**: When `selectedMathGrade > 0`, operation/difficulty selectors are hidden (`{!mathGradeSet && ...}`), "当前题库：X年级X册" banner shown with settings link. `effectiveOperation`/`effectiveDifficulty` auto-mapped from grade. Speed challenge uses `speedOperation` (separate manual selection, correct for math). ✅ No issues.
+- **ChineseHome.tsx verification**: When `selectedChineseGrade > 0`, grade selector hidden, banner shown. `effectiveGrade` used for free practice. **BUG FOUND & FIXED**: Speed challenge `handleSpeedStart` was using `selectedGrade` (local state) instead of `effectiveGrade` (respects global grade setting). Fixed to use `effectiveGrade`.
+- **EnglishHome.tsx verification**: When `selectedEnglishGrade > 0`, grade selector hidden, banner shown. `effectiveGrade` used for free practice. **BUG FOUND & FIXED**: Same speed challenge bug — `handleSpeedStart` used `selectedGrade` instead of `effectiveGrade`. Fixed to use `effectiveGrade`.
+- Ran `bun run lint`: 0 errors.
+
+Stage Summary:
+- SettingsPage.tsx: clean, no learning statistics section, nickname/avatar dialogs working
+- MathHome.tsx: grade auto-matching verified correct
+- ChineseHome.tsx: fixed speed challenge grade bug (selectedGrade → effectiveGrade)
+- EnglishHome.tsx: fixed speed challenge grade bug (selectedGrade → effectiveGrade)
+- bun run lint: 0 errors
+
+---
+Task ID: Fix encouragement + question bank + settings cleanup
+Agent: Main + sub-agents
+Task: Fix completion text logic, search question bank references, fix speed mode bug, settings cleanup
+
+Work Log:
+- Analyzed full project state: math-curriculum.ts (23 topics, 1082 lines), chinese-utils.ts (1757 lines), english-utils.ts (474 lines)
+- Confirmed math curriculum has proper grade differentiation (G1: within-10, G2: mul table, G3: multi-digit, G4: large nums, G5: equations/fractions, G6: ratios/negative)
+- Chinese/English have grade-level databases but lack semester-level differentiation
+- Searched web for 学而思/小猿题库/人教版 references - confirmed these are commercial products not freely downloadable
+- Read reference pages for PEP curriculum standards
+
+Fixed completion encouragement system:
+- PracticeResult.tsx: Created getSubjectEncouragement() with 6-tier subject-specific messages
+  - 100%: "你是数学小天才！"/"你是语文小达人！"/"你是英语小高手！"
+  - 90%+: "再接再厉，满分就在眼前！"
+  - 75%+: encouraging progress
+  - 60%+: positive motivation
+  - 40%+: gentle support
+  - <40%: warm non-discouraging messages (NOT "让我们再复习一遍吧")
+- math-utils.ts: Fixed accuracy === 100 → accuracy >= 100, updated all messages
+- ChinesePlay.tsx: Added explicit 6-tier encouragement with Chinese-specific messages
+- EnglishPlay.tsx: Added explicit 6-tier encouragement with English/Chinese bilingual messages
+- ResultPage.tsx: Fixed fallback edge case
+
+Fixed speed mode grade bug:
+- ChineseHome.tsx: handleSpeedStart now uses effectiveGrade (was selectedGrade, ignoring settings)
+- EnglishHome.tsx: Same fix applied
+
+Settings cleanup verified:
+- No "📊 学习数据" section exists (was already cleaned)
+- Nickname input and avatar picker working correctly
+
+Stage Summary:
+- 6 files modified: PracticeResult.tsx, math-utils.ts, ChinesePlay.tsx, EnglishPlay.tsx, ChineseHome.tsx, EnglishHome.tsx
+- Encouragement: All 3 subjects now have 6-tier, subject-specific, child-friendly completion messages
+- Speed mode: Chinese and English now correctly use global grade setting from Settings
+- bun run lint: 0 errors, dev server compiled successfully

@@ -640,7 +640,7 @@ export const useGameStore = create<GameState & GameActions>()(
       // ── English Session ──
       startEnglishSession: (mode: EnglishMode, _grade: number, count: number = 10) => {
         import('./english-utils').then(({ generateEnglishQuestions }) => {
-          const questions = generateEnglishQuestions(mode, _grade as 1 | 2 | 3, count);
+          const questions = generateEnglishQuestions(mode, _grade as 1 | 2 | 3 | 4 | 5 | 6, count);
           const session: GameSessionState = {
             questions,
             currentQuestionIndex: 0,
