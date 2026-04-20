@@ -472,3 +472,54 @@ Stage Summary:
 - Encouragement: All 3 subjects now have 6-tier, subject-specific, child-friendly completion messages
 - Speed mode: Chinese and English now correctly use global grade setting from Settings
 - bun run lint: 0 errors, dev server compiled successfully
+
+---
+
+Task ID: Modular Question Bank System (题库模块化)
+Agent: Main + 3 sub-agents (full-stack-developer)
+Task: Modularize the question bank system with extensible templates for math, Chinese, and English
+
+Work Log:
+- Analyzed existing question generation code:
+  - math-utils.ts: basic arithmetic generators (add/sub/mul/div/compare)
+  - math-curriculum.ts: curriculum-aligned generators with constraints (23 topics)
+  - chinese-utils.ts: embedded character/word databases + generators (8 modes, grades 1-6)
+  - english-utils.ts: embedded vocabulary databases + generators (4 modes, grades 1-6)
+  - curriculum-config.ts: unified topic definitions (126 topics across 3 subjects)
+- Designed modular architecture with:
+  - Core type system (QuestionBank<T> interface, BaseQuestion, subject-specific question types)
+  - Registry pattern (QuestionBankRegistry singleton with register/get/replace/enable/disable)
+  - Template system (data format guides for each subject)
+  - Auto-initialization (all banks register on first import)
+
+Created 12 new files in `/home/z/my-project/src/lib/question-bank/`:
+
+**Core Framework (3 files):**
+- `types.ts` — Core type definitions: QuestionBank<T> interface, BaseQuestion, MathQuestion, ChineseQuestion, EnglishQuestion, TopicMeta, GenerationOptions, QuestionBankTemplate
+- `registry.ts` — QuestionBankRegistry singleton: register(), getBank(), replace(), enable/disable(), subject index, priority sorting
+- `index.ts` — Main entry point: auto-initializes all banks, exports convenience functions generateQuestions() and getTopics()
+
+**Math Bank (3 files):**
+- `math/template.ts` (904 lines) — MathQuestionData interface + MATH_BANK_TEMPLATE with example questions for ALL 45 topics (6 grades × 2 semesters), difficulty scaling from G1 (single-digit) to G6 (fractions/percentages)
+- `math/generators.ts` (984 lines) — 17 specialized generator functions: noCarryAdd, noBorrowSub, tableMultiply/Divide, multiDigitMul, twoDigitDiv, threeByTwoMul, fourOpsWithParens, decimal ops, fraction ops, equation, percentage, negative, ratio
+- `math/index.ts` (515 lines) — MathQuestionBank class implementing QuestionBank<MathQuestion>, static data + procedural generation, topic→generator routing map for all 45 topics
+
+**Chinese Bank (3 files):**
+- `chinese/template.ts` (709 lines) — ChineseQuestionData interface + CHINESE_BANK_TEMPLATE covering 36 topics (6 grades × 2 semesters) with 3-5 examples each, 11 ChineseMode types
+- `chinese/generators.ts` (1174 lines) — ~300 chars/grade, ~150 words/grade, 32 idioms, 30 antonym pairs, 18 synonym pairs, 17 poetry entries, 11 generator functions for all modes
+- `chinese/index.ts` (378 lines) — ChineseQuestionBank class with generateModeQuestions() support for 11 Chinese modes
+
+**English Bank (3 files):**
+- `english/template.ts` (2009 lines) — EnglishQuestionData interface + ENGLISH_BANK_TEMPLATE with 3-5 questions per topic for all 24 topics, detailed mode descriptions
+- `english/generators.ts` (775 lines) — ~260 vocabulary entries across 6 grades, 4 generator functions (wordPicture, pictureWord, listening, spelling), smart distractor generation
+- `english/index.ts` (289 lines) — EnglishQuestionBank class with generateModeQuestions() support for 4 English modes
+
+Total new code: ~7,737 lines
+
+Stage Summary:
+- Modular question bank system fully implemented with 12 new files (7,737 lines)
+- 3 subject banks (math/chinese/english) each with template + generators + QuestionBank implementation
+- Registry pattern allows hot-swapping question banks at runtime
+- Template system provides clear data format guides for future question bank expansion
+- All banks auto-register on import via `import '@/lib/question-bank'`
+- `bun run lint`: 0 errors, dev server compiled successfully
