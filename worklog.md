@@ -812,3 +812,35 @@ Stage Summary:
 - Math accuracy now correctly uses actual answered count (correct + wrong) instead of question pool size
 - Chinese and English accuracy confirmed correct (no changes needed)
 - bun run lint: 0 errors, dev server compiled OK
+
+---
+Task ID: Fix Speed Challenge Accuracy Calculation Bug (语数外三科)
+Agent: Main
+Task: Fix accuracy/statistics calculation bugs in speed challenge mode across all 3 subjects
+
+Work Log:
+- User reported: "数学限时挑战正确率计算有问题" with screenshot showing 0/0 after 31 seconds of gameplay
+- Analyzed screenshot via VLM: confirmed 0 correct, 0 total, 0% accuracy after playing speed mode for 31 seconds
+- Root cause analysis of SpeedGamePlay.tsx:
+  - In `handleSubmit`, `answerQuestion()` updates Zustand store (sessionCorrect/sessionWrong) synchronously
+  - But the `setTimeout` callback (350ms for correct answers) uses the STALE `session` from the closure
+  - When it does `useGameStore.setState({ session: { ...session, currentQuestionIndex: next } })`, the spread of old session OVERWRITES the incremented sessionCorrect/sessionWrong back to pre-answer values
+  - This means every correct answer's score gets wiped out 350ms later
+  - Similarly, wrong answer counts also get overwritten when the NEXT correct answer triggers the stale closure
+- Checked ChinesePlay.tsx: Uses local React state (setCorrect/setWrong with functional updates) - NOT affected
+- Checked EnglishPlay.tsx: Same local state pattern - NOT affected by stale closure bug
+- Found additional bugs:
+  1. ResultPage.tsx mode label only checked 'math-adventure', showing '自由练习' for speed mode
+  2. EnglishPlay.tsx speed mode used `Date.now() - startTime` instead of `config.speedTimeLimit * 1000` for total time
+
+Fixed 3 files:
+1. **SpeedGamePlay.tsx** (CRITICAL FIX): Changed setTimeout callback to use `useGameStore.getState().session` instead of closure's `session` for both "move to next" and "regenerate more" branches
+2. **ResultPage.tsx**: Added mode label detection using `lastResult?.mode` — now shows '速度模式' (⚡) for speed, '每日挑战' (📅) for daily, '闯关' (🏆) for adventure, '自由练习' (📖) for free
+3. **EnglishPlay.tsx**: Fixed `handleFinish` to use `config.speedTimeLimit * 1000` for speed mode time, added `config.speedTimeLimit` to dependency array
+
+Stage Summary:
+- Critical bug fixed: Math speed challenge now correctly tracks correct/wrong counts (was always showing 0/0)
+- Result page now shows correct mode label for all game modes (was always showing '自由练习')
+- English speed mode now uses correct time calculation
+- Chinese/English speed modes were NOT affected (use local React state, not Zustand session)
+- bun run lint: 0 errors, dev server compiled OK

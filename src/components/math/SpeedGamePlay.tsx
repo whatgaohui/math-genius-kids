@@ -163,19 +163,25 @@ export default function SpeedGamePlay() {
       setInputValue('');
 
       if (isCorrect) {
+        // IMPORTANT: Use getState() to get the latest session state, not the stale closure.
+        // answerQuestion() has already updated sessionCorrect/sessionWrong synchronously,
+        // but the closure's `session` still holds pre-answer values.
+        const latestSession = useGameStore.getState().session;
+        if (!latestSession) return;
+
         // Move to next question
-        const nextIndex = session.currentQuestionIndex + 1;
-        if (nextIndex < session.questions.length) {
+        const nextIndex = latestSession.currentQuestionIndex + 1;
+        if (nextIndex < latestSession.questions.length) {
           useGameStore.setState({
             session: {
-              ...session,
+              ...latestSession,
               currentQuestionIndex: nextIndex,
               questionStartTime: Date.now(),
             },
           });
         } else {
           // All questions exhausted - regenerate more (use curriculum if configured)
-          const newQuestions = [...(session.questions as MathQuestion[])];
+          const newQuestions = [...(latestSession.questions as MathQuestion[])];
           let more: MathQuestion[];
           const mathGrade = useGameStore.getState().selectedMathGrade;
           const mathSemester = useGameStore.getState().selectedMathSemester;
@@ -186,7 +192,7 @@ export default function SpeedGamePlay() {
             more = generateQuestions(speedOperation, 'easy', 20);
           }
           const updatedSession = {
-            ...session,
+            ...latestSession,
             questions: [...newQuestions, ...more],
             currentQuestionIndex: nextIndex,
             questionStartTime: Date.now(),

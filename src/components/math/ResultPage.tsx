@@ -81,10 +81,25 @@ export default function ResultPage() {
     timeMs: q.timeMs,
   }))
 
-  const modeLabel = lastGameSource === 'math-adventure'
-    ? `闯关 · ${lastLevelEmoji} ${lastLevelName}`
-    : '自由练习'
-  const modeEmoji = lastGameSource === 'math-adventure' ? '🏆' : '📖'
+  // Determine mode label from lastResult or lastGameSource
+  const modeLabel = (() => {
+    if (lastGameSource === 'math-adventure') {
+      return `闯关 · ${lastLevelEmoji} ${lastLevelName}`;
+    }
+    if (lastResult?.mode === 'speed') {
+      return '速度模式';
+    }
+    if (lastResult?.mode === 'daily') {
+      return '每日挑战';
+    }
+    return '自由练习';
+  })();
+  const modeEmoji = (() => {
+    if (lastGameSource === 'math-adventure') return '🏆';
+    if (lastResult?.mode === 'speed') return '⚡';
+    if (lastResult?.mode === 'daily') return '📅';
+    return '📖';
+  })();
 
   // Primary render: use lastResult if session is null
   const total = resultCorrect + resultWrong

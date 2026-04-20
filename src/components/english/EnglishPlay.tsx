@@ -288,7 +288,7 @@ export default function EnglishPlay() {
   };
 
   const handleFinish = useCallback(() => {
-    const totalTimeMs = Date.now() - startTime;
+    const totalTimeMs = isSpeedMode ? config.speedTimeLimit * 1000 : Date.now() - startTime;
     const totalAnswered = correct + wrong;
     const result = completeSubjectSession({
       correct,
@@ -313,7 +313,7 @@ export default function EnglishPlay() {
         },
       });
     }
-  }, [correct, wrong, questions.length, maxCombo, startTime, config.mode, config.grade, completeSubjectSession, isSpeedMode, config.isAdventure, config.adventureFloor]);
+  }, [correct, wrong, questions.length, maxCombo, startTime, config.mode, config.grade, completeSubjectSession, isSpeedMode, config.speedTimeLimit, config.isAdventure, config.adventureFloor]);
 
   useEffect(() => {
     if (isFinished) {
