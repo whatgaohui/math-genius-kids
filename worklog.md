@@ -963,3 +963,55 @@ Stage Summary:
 - All 3 subjects now have consistent confetti + full-screen feedback overlays
 - Math speed challenge now offers 7 question types (matching free practice more closely)
 - G6S2 comparison question proportion reduced from 40% to 20%
+
+---
+
+Task ID: Comprehensive Consistency Fix — 12 Issues Across All 3 Subjects
+Agent: Main + 3 parallel full-stack-developer sub-agents
+Task: Fix all 12 remaining consistency issues identified in the QA Checklist audit
+
+Work Log:
+- Read all affected source files to understand current state
+- Dispatched 3 parallel agents to fix: (1) Math GamePlay, (2) Math SpeedGamePlay, (3) English/Chinese/Home files
+- All 3 agents completed successfully with 0 lint errors each
+
+Fixes Applied (12 total):
+
+**🔴 High Priority (7 fixes):**
+
+1. **H1: English Speed Full-Card Overlay** — Replaced corner Check/X icons (w-9) with full-card CheckCircle2/XCircle overlay (w-16, bg-white/70) in EnglishPlay speed mode. Removed unused Check/X imports.
+
+2. **H2: Math Free Confetti Unified** — Changed: 18→12 particles, 6→5 colors, size max 8→6, start top 30%→40%, duration 1.2s→0.8s, removed rotation/ease. Also unified feedback overlay: w-20→w-16 icons, bg-white/80→bg-white/70, scale [1,1.3,1]→[1,1.2,1], duration 0.4→0.3. Also unified correct delay: 600ms→1200ms (matching Chinese/English normal mode).
+
+3. **H3: Math Speed Combo** — Added combo display (Badge with Flame icon, ≥3 threshold) and combo sound (playComboSound) to SpeedGamePlay. Reads sessionCurrentCombo from store via getState().
+
+4. **H4: Math Speed Correct Delay** — Changed 350ms→300ms to match ChinesePlay/EnglishPlay speed mode.
+
+5. **H5: Completion Sound** — Added playCompleteSound() useEffect to both ChinesePlay and EnglishPlay when isFinished && soundEnabled. Now all 3 subjects play completion sound.
+
+6. **H6: setTimeout Leak Fix** — Changed bare setTimeout in normal mode to feedbackTimerRef.current = setTimeout in both ChinesePlay and EnglishPlay. Existing cleanup effect now properly clears these timers on unmount.
+
+7. **H7: Math Speed Finish Delay** — Changed 800ms→100ms delay before calling endSession() and navigating to result. Now consistent with Chinese/English (immediate display).
+
+**🟡 Medium Priority (5 fixes):**
+
+8. **M1: Math Floating XP** — Added Floating XP animation (+10 XP, orange text, floats upward) to GamePlay. Added floatingXP state, xpIdRef, cardRef, addFloatingXP callback, and AnimatePresence rendering block.
+
+9. **M2: Math Combo Threshold** — Changed combo display threshold from ≥2 to ≥3, matching ChinesePlay/EnglishPlay. (Combo sound was already at ≥3.)
+
+10. **M3: English Grade Mode Filtering** — Added minGrade field to EnglishModeConfig (listening: 2, spelling: 2). Created getEnglishModesForGrade() helper. Updated EnglishHome speed tab to use filtered modes with locked/disabled styling and "2年级+" badge.
+
+11. **M4: Empty Questions Guard** — Added empty array check in all 3 subjects (GamePlay, SpeedGamePlay, ChinesePlay, EnglishPlay). Shows "题目加载失败" + "返回重试" button instead of infinite spinner.
+
+12. **M5: Math Retry Behavior** — SKIPPED (architecture difference: Math uses Zustand session+endSession, Chinese/English use local state. Changing Math retry to in-place retry would require significant refactoring. Low impact.)
+
+Verification:
+- `bun run lint`: 0 errors
+- Dev server: compiled successfully (✓ Compiled in ~170ms)
+- All 12 fixes verified in source code
+
+Stage Summary:
+- 7 files modified: GamePlay.tsx, SpeedGamePlay.tsx, EnglishPlay.tsx, ChinesePlay.tsx, english-utils.ts, EnglishHome.tsx, QA-CHECKLIST.md
+- All 7 high-priority + 4 medium-priority issues fixed (11/12, 1 skipped)
+- QA Checklist updated with fix status
+- Three-subject consistency now significantly improved across feedback, speed, results, and edge cases

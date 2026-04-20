@@ -20,6 +20,7 @@ export interface EnglishModeConfig {
   emoji: string;
   name: string;
   description: string;
+  minGrade?: number;
 }
 
 // ─── Mode Configuration ─────────────────────────────────────────────────────
@@ -42,12 +43,14 @@ const MODE_CONFIGS: Record<EnglishMode, EnglishModeConfig> = {
     emoji: '🎧',
     name: '听力挑战',
     description: '听英文发音，选择正确的单词！',
+    minGrade: 2,
   },
   'spelling': {
     mode: 'spelling',
     emoji: '✏️',
     name: '拼写达人',
     description: '看中文意思，拼写正确的英文单词！',
+    minGrade: 2,
   },
 };
 
@@ -59,6 +62,10 @@ export function getEnglishModeConfig(mode: EnglishMode): EnglishModeConfig {
 }
 
 export const ALL_ENGLISH_MODES: EnglishModeConfig[] = Object.values(MODE_CONFIGS);
+
+export function getEnglishModesForGrade(grade: EnglishGrade): EnglishModeConfig[] {
+  return ALL_ENGLISH_MODES.filter((m) => !m.minGrade || grade >= m.minGrade);
+}
 
 // ─── Vocabulary Database ────────────────────────────────────────────────────
 

@@ -12,9 +12,10 @@ import {
   Delete,
   Zap,
   Trophy,
+  Flame,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
-import { playCorrectSound, playWrongSound, resumeAudioContext } from '@/lib/sound';
+import { playCorrectSound, playWrongSound, playComboSound, resumeAudioContext } from '@/lib/sound';
 import { generateQuestions } from '@/lib/math-utils';
 import { generateCurriculumQuestions, type Grade, type Semester } from '@/lib/math-curriculum';
 import type { MathQuestion } from '@/lib/math-utils';
@@ -49,6 +50,7 @@ export default function SpeedGamePlay() {
   const [timeLeft, setTimeLeft] = useState(speedTimeLimit);
   const [isFinished, setIsFinished] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const currentCombo = session?.sessionCurrentCombo ?? 0;
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Resume audio
@@ -99,7 +101,7 @@ export default function SpeedGamePlay() {
 
       endSession();
       setCurrentView('result');
-    }, 800);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [isFinished, endSession, setCurrentView]);
@@ -150,8 +152,13 @@ export default function SpeedGamePlay() {
     answerQuestion(currentQuestion.id, answer, questionTime);
 
     if (soundEnabled) {
-      if (isCorrect) playCorrectSound();
-      else playWrongSound();
+      if (isCorrect) {
+        playCorrectSound();
+        const newCombo = (useGameStore.getState().session?.sessionCurrentCombo ?? 0);
+        if (newCombo >= 3) playComboSound(newCombo);
+      } else {
+        playWrongSound();
+      }
     }
 
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
@@ -201,7 +208,7 @@ export default function SpeedGamePlay() {
         }
       }
       // Wrong answers: user stays on the same question
-    }, isCorrect ? 350 : 800);
+    }, isCorrect ? 300 : 800);
   }, [session, currentQuestion, showFeedback, isFinished, soundEnabled, answerQuestion, speedOperation]);
 
   const handleNumericSubmit = useCallback(() => {
@@ -222,9 +229,22 @@ export default function SpeedGamePlay() {
   };
 
   if (!session || !currentQuestion) {
+    const isEmpty = session && session.questions.length === 0;
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-white">
-        <p className="text-gray-400">加载中...</p>
+        {isEmpty ? (
+          <div className="text-center">
+            <p className="text-gray-400 mb-4">题目加载失败</p>
+            <button
+              onClick={handleBack}
+              className="text-rose-500 underline text-sm"
+            >
+              返回重试
+            </button>
+          </div>
+        ) : (
+          <p className="text-gray-400">加载中...</p>
+        )}
       </div>
     );
   }
@@ -310,6 +330,25 @@ export default function SpeedGamePlay() {
               <Badge className="bg-gradient-to-r from-rose-400 to-red-500 text-white border-none px-3 py-1 shadow-lg gap-1">
                 <Zap className="w-4 h-4" />
                 速度模式
+              </Badge>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Combo Display */}
+        <AnimatePresence>
+          {currentCombo >= 3 && (
+            <motion.div
+              key={currentCombo}
+              initial={{ scale: 0, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0, opacity: 0, y: -20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              className="mb-4"
+            >
+              <Badge className="bg-gradient-to-r from-orange-400 to-red-500 text-white border-none px-3 py-1.5 text-sm gap-1 shadow-lg">
+                <Flame className="w-4 h-4" />
+                {currentCombo} 连击
               </Badge>
             </motion.div>
           )}

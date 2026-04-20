@@ -18,7 +18,7 @@ import {
 } from '@/lib/chinese-utils';
 import { chinesePlayConfig } from '@/components/chinese/ChineseHome';
 import { calculateStars, calculateXP } from '@/lib/math-utils';
-import { playCorrectSound, playWrongSound, playComboSound, playClickSound } from '@/lib/sound';
+import { playCorrectSound, playWrongSound, playComboSound, playClickSound, playCompleteSound } from '@/lib/sound';
 import { speakChinese, stopSpeaking } from '@/lib/tts';
 import PracticeResult from '@/components/shared/PracticeResult';
 
@@ -196,7 +196,7 @@ export default function ChinesePlay() {
         }, isCorrect ? 300 : 800);
       } else {
         // Normal mode: fixed delay then advance
-        setTimeout(() => {
+        feedbackTimerRef.current = setTimeout(() => {
           const nextIndex = currentIndex + 1;
           if (nextIndex >= questions.length) {
             setIsFinished(true);
@@ -324,6 +324,13 @@ export default function ChinesePlay() {
     return m > 0 ? `${m}:${(s % 60).toString().padStart(2, '0')}` : `${s}s`;
   };
 
+  // Play completion sound when finished
+  useEffect(() => {
+    if (isFinished && soundEnabled) {
+      playCompleteSound();
+    }
+  }, [isFinished, soundEnabled]);
+
   if (isFinished) {
     const totalTime = isSpeedMode ? config.speedTimeLimit * 1000 : (elapsed || (Date.now() - startTime));
     const totalAnswered = correct + wrong;
@@ -380,13 +387,21 @@ export default function ChinesePlay() {
   }
 
   if (!currentQuestion) {
+    const isEmpty = questions.length > 0 ? false : true;
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-rose-50 to-white">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="w-10 h-10 border-4 border-rose-200 border-t-rose-500 rounded-full"
-        />
+        {isEmpty ? (
+          <div className="text-center">
+            <p className="text-gray-400 mb-4">题目加载失败</p>
+            <button onClick={handleBack} className="text-rose-500 underline text-sm">返回重试</button>
+          </div>
+        ) : (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+            className="w-10 h-10 border-4 border-rose-200 border-t-rose-500 rounded-full"
+          />
+        )}
       </div>
     );
   }

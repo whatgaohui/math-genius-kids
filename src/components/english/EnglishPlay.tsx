@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Volume2, Zap, Check, X, Flame, Trophy, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, Volume2, Zap, Flame, Trophy, CheckCircle2, XCircle } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { usePetStore, getCoinBonusPercent, getCriticalHitChance } from '@/lib/pet-store';
 import {
@@ -17,7 +17,7 @@ import {
 } from '@/lib/english-utils';
 import { englishPlayConfig } from '@/components/english/EnglishHome';
 import { calculateStars, calculateXP } from '@/lib/math-utils';
-import { playCorrectSound, playWrongSound, playComboSound, playClickSound } from '@/lib/sound';
+import { playCorrectSound, playWrongSound, playComboSound, playClickSound, playCompleteSound } from '@/lib/sound';
 import { speakEnglish, stopSpeaking } from '@/lib/tts';
 import PracticeResult from '@/components/shared/PracticeResult';
 
@@ -221,7 +221,7 @@ export default function EnglishPlay() {
         }, isCorrect ? 300 : 800);
       } else {
         // Normal mode: always advance after 1.2s
-        setTimeout(() => {
+        feedbackTimerRef.current = setTimeout(() => {
           const nextIndex = currentIndex + 1;
           if (nextIndex >= questions.length) {
             setIsFinished(true);
@@ -331,6 +331,13 @@ export default function EnglishPlay() {
   const timerPercent = isSpeedMode ? (timeLeft / config.speedTimeLimit) * 100 : 0;
   const isUrgent = isSpeedMode && timeLeft <= 10;
 
+  // Play completion sound when finished
+  useEffect(() => {
+    if (isFinished && soundEnabled) {
+      playCompleteSound();
+    }
+  }, [isFinished, soundEnabled]);
+
   if (isFinished) {
     const totalTime = elapsed || (Date.now() - startTime);
     const totalAnswered = correct + wrong;
@@ -395,13 +402,21 @@ export default function EnglishPlay() {
   }
 
   if (!currentQuestion) {
+    const isEmpty = questions.length > 0 ? false : true;
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-emerald-50 to-white">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-500 rounded-full"
-        />
+        {isEmpty ? (
+          <div className="text-center">
+            <p className="text-gray-400 mb-4">题目加载失败</p>
+            <button onClick={handleBack} className="text-emerald-500 underline text-sm">返回重试</button>
+          </div>
+        ) : (
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+            className="w-10 h-10 border-4 border-emerald-200 border-t-emerald-500 rounded-full"
+          />
+        )}
       </div>
     );
   }
@@ -574,30 +589,30 @@ export default function EnglishPlay() {
                   )}
                 </motion.div>
 
-                {/* Feedback Icons */}
+                {/* Full-card feedback overlay */}
                 <AnimatePresence>
                   {feedback === 'correct' && (
                     <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute top-3 right-3"
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute inset-0 flex items-center justify-center z-10 bg-white/70 rounded-2xl"
                     >
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-green-500 flex items-center justify-center">
-                        <Check className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                      </div>
+                      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.3 }}>
+                        <CheckCircle2 className="w-16 h-16 text-emerald-500" />
+                      </motion.div>
                     </motion.div>
                   )}
                   {feedback === 'wrong' && (
                     <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute top-3 right-3"
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1, rotate: [0, -6, 6, -4, 4, 0] }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute inset-0 flex items-center justify-center z-10 bg-white/70 rounded-2xl"
                     >
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-red-500 flex items-center justify-center">
-                        <X className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                      </div>
+                      <XCircle className="w-16 h-16 text-red-500" />
                     </motion.div>
                   )}
                 </AnimatePresence>

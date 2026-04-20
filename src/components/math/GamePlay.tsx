@@ -22,13 +22,12 @@ import type { MathQuestion } from '@/lib/math-utils';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const CONFETTI_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
+const CONFETTI_PARTICLES = Array.from({ length: 12 }, (_, i) => ({
   id: i,
   x: Math.random() * 100,
-  delay: Math.random() * 0.3,
-  color: ['#f59e0b', '#f97316', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899'][i % 6],
-  size: 6 + Math.random() * 8,
-  rotation: Math.random() * 360,
+  delay: Math.random() * 0.2,
+  color: ['#f59e0b', '#f97316', '#10b981', '#3b82f6', '#8b5cf6'][i % 5],
+  size: 6 + Math.random() * 6,
 }));
 
 // ─── Helper ─────────────────────────────────────────────────────────────────
@@ -114,6 +113,19 @@ export default function GamePlay() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [floatingXP, setFloatingXP] = useState<{ id: number; x: number; y: number }[]>([]);
+  const xpIdRef = useRef(0);
+
+  const addFloatingXP = useCallback(() => {
+    const card = document.querySelector('[data-question-card]');
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const id = ++xpIdRef.current;
+    setFloatingXP((prev) => [...prev, { id, x: rect.width / 2, y: rect.height / 2 }]);
+    setTimeout(() => {
+      setFloatingXP((prev) => prev.filter((xp) => xp.id !== id));
+    }, 1000);
+  }, []);
 
   // Timer
   useEffect(() => {
@@ -199,6 +211,7 @@ export default function GamePlay() {
 
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
     if (isCorrect) setShowConfetti(true);
+    if (isCorrect) addFloatingXP();
 
     feedbackTimerRef.current = setTimeout(() => {
       setShowFeedback(null);
@@ -227,8 +240,8 @@ export default function GamePlay() {
 
         setCurrentView('result');
       }
-    }, isCorrect ? 600 : 1200);
-  }, [session, currentQuestion, showFeedback, soundEnabled, answerQuestion, advanceToNextOrEnd, endSession, setCurrentView, adventureLevel, setAdventureStars]);
+    }, 1200);
+  }, [session, currentQuestion, showFeedback, soundEnabled, answerQuestion, advanceToNextOrEnd, endSession, setCurrentView, adventureLevel, setAdventureStars, addFloatingXP]);
 
   const handleCompareAnswer = useCallback((answer: boolean) => {
     handleSubmitAnswer(answer);
@@ -266,7 +279,7 @@ export default function GamePlay() {
                 key={p.id}
                 initial={{
                   opacity: 1,
-                  top: '30%',
+                  top: '40%',
                   left: `${p.x}%`,
                   scale: 0,
                 }}
@@ -275,13 +288,11 @@ export default function GamePlay() {
                   top: '120%',
                   left: `${p.x + (Math.random() - 0.5) * 30}%`,
                   scale: 1,
-                  rotate: p.rotation + 360,
                 }}
                 exit={{ opacity: 0 }}
                 transition={{
-                  duration: 1.2,
+                  duration: 0.8,
                   delay: p.delay,
-                  ease: 'easeOut',
                 }}
                 className="absolute rounded-sm"
                 style={{
@@ -328,7 +339,7 @@ export default function GamePlay() {
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-6 max-w-lg mx-auto w-full">
         {/* Combo Display */}
         <AnimatePresence>
-          {currentCombo >= 2 && (
+          {currentCombo >= 3 && (
             <motion.div
               initial={{ opacity: 0, scale: 0.5, y: -20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -352,7 +363,7 @@ export default function GamePlay() {
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="w-full mb-6"
         >
-          <div className={`
+          <div data-question-card className={`
             relative bg-white rounded-2xl shadow-lg border-2 p-6 text-center transition-all
             ${showFeedback === 'correct'
               ? 'border-emerald-300 bg-emerald-50'
@@ -373,20 +384,37 @@ export default function GamePlay() {
                   }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: showFeedback === 'wrong' ? 0.4 : 0.3 }}
-                  className="absolute inset-0 flex items-center justify-center z-10 bg-white/80 rounded-2xl"
+                  className="absolute inset-0 flex items-center justify-center z-10 bg-white/70 rounded-2xl"
                 >
                   {showFeedback === 'correct' ? (
                     <motion.div
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ duration: 0.4 }}
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 0.3 }}
                     >
-                      <CheckCircle2 className="w-20 h-20 text-emerald-500" />
+                      <CheckCircle2 className="w-16 h-16 text-emerald-500" />
                     </motion.div>
                   ) : (
-                    <XCircle className="w-20 h-20 text-red-500" />
+                    <XCircle className="w-16 h-16 text-red-500" />
                   )}
                 </motion.div>
               )}
+            </AnimatePresence>
+
+            {/* Floating XP Animation */}
+            <AnimatePresence>
+              {floatingXP.map((xp) => (
+                <motion.div
+                  key={xp.id}
+                  initial={{ opacity: 1, y: xp.y, x: xp.x }}
+                  animate={{ opacity: 0, y: xp.y - 80 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  className="absolute text-orange-500 font-bold text-lg pointer-events-none z-20"
+                  style={{ left: xp.x - 15, top: xp.y - 10 }}
+                >
+                  +10 XP
+                </motion.div>
+              ))}
             </AnimatePresence>
 
             {/* Question text */}

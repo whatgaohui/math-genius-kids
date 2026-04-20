@@ -17,7 +17,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
-import { ALL_ENGLISH_MODES, type EnglishMode, type EnglishGrade } from '@/lib/english-utils';
+import { ALL_ENGLISH_MODES, getEnglishModesForGrade, type EnglishMode, type EnglishGrade } from '@/lib/english-utils';
 import { getGradeLabel } from '@/lib/curriculum-config';
 import { playClickSound, resumeAudioContext } from '@/lib/sound';
 import { cn } from '@/lib/utils';
@@ -419,20 +419,29 @@ export default function EnglishHome() {
       <div>
         <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
         <div className="grid grid-cols-2 gap-2">
-          {ALL_ENGLISH_MODES.map((modeConfig) => (
-            <button
-              key={modeConfig.mode}
-              onClick={() => { setSpeedMode(modeConfig.mode as EnglishMode); playClickSound(); }}
-              className={`flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
-                speedMode === modeConfig.mode
-                  ? 'bg-gradient-to-r from-teal-400 to-emerald-500 text-white shadow-sm'
-                  : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-emerald-200'
-              }`}
-            >
-              <span className="text-lg">{modeConfig.emoji}</span>
-              <p className="text-xs font-bold truncate">{modeConfig.name}</p>
-            </button>
-          ))}
+          {getEnglishModesForGrade(effectiveGrade).map((modeConfig) => {
+            const isLocked = modeConfig.minGrade && effectiveGrade < modeConfig.minGrade;
+            return (
+              <button
+                key={modeConfig.mode}
+                onClick={() => { if (!isLocked) { setSpeedMode(modeConfig.mode as EnglishMode); playClickSound(); } }}
+                disabled={isLocked}
+                className={`relative flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
+                  speedMode === modeConfig.mode
+                    ? 'bg-gradient-to-r from-teal-400 to-emerald-500 text-white shadow-sm'
+                    : isLocked
+                      ? 'bg-gray-50 text-gray-300 shadow-sm border border-gray-100 opacity-40 cursor-not-allowed'
+                      : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-emerald-200'
+                }`}
+              >
+                <span className="text-lg">{modeConfig.emoji}</span>
+                <p className="text-xs font-bold truncate">{modeConfig.name}</p>
+                {isLocked && (
+                  <span className="absolute top-0.5 right-1 text-[10px] text-gray-400">{modeConfig.minGrade}年级+</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
