@@ -53,6 +53,8 @@ export default function SpeedGamePlay() {
   const currentCombo = session?.sessionCurrentCombo ?? 0;
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [floatingXP, setFloatingXP] = useState<{ id: number; x: number; y: number }[]>([]);
+  const xpIdRef = useRef(0);
 
   // Resume audio
   useEffect(() => {
@@ -126,6 +128,17 @@ export default function SpeedGamePlay() {
     }
   }, [session, gameStarted]);
 
+  const addFloatingXP = useCallback(() => {
+    const card = document.querySelector('[data-question-card]');
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const id = ++xpIdRef.current;
+    setFloatingXP((prev) => [...prev, { id, x: rect.width / 2, y: rect.height / 2 }]);
+    setTimeout(() => {
+      setFloatingXP((prev) => prev.filter((xp) => xp.id !== id));
+    }, 1000);
+  }, []);
+
   const handleNumPress = useCallback((num: string) => {
     if (showFeedback || isFinished || !currentQuestion) return;
     if (currentQuestion.operation === 'compare') return;
@@ -175,6 +188,7 @@ export default function SpeedGamePlay() {
     setShowFeedback(isCorrect ? 'correct' : 'wrong');
     if (isCorrect) {
       setShowConfetti(true);
+      addFloatingXP();
       if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
       confettiTimerRef.current = setTimeout(() => setShowConfetti(false), 1000);
     }
@@ -371,9 +385,9 @@ export default function SpeedGamePlay() {
         {/* Question Card */}
         <motion.div
           key={currentQuestion.id}
-          initial={{ opacity: 0, x: 40 }}
+          initial={{ opacity: 0, x: 60 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="w-full mb-6"
         >
           <div className={`
@@ -397,7 +411,7 @@ export default function SpeedGamePlay() {
                   }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: showFeedback === 'wrong' ? 0.3 : 0.2 }}
-                  className="absolute inset-0 flex items-center justify-center z-10 bg-white/80 rounded-2xl"
+                  className="absolute inset-0 flex items-center justify-center z-10 bg-white/70 rounded-2xl"
                 >
                   {showFeedback === 'correct' ? (
                     <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.3 }}>
@@ -408,6 +422,23 @@ export default function SpeedGamePlay() {
                   )}
                 </motion.div>
               )}
+            </AnimatePresence>
+
+            {/* Floating XP Animation */}
+            <AnimatePresence>
+              {floatingXP.map((xp) => (
+                <motion.div
+                  key={xp.id}
+                  initial={{ opacity: 1, y: xp.y, x: xp.x }}
+                  animate={{ opacity: 0, y: xp.y - 80 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  className="absolute text-orange-500 font-bold text-lg pointer-events-none z-20"
+                  style={{ left: xp.x - 15, top: xp.y - 10 }}
+                >
+                  +10 XP
+                </motion.div>
+              ))}
             </AnimatePresence>
 
             <p className="text-3xl sm:text-4xl font-bold text-gray-800 tracking-wide">

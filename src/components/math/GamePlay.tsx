@@ -13,7 +13,6 @@ import {
   XCircle,
   Clock,
   Delete,
-  Sparkles,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { playCorrectSound, playWrongSound, playComboSound, resumeAudioContext } from '@/lib/sound';
@@ -113,6 +112,7 @@ export default function GamePlay() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [elapsedMs, setElapsedMs] = useState(0);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [floatingXP, setFloatingXP] = useState<{ id: number; x: number; y: number }[]>([]);
   const xpIdRef = useRef(0);
 
@@ -151,6 +151,7 @@ export default function GamePlay() {
   useEffect(() => {
     return () => {
       if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
     };
   }, []);
 
@@ -222,11 +223,12 @@ export default function GamePlay() {
     if (isCorrect) {
       setShowConfetti(true);
       addFloatingXP();
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
+      confettiTimerRef.current = setTimeout(() => setShowConfetti(false), 1000);
     }
 
     feedbackTimerRef.current = setTimeout(() => {
       setShowFeedback(null);
-      setShowConfetti(false);
       setInputValue('');
 
       const result = advanceToNextOrEnd();
@@ -280,7 +282,7 @@ export default function GamePlay() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex flex-col relative overflow-hidden max-w-lg mx-auto">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex flex-col relative overflow-x-hidden max-w-lg mx-auto">
       {/* Confetti */}
       <AnimatePresence>
         {showConfetti && (
@@ -352,15 +354,16 @@ export default function GamePlay() {
         <AnimatePresence>
           {currentCombo >= 3 && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.5, y: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.5 }}
+              key={currentCombo}
+              initial={{ scale: 0, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0, opacity: 0, y: -20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
               className="mb-4"
             >
               <Badge className="bg-gradient-to-r from-orange-400 to-red-500 text-white border-none px-3 py-1.5 text-sm gap-1 shadow-lg">
                 <Flame className="w-4 h-4" />
                 {currentCombo} 连击
-                {currentCombo >= 5 && <Sparkles className="w-3 h-3" />}
               </Badge>
             </motion.div>
           )}
@@ -391,10 +394,10 @@ export default function GamePlay() {
                   animate={{
                     opacity: 1,
                     scale: 1,
-                    rotate: showFeedback === 'correct' ? 0 : [0, -8, 8, -5, 5, 0],
+                    rotate: showFeedback === 'correct' ? 0 : [0, -6, 6, -4, 4, 0],
                   }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: showFeedback === 'wrong' ? 0.4 : 0.3 }}
+                  transition={{ duration: showFeedback === 'wrong' ? 0.3 : 0.2 }}
                   className="absolute inset-0 flex items-center justify-center z-10 bg-white/70 rounded-2xl"
                 >
                   {showFeedback === 'correct' ? (

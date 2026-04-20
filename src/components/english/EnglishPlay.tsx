@@ -455,9 +455,11 @@ export default function EnglishPlay() {
                 <ArrowLeft className="w-4 h-4" />
                 退出
               </button>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4" />
                 <span className="text-sm font-bold">{correct} 题</span>
+                <span className="text-emerald-200 font-semibold text-xs">✓ {correct}</span>
+                <span className="text-red-200 font-semibold text-xs">✗ {wrong}</span>
               </div>
               <button
                 onClick={handleSpeak}
@@ -633,17 +635,6 @@ export default function EnglishPlay() {
               </CardContent>
             </Card>
           </motion.div>
-
-          {/* Speed Stats Row */}
-          <div className="flex items-center justify-center gap-4 mb-4 text-sm">
-            <span className="text-emerald-600 font-semibold">✓ {correct}</span>
-            <span className="text-red-500 font-semibold">✗ {wrong}</span>
-            {combo >= 3 && (
-              <span className="text-amber-500 font-semibold">
-                <Flame className="w-3 h-3 inline mr-1" />{combo}
-              </span>
-            )}
-          </div>
 
           {/* Answer Options (2x2 Grid) */}
           <div className="w-full grid grid-cols-2 gap-3">

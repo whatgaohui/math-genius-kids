@@ -1079,3 +1079,43 @@ Stage Summary:
 - Issue 5 ✅: Confetti uses `fixed` positioning + separate 1s timer for full animation display
 - English speed mode also updated for consistency (wrong → advance)
 - bun run lint: 0 errors, dev server compiled OK
+---
+Task ID: Comprehensive Consistency Audit & Fix (5-issue follow-up)
+Agent: Main
+Task: Systematic cross-subject + cross-mode consistency check based on the 5 user-reported issues
+
+Work Log:
+- Read all 4 gameplay files line-by-line: SpeedGamePlay, GamePlay, ChinesePlay, EnglishPlay
+- Performed systematic comparison across 11 dimensions:
+  1. Speed mode wrong-answer behavior → ✅ Consistent (all advance)
+  2. Number pad (± button, layout) → ✅ Consistent (both math modes have ±)
+  3. Speed top bar UI → ❌ Found 2 inconsistencies
+  4. Confetti (positioning, timer, params) → ❌ Found 2 inconsistencies
+  5. Feedback overlay (bg, shake, enter) → ❌ Found 3 inconsistencies
+  6. Combo display (sparkles, animation) → ❌ Found 2 inconsistencies
+  7. Floating XP → ❌ Found 1 inconsistency
+  8. Card enter animation → ❌ Found 1 inconsistency
+
+Fixed 10 inconsistencies:
+1. English speed: Added ✓/✗ to top bar, removed redundant Speed Stats Row
+2. Chinese speed: Moved Trophy+✓/✗ from bottom stats row to top bar center (match Math/English)
+3. Math speed: Added Floating XP (+10 XP orange animation, matching Math Free/Chinese/English)
+4. Math Free (GamePlay): overflow-hidden → overflow-x-hidden
+5. Math Free: Added confettiTimerRef (separate 1000ms timer, was sharing 1200ms feedback timer)
+6. Math speed: Feedback overlay bg-white/80 → bg-white/70
+7. Math Free: Wrong shake [-8,8,-5,5] 0.4s → [-6,6,-4,4] 0.3s
+8. Math Free: Overlay enter 0.3s → 0.2s
+9. Math Free: Removed Sparkles from combo badge (only it had ≥5 sparkles)
+10. Math Free: Combo initial animation opacity:0,scale:0.5,y:-20 → scale:0,opacity:0,y:20
+11. Math speed: Card enter x:40,stiffness:400 → x:60,stiffness:300
+12. All: confettiTimerRef cleanup in useEffect
+
+Stage Summary:
+- 4 files modified: SpeedGamePlay.tsx, GamePlay.tsx, ChinesePlay.tsx, EnglishPlay.tsx
+- 10 consistency issues found and fixed across 6 categories
+- All feedback overlays now use bg-white/70, same shake params, same enter duration
+- All confetti now use fixed positioning + separate 1000ms timer
+- All speed modes now show Trophy+✓/✗ in top bar
+- All modes with combo now use identical animation params
+- Floating XP present in all 4 gameplay contexts
+- bun run lint: 0 errors, dev server compiled OK

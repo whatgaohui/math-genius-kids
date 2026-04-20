@@ -440,9 +440,21 @@ export default function ChinesePlay() {
               <ArrowLeft className="w-4 h-4" />
               退出
             </button>
-            <span className="text-sm font-semibold truncate max-w-[40%]">
-              {modeConfig?.name}
-            </span>
+            <div className="flex items-center gap-3">
+              {isSpeedMode && (
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-4 h-4" />
+                  <span className="text-sm font-bold">{correct} 题</span>
+                  <span className="text-emerald-200 font-semibold text-xs">✓ {correct}</span>
+                  <span className="text-red-200 font-semibold text-xs">✗ {wrong}</span>
+                </div>
+              )}
+              {!isSpeedMode && (
+                <span className="text-sm font-semibold truncate max-w-[60%]">
+                  {modeConfig?.name}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3">
               {config.mode === 'dictation' && (
                 <button
@@ -506,13 +518,10 @@ export default function ChinesePlay() {
           <div className="flex items-center justify-between text-xs text-white/70 mt-1">
             {isSpeedMode ? (
               <>
-                <div className="flex items-center gap-1">
-                  <Trophy className="w-3 h-3" />
-                  <span className="font-bold">{correct} 题</span>
-                </div>
+                <span></span>
                 <div className="flex items-center gap-3">
-                  <span className="text-emerald-200">✓ {correct}</span>
-                  <span className="text-red-200">✗ {wrong}</span>
+                  <span className="text-emerald-200 font-semibold">✓ {correct}</span>
+                  <span className="text-red-200 font-semibold">✗ {wrong}</span>
                 </div>
               </>
             ) : (
