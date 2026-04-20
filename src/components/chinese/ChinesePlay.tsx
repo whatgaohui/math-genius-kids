@@ -395,7 +395,7 @@ export default function ChinesePlay() {
   const isUrgent = isSpeedMode && timeLeft <= 10;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 to-white relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-rose-50 to-white relative overflow-x-hidden overflow-y-hidden">
       {/* Confetti for Speed Mode */}
       <AnimatePresence>
         {showConfetti && (

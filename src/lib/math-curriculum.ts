@@ -357,17 +357,30 @@ const TOPICS: CurriculumTopic[] = [
 
   // ── Grade 6 下册 ─────────────────────────────────────────────────────────
   {
-    id: 'g6s2-negative-numbers',
+    id: 'g6s2-negative-arithmetic',
     grade: 6, semester: '下册',
-    name: '负数认识',
-    description: '负数比较，理解正负数',
+    name: '负数加减法',
+    description: '正负数加减运算',
     emoji: '🌡️',
+    category: '数的运算',
+    operations: ['add', 'subtract'],
+    difficulty: 'medium',
+    numRange: [1, 50],
+    constraints: {},
+    questionCount: 8,
+  },
+  {
+    id: 'g6s2-negative-compare',
+    grade: 6, semester: '下册',
+    name: '负数比较',
+    description: '正负数大小比较',
+    emoji: '❄️',
     category: '量的计量',
     operations: ['compare'],
     difficulty: 'medium',
     numRange: [1, 50],
     constraints: {},
-    questionCount: 8,
+    questionCount: 4,
   },
   {
     id: 'g6s2-ratio',
@@ -381,6 +394,32 @@ const TOPICS: CurriculumTopic[] = [
     numRange: [2, 20],
     constraints: {},
     questionCount: 6,
+  },
+  {
+    id: 'g6s2-percentage-advanced',
+    grade: 6, semester: '下册',
+    name: '百分数应用',
+    description: '百分数应用题：求百分率、折扣等',
+    emoji: '💯',
+    category: '比与比例',
+    operations: ['multiply'],
+    difficulty: 'hard',
+    numRange: [1, 200],
+    constraints: {},
+    questionCount: 6,
+  },
+  {
+    id: 'g6s2-mixed-review',
+    grade: 6, semester: '下册',
+    name: '综合复习',
+    description: '六年级综合运算复习',
+    emoji: '📝',
+    category: '综合',
+    operations: ['add', 'subtract', 'multiply', 'divide'],
+    difficulty: 'hard',
+    numRange: [2, 100],
+    constraints: {},
+    questionCount: 8,
   },
 ];
 
@@ -888,6 +927,123 @@ function generateNegativeComparison(): MathQuestion {
   };
 }
 
+function generateNegativeArithmetic(isAdd: boolean): MathQuestion {
+  // Negative number addition/subtraction: e.g., (-3) + 5 = ? or (-5) - (-3) = ?
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const a = randInt(1, 30);
+    const b = randInt(1, 30);
+    if (isAdd) {
+      // Various patterns: (-a)+b, a+(-b), (-a)+(-b)
+      const pattern = randInt(1, 3);
+      let left: number, right: number, answer: number;
+      let expr: string;
+      if (pattern === 1) { // (-a) + b
+        left = -a; right = b;
+        answer = b - a;
+        expr = `(${left}) + ${right}`;
+      } else if (pattern === 2) { // a + (-b)
+        left = a; right = -b;
+        answer = a - b;
+        expr = `${a} + (${right})`;
+      } else { // (-a) + (-b)
+        left = -a; right = -b;
+        answer = -(a + b);
+        expr = `(${left}) + (${right})`;
+      }
+      return {
+        id: genId(), num1: left, num2: right, operation: 'add',
+        correctAnswer: answer, displayOp: '+',
+        expression: `${expr} = ?`,
+      };
+    } else {
+      // Various patterns: (-a) - b, a - (-b), (-a) - (-b)
+      const pattern = randInt(1, 3);
+      let left: number, right: number, answer: number;
+      let expr: string;
+      if (pattern === 1) { // (-a) - b
+        left = -a; right = b;
+        answer = -(a + b);
+        expr = `(${left}) − ${right}`;
+      } else if (pattern === 2) { // a - (-b)
+        left = a; right = -b;
+        answer = a + b;
+        expr = `${a} − (${right})`;
+      } else { // (-a) - (-b)
+        left = -a; right = -b;
+        answer = -a + b;
+        expr = `(${left}) − (${right})`;
+      }
+      return {
+        id: genId(), num1: left, num2: right, operation: 'subtract',
+        correctAnswer: answer, displayOp: '−',
+        expression: `${expr} = ?`,
+      };
+    }
+  }
+  return {
+    id: genId(), num1: -3, num2: 5, operation: 'add',
+    correctAnswer: 2, displayOp: '+',
+    expression: `(-3) + 5 = ?`,
+  };
+}
+
+function generatePercentageAdvanced(): MathQuestion {
+  // Advanced percentage: "原价200，打8折，现价多少" or "某数增加20%是多少"
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const pattern = randInt(1, 4);
+    const base = randInt(50, 500);
+    const pct = pickRandom([10, 15, 20, 25, 30, 40, 50, 60, 75, 80]);
+
+    if (pattern === 1) {
+      // "200打8折" → 200 × 80% = 160
+      const answer = Math.round(base * pct / 100);
+      return {
+        id: genId(), num1: base, num2: pct, operation: 'multiply',
+        correctAnswer: answer, displayOp: '=',
+        expression: `${base}打${pct / 10}折 = ?`,
+      };
+    } else if (pattern === 2) {
+      // "增加20%" → base × (1 + 0.2)
+      const factor = 100 + pct;
+      const answer = (base * factor) / 100;
+      if (Number.isInteger(answer)) {
+        return {
+          id: genId(), num1: base, num2: pct, operation: 'multiply',
+          correctAnswer: answer, displayOp: '=',
+          expression: `${base}增加${pct}% = ?`,
+        };
+      }
+    } else if (pattern === 3) {
+      // "减少20%" → base × (1 - 0.2)
+      const factor = 100 - pct;
+      const answer = (base * factor) / 100;
+      if (Number.isInteger(answer)) {
+        return {
+          id: genId(), num1: base, num2: pct, operation: 'multiply',
+          correctAnswer: answer, displayOp: '=',
+          expression: `${base}减少${pct}% = ?`,
+        };
+      }
+    } else {
+      // "是200的百分之几" → part/total × 100%
+      const part = randInt(1, Math.floor(base * 0.9));
+      if (part > 0 && base > 0) {
+        const answer = Math.round(part / base * 100);
+        return {
+          id: genId(), num1: part, num2: base, operation: 'divide',
+          correctAnswer: answer, displayOp: '=',
+          expression: `${part}是${base}的百分之几？`,
+        };
+      }
+    }
+  }
+  return {
+    id: genId(), num1: 200, num2: 80, operation: 'multiply',
+    correctAnswer: 160, displayOp: '=',
+    expression: `200打8折 = ?`,
+  };
+}
+
 function generateRatio(): MathQuestion {
   // "If a:b = c:x, find x" → x = c * b / a
   for (let attempt = 0; attempt < 10; attempt++) {
@@ -936,8 +1092,14 @@ function generateForTopic(topic: CurriculumTopic): MathQuestion {
       return generatePercentage();
     case 'g6s2-negative-numbers':
       return generateNegativeComparison();
+    case 'g6s2-negative-compare':
+      return generateNegativeComparison();
+    case 'g6s2-negative-arithmetic':
+      return generateNegativeArithmetic(Math.random() > 0.5);
     case 'g6s2-ratio':
       return generateRatio();
+    case 'g6s2-percentage-advanced':
+      return generatePercentageAdvanced();
     case 'g3s2-simple-fractions':
       return generateFractionComparison();
   }

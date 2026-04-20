@@ -76,8 +76,7 @@ const TIME_OPTIONS = [
   { value: 120, label: '120秒', emoji: '🏃‍♂️' },
 ];
 
-// Speed mode only supports these Chinese modes
-const SPEED_MODES: ChineseMode[] = ['recognize-char', 'recognize-pinyin', 'word-match', 'dictation'];
+// Speed mode uses the same modes as free practice, filtered by grade
 
 // ─── Adventure Tiers ────────────────────────────────────────────────────────
 
@@ -254,6 +253,8 @@ export default function ChineseHome() {
   const availableModes = getModesForGrade(effectiveGrade);
   const isModeAvailable = (mode: ChineseMode) => availableModes.some((m) => m.mode === mode);
   const activeMode = isModeAvailable(selectedMode) ? selectedMode : (availableModes[0]?.mode ?? 'recognize-char');
+  // Ensure speedMode stays valid for current grade
+  const activeSpeedMode = isModeAvailable(speedMode) ? speedMode : (availableModes[0]?.mode ?? 'recognize-char');
 
   // ── Handlers ──
   const handleBack = () => { playClickSound(); setCurrentView('home'); };
@@ -279,7 +280,7 @@ export default function ChineseHome() {
   const handleSpeedStart = () => {
     playClickSound();
     resumeAudioContext();
-    setChinesePlayConfig({ mode: speedMode, grade: effectiveGrade, count: 50, isSpeed: true, speedTimeLimit: chineseSpeedTimeLimit, isAdventure: false, adventureFloor: 0 });
+    setChinesePlayConfig({ mode: activeSpeedMode, grade: effectiveGrade, count: 50, isSpeed: true, speedTimeLimit: chineseSpeedTimeLimit, isAdventure: false, adventureFloor: 0 });
     setCurrentView('chinese-play');
   };
 
@@ -479,25 +480,35 @@ export default function ChineseHome() {
         </div>
       </div>
 
-      {/* Speed Mode Selection */}
+      {/* Speed Mode Selection — same as free practice, filtered by grade */}
       <div>
         <p className="text-xs font-semibold text-gray-400 mb-2 px-1">练习模式</p>
         <div className="grid grid-cols-2 gap-2">
-          {SPEED_MODES.map((mode) => {
-            const modeConfig = MODE_CONFIG[mode];
-            const isSelected = speedMode === mode;
+          {(Object.values(MODE_CONFIG) as typeof MODE_CONFIG[ChineseMode][]).map((modeConfig) => {
+            const available = isModeAvailable(modeConfig.mode);
+            const isSelected = activeSpeedMode === modeConfig.mode;
             return (
               <button
-                key={mode}
-                onClick={() => { setSpeedMode(mode); playClickSound(); }}
+                key={modeConfig.mode}
+                onClick={() => { if (available) { setSpeedMode(modeConfig.mode); playClickSound(); } }}
+                disabled={!available}
                 className={`flex items-center gap-2 py-3 px-3 rounded-xl text-left transition-all active:scale-95 ${
-                  isSelected
-                    ? 'bg-gradient-to-r from-red-400 to-rose-400 text-white shadow-sm'
-                    : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-rose-200'
+                  !available
+                    ? 'bg-gray-50 text-gray-300 cursor-not-allowed border border-gray-100'
+                    : isSelected
+                      ? 'bg-gradient-to-r from-red-400 to-rose-400 text-white shadow-sm'
+                      : 'bg-white text-gray-700 shadow-sm border border-gray-100 hover:border-rose-200'
                 }`}
               >
                 <span className="text-lg">{modeConfig.emoji}</span>
-                <span className="text-xs font-bold">{modeConfig.name}</span>
+                <div className="min-w-0">
+                  <p className={`text-xs font-bold truncate ${!available ? 'text-gray-300' : ''}`}>
+                    {modeConfig.name}
+                  </p>
+                  {!available && (
+                    <p className="text-[10px] text-gray-300">{modeConfig.minGrade}年级+</p>
+                  )}
+                </div>
               </button>
             );
           })}
