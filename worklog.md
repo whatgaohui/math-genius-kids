@@ -70,3 +70,42 @@ Stage Summary:
   - Both English and Chinese listening features call resumeAudioForMobile()
   - Chrome on Android stuck-in-paused bug is handled
 - Key files modified: tts.ts, ChinesePlay.tsx, EnglishPlay.tsx, StatsPage.tsx, AchievementsPage.tsx, PetPage.tsx, EnglishHome.tsx, ChineseHome.tsx, MathHome.tsx, LeaderboardPage.tsx, ErrorBookPage.tsx, globals.css
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Design app icon for mobile app display
+
+Work Log:
+- Generated a 1024x1024 app icon using AI image generation (z-ai CLI)
+- Prompt: "Mobile app icon for a kids math learning app called 'Math Genius Kids' (数学天才少年). Cute cartoon style. A happy smiling brain character wearing a graduation cap, surrounded by floating math symbols (+, -, ×, ÷, =), stars, and sparkles. Bright gradient background from orange to purple."
+- VLM verification confirmed the icon is highly suitable: clean design, recognizable at small sizes, professional kid-friendly style
+- Created resized versions using sharp:
+  - `favicon-32.png` (32x32) - browser tab icon
+  - `favicon-16.png` (16x16) - browser tab icon
+  - `favicon.ico` (32x32) - legacy favicon
+  - `apple-touch-icon.png` (180x180) - iOS home screen icon
+  - `icon-192.png` (192x192) - Android/PWA icon
+  - `icon-512.png` (512x512) - Android/PWA icon (splash screen)
+- Created `manifest.json` for PWA support:
+  - App name: 知识小勇士
+  - Standalone display mode, portrait orientation
+  - Theme color: #6366f1 (indigo/purple matching the app gradient)
+  - Icons at 192x192, 512x512, and 1024x1024 sizes
+  - Categories: education, kids
+- Updated `layout.tsx`:
+  - Added all icon sizes to metadata.icons (favicon, apple-touch-icon)
+  - Added manifest.json reference
+  - Added openGraph and Twitter card images
+  - Added appleWebApp metadata for iOS PWA support
+  - Changed themeColor to #6366f1 to match app branding
+- All icon files verified accessible via HTTP 200
+- Lint passes with no errors
+
+Stage Summary:
+- Complete app icon set generated and integrated into the project
+- PWA manifest created for "Add to Home Screen" on mobile devices
+- All platforms covered: browser tabs (favicon), iOS home screen (apple-touch-icon), Android/PWA (manifest icons)
+- OpenGraph and Twitter card images configured for social sharing
+- Key files created: manifest.json, app-icon-1024.png, plus 5 resized variants
+- Key files modified: layout.tsx
