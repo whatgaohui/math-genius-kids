@@ -343,11 +343,11 @@ export default function GamePlay() {
       </AnimatePresence>
 
       {/* Top Bar */}
-      <div className="bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-3 text-white">
+      <div className="bg-gradient-to-r from-amber-400 to-orange-500 px-4 pt-3 py-3 text-white safe-top">
         <div className="flex items-center justify-between mb-2">
           <button
             onClick={handleBack}
-            className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors"
+            className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors min-h-[44px]"
           >
             <ArrowLeft className="w-4 h-4" />
             退出

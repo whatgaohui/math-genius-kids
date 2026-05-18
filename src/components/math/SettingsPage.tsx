@@ -623,7 +623,7 @@ export default function SettingsPage() {
         >
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center text-2xl shadow-lg shadow-[#667eea]/20">
-              🏰
+              ⚔️
             </div>
             <div>
               <h4 className="text-base font-bold text-gray-800">知识小勇士</h4>
@@ -631,7 +631,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <p className="text-[12px] text-gray-400 leading-relaxed font-medium">
-            闯关答题，快乐成长！专为小朋友设计的趣味学习应用，包含数学、语文、英语三大科目。
+            欢迎来到知识小勇士！这是一个集数学、语文、英语于一体的学习乐园，还有可爱的宠物伙伴陪你一起成长！
           </p>
           <div className="flex flex-wrap gap-1.5 mt-3">
             {['🧮 数学', '📖 语文', '🔤 英语', '🐾 宠物', '🏆 成就'].map((tag) => (
@@ -640,9 +640,7 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        <div className="text-center py-3">
-          <p className="text-[11px] text-gray-300 font-medium">Made with ❤️ for kids</p>
-        </div>
+
       </div>
 
       {/* Dialogs */}

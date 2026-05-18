@@ -109,3 +109,44 @@ Stage Summary:
 - OpenGraph and Twitter card images configured for social sharing
 - Key files created: manifest.json, app-icon-1024.png, plus 5 resized variants
 - Key files modified: layout.tsx
+
+---
+Task ID: 4
+Agent: Main Agent
+Task: Redesign app icon for 知识小勇士 theme + Fix all page spacing + Update settings page text
+
+Work Log:
+- **Redesigned app icon** based on "知识小勇士" (Knowledge Little Warrior) theme
+  - Generated new 1024x1024 icon: cute cartoon warrior kid wearing a scholar hat, holding a glowing book, surrounded by math symbols/Chinese characters/English letters
+  - Bright gradient background from amber/orange to purple
+  - VLM verification: "适合" - icon well matches the "知识小勇士" brand
+  - Regenerated all resized variants (32x32, 16x16, 180x180, 192x192, 512x512, favicon.ico)
+
+- **Fixed spacing on all pages** - added `pt-3 safe-top` and `min-h-[44px]` back buttons consistently:
+  - HelpGuide.tsx: Header had `px-4 pb-4` with no top padding → added `pt-3 safe-top`
+  - PracticeSetup.tsx: Header had `px-4 py-5` → changed to `px-4 pt-3 pb-5 safe-top`
+  - SpeedSetup.tsx: Same fix as PracticeSetup
+  - AdventureMode.tsx: Same fix + changed `max-w-lg` → `max-w-md`
+  - ParentDashboard.tsx: Header had `px-4 pb-6` → added `pt-3 safe-top`
+  - LearningGoalsPage.tsx: Header had `pb-6 pt-4` → changed to `pb-6 pt-3 safe-top`
+  - MentalMathPage.tsx: Playing header had `px-4 pb-4` → added `pt-3 safe-top`; Landing header had `px-4 pb-6` → added `pt-3 safe-top`
+  - DailyChallengePage.tsx: Playing header had `px-4 pb-4` → added `pt-3 safe-top`; Landing header had `px-4 pb-6` → added `pt-3 safe-top`
+  - GamePlay.tsx: Top bar had `px-4 py-3` → added `pt-3 safe-top`
+  - SpeedGamePlay.tsx: Same fix as GamePlay
+  - ChinesePlay.tsx: Top bar had `px-4 py-3` → added `pt-3 safe-top`
+  - EnglishPlay.tsx: Both top bars had `px-4 py-3` → added `pt-3 safe-top`
+  - All back/exit buttons now have `min-h-[44px]` for proper touch target size
+
+- **Updated settings page text**:
+  - Changed description from "闯关答题，快乐成长！专为小朋友设计的趣味学习应用，包含数学、语文、英语三大科目。" → "欢迎来到知识小勇士！这是一个集数学、语文、英语于一体的学习乐园，还有可爱的宠物伙伴陪你一起成长！"
+  - Removed "Made with ❤️ for kids" footer
+  - Changed About icon from 🏰 to ⚔️ (warrior theme matching 知识小勇士)
+
+- Lint passes with no errors
+- Page loads with HTTP 200
+
+Stage Summary:
+- App icon redesigned with 知识小勇士 warrior/scholar theme
+- All 12 page headers now have consistent safe-area spacing (pt-3 safe-top min-h-[44px])
+- Settings page description updated to match the app branding
+- Key files modified: HelpGuide, PracticeSetup, SpeedSetup, AdventureMode, ParentDashboard, LearningGoalsPage, MentalMathPage, DailyChallengePage, GamePlay, SpeedGamePlay, ChinesePlay, EnglishPlay, SettingsPage, public/app-icon-1024.png + all resized variants

@@ -359,12 +359,12 @@ export default function DailyChallengePage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50/30 to-white">
         {/* Header */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 pb-4 text-white">
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 pt-3 pb-4 text-white safe-top">
           <div className="mx-auto max-w-md">
             <div className="flex items-center justify-between mb-2">
               <button
                 onClick={() => { setChallengeState(null); playClickSound(); }}
-                className="flex items-center gap-1 text-white/80 hover:text-white text-sm active:scale-95"
+                className="flex items-center gap-1 text-white/80 hover:text-white text-sm active:scale-95 min-h-[44px]"
               >
                 <ArrowLeft className="w-4 h-4" />
                 退出
@@ -470,7 +470,7 @@ export default function DailyChallengePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50/30 to-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 pb-6 text-white">
+      <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 pt-3 pb-6 text-white safe-top">
         <div className="mx-auto max-w-md">
           <div className="flex items-center justify-between mb-3">
             <button

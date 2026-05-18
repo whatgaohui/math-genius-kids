@@ -463,7 +463,7 @@ export default function EnglishPlay() {
         </AnimatePresence>
 
         {/* Top Timer Bar */}
-        <div className={`bg-gradient-to-r px-4 py-3 text-white transition-colors duration-500 ${
+        <div className={`bg-gradient-to-r px-4 pt-3 py-3 text-white safe-top transition-colors duration-500 ${
           isUrgent ? 'from-red-500 to-rose-600' : 'from-emerald-400 to-teal-500'
         }`}>
           <div className="max-w-md mx-auto">
@@ -471,7 +471,7 @@ export default function EnglishPlay() {
             <div className="flex items-center justify-between mb-2">
               <button
                 onClick={handleBack}
-                className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors"
+                className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors min-h-[44px]"
               >
                 <ArrowLeft className="w-4 h-4" />
                 退出
@@ -722,13 +722,13 @@ export default function EnglishPlay() {
         )}
       </AnimatePresence>
       {/* Top Bar — gradient banner matching GamePlay style */}
-      <div className="bg-gradient-to-r from-emerald-400 to-teal-500 px-4 py-3 text-white">
+      <div className="bg-gradient-to-r from-emerald-400 to-teal-500 px-4 pt-3 py-3 text-white safe-top">
         <div className="max-w-md mx-auto">
           {/* Row 1: Back / Mode / Volume */}
           <div className="flex items-center justify-between mb-2">
             <button
               onClick={handleBack}
-              className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors"
+              className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4" />
               退出

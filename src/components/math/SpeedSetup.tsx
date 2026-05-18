@@ -69,11 +69,11 @@ export default function SpeedSetup() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-red-400 to-rose-500 px-4 py-5 text-white">
+      <div className="bg-gradient-to-r from-red-400 to-rose-500 px-4 pt-3 pb-5 text-white safe-top">
         <div className="max-w-md mx-auto">
           <button
             onClick={handleBack}
-            className="flex items-center gap-1 text-white/80 hover:text-white mb-3 text-sm transition-colors"
+            className="flex items-center gap-1 text-white/80 hover:text-white mb-3 text-sm transition-colors min-h-[44px]"
           >
             <ArrowLeft className="w-4 h-4" />
             返回

@@ -1853,12 +1853,12 @@ export default function HelpGuide() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-violet-50/20 to-white flex flex-col">
       {/* Header */}
-      <div className={`bg-gradient-to-r ${activeTabData?.color ?? 'from-violet-500 to-purple-600'} px-4 pb-4 text-white shrink-0`}>
+      <div className={`bg-gradient-to-r ${activeTabData?.color ?? 'from-violet-500 to-purple-600'} px-4 pt-3 pb-4 text-white shrink-0 safe-top`}>
         <div className="max-w-md mx-auto">
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={() => { playClickSound(); setCurrentView('home'); }}
-              className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors"
+              className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4" />
               返回

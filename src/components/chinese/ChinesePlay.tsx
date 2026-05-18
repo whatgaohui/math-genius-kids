@@ -470,13 +470,13 @@ export default function ChinesePlay() {
       </AnimatePresence>
 
       {/* Top Bar — gradient banner matching GamePlay style */}
-      <div className={`px-4 py-3 text-white ${isSpeedMode ? 'bg-gradient-to-r from-red-400 to-rose-500' : 'bg-gradient-to-r from-rose-400 to-orange-500'}`}>
+      <div className={`px-4 pt-3 py-3 text-white safe-top ${isSpeedMode ? 'bg-gradient-to-r from-red-400 to-rose-500' : 'bg-gradient-to-r from-rose-400 to-orange-500'}`}>
         <div className="max-w-md mx-auto">
           {/* Row 1: Back / Mode / Volume */}
           <div className="flex items-center justify-between mb-2">
             <button
               onClick={handleBack}
-              className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors"
+              className="text-white/80 hover:text-white text-sm flex items-center gap-1 transition-colors min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4" />
               退出

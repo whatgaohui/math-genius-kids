@@ -881,7 +881,7 @@ export default function ParentDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50/60 via-cyan-50/30 to-white">
       {/* ── Header ── */}
-      <div className="bg-gradient-to-r from-sky-500 to-cyan-600 px-4 pb-6 text-white">
+      <div className="bg-gradient-to-r from-sky-500 to-cyan-600 px-4 pt-3 pb-6 text-white safe-top">
         <div className="mx-auto max-w-md">
           <div className="flex items-center justify-between mb-3">
             <button

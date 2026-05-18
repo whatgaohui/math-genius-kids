@@ -122,7 +122,7 @@ export default function LearningGoalsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50/60 via-orange-50/30 to-white">
       {/* ── Header ── */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 pb-6 pt-4 px-4">
+      <div className="relative overflow-hidden bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 pb-6 pt-3 px-4 safe-top">
         <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
         <div className="pointer-events-none absolute -left-4 bottom-0 h-20 w-20 rounded-full bg-white/5" />
         
