@@ -52,3 +52,23 @@ prompt
 server.log
 # Skills directory
 /skills/
+
+# Android SDK tools
+cmdline-tools.zip
+android-sdk/
+
+# Build artifacts
+*.apk
+public/app-debug.apk
+
+# QA screenshots
+qa-*.png
+
+# Database
+db/*.db
+
+# Examples
+examples/
+
+# Mini services (local only)
+mini-services/
