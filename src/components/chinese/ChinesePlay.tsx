@@ -20,7 +20,7 @@ import { chinesePlayConfig } from '@/components/chinese/ChineseHome';
 import { calculateStars, calculateXP } from '@/lib/math-utils';
 import { playCorrectSound, playWrongSound, playComboSound, playClickSound, playCompleteSound } from '@/lib/sound';
 import { addError, generateId } from '@/lib/error-book';
-import { speakChinese, stopSpeaking } from '@/lib/tts';
+import { speakChinese, stopSpeaking, resumeAudioForMobile } from '@/lib/tts';
 import PracticeResult from '@/components/shared/PracticeResult';
 
 type FeedbackState = 'idle' | 'correct' | 'wrong';
@@ -228,21 +228,42 @@ export default function ChinesePlay() {
     [currentQuestion, hasAnswered, feedback, combo, maxCombo, soundEnabled, currentIndex, questions.length, addFloatingXP, isSpeedMode]
   );
 
-  // TTS for dictation mode on question appear
+  // TTS for dictation mode - on mobile, don't autoplay (browser restrictions)
+  // Instead, set the text to speak and show a play button for user to tap
+  const [pendingDictationSpeak, setPendingDictationSpeak] = useState<string | null>(null);
+
   useEffect(() => {
     if (!currentQuestion || config.mode !== 'dictation') return;
-    // For dictation, speak the pinyin part (extract from prompt)
+    // For dictation, extract the pinyin part from prompt
     const prompt = currentQuestion.prompt;
     // prompt format: "meaning (pinyin)"
     const match = prompt.match(/\(([^)]+)\)/);
     const textToSpeak = match ? match[1] : prompt;
-    setIsSpeaking(true);
-    speakChinese(textToSpeak, 0.7).finally(() => setIsSpeaking(false));
+
+    // On mobile, don't auto-play - set pending text for user to tap play
+    // On desktop, auto-play is fine
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+    if (isMobile) {
+      setPendingDictationSpeak(textToSpeak);
+    } else {
+      setIsSpeaking(true);
+      speakChinese(textToSpeak, 0.7).finally(() => setIsSpeaking(false));
+    }
+
     return () => {
       stopSpeaking();
       setIsSpeaking(false);
+      setPendingDictationSpeak(null);
     };
   }, [currentIndex, currentQuestion, config.mode]);
+
+  const handleDictationPlay = useCallback(() => {
+    if (!pendingDictationSpeak) return;
+    resumeAudioForMobile();
+    setPendingDictationSpeak(null);
+    setIsSpeaking(true);
+    speakChinese(pendingDictationSpeak, 0.7).finally(() => setIsSpeaking(false));
+  }, [pendingDictationSpeak]);
 
   // Keyboard support (1-4 keys)
   useEffect(() => {
@@ -479,13 +500,15 @@ export default function ChinesePlay() {
               {config.mode === 'dictation' && (
                 <button
                   onClick={() => {
+                    resumeAudioForMobile();
                     const prompt = currentQuestion.prompt;
                     const match = prompt.match(/\(([^)]+)\)/);
                     const textToSpeak = match ? match[1] : prompt;
+                    setPendingDictationSpeak(null);
                     setIsSpeaking(true);
                     speakChinese(textToSpeak, 0.7).finally(() => setIsSpeaking(false));
                   }}
-                  className="text-white/80 hover:text-white transition-colors"
+                  className="text-white/80 hover:text-white transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 >
                   <Volume2 className={`w-4 h-4 ${isSpeaking ? 'animate-pulse' : ''}`} />
                 </button>
@@ -644,9 +667,11 @@ export default function ChinesePlay() {
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => {
+                        resumeAudioForMobile();
                         const prompt = currentQuestion.prompt;
                         const match = prompt.match(/\(([^)]+)\)/);
                         const textToSpeak = match ? match[1] : prompt;
+                        setPendingDictationSpeak(null);
                         setIsSpeaking(true);
                         speakChinese(textToSpeak, 0.7).finally(() => setIsSpeaking(false));
                       }}
@@ -655,7 +680,7 @@ export default function ChinesePlay() {
                       <Volume2 className={`w-8 h-8 text-white ${isSpeaking ? 'animate-pulse' : ''}`} />
                     </motion.button>
                     <p className="text-sm text-gray-500 font-medium">
-                      {isSpeaking ? '🔊 正在播放...' : '点击播放发音'}
+                      {isSpeaking ? '🔊 正在播放...' : pendingDictationSpeak ? '👆 点击播放发音' : '点击播放发音'}
                     </p>
                   </div>
                 ) : (

@@ -428,10 +428,10 @@ export default function PetPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
         {/* Gradient Header */}
-        <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-4 pb-5 text-white">
+        <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-4 pt-3 pb-5 text-white safe-top">
           <div className="mx-auto max-w-md">
             <div className="flex items-center justify-between mb-3">
-              <button onClick={() => { playClickSound(); setCurrentView('home'); }} className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95">
+              <button onClick={() => { playClickSound(); setCurrentView('home'); }} className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95 min-h-[44px]">
                 <ArrowLeft className="w-4 h-4" />
                 返回
               </button>
@@ -527,10 +527,10 @@ export default function PetPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-rose-50 via-pink-50 to-amber-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-4 pb-5 text-white">
+      <div className="bg-gradient-to-r from-rose-500 to-pink-500 px-4 pt-3 pb-5 text-white safe-top">
         <div className="mx-auto max-w-md">
           <div className="flex items-center justify-between mb-3">
-            <button onClick={() => { playClickSound(); setCurrentView('home'); }} className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95">
+            <button onClick={() => { playClickSound(); setCurrentView('home'); }} className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95 min-h-[44px]">
               <ArrowLeft className="w-4 h-4" />
               返回
             </button>

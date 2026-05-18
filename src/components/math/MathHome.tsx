@@ -762,7 +762,7 @@ export default function MathHome() {
       <div className="absolute bottom-40 left-1/2 -translate-x-1/2 w-72 h-72 bg-amber-100/20 rounded-full blur-3xl pointer-events-none" />
 
       {/* Gradient Header */}
-      <div className="bg-gradient-to-r from-amber-400 to-orange-500 px-4 pb-5 text-white relative">
+      <div className="bg-gradient-to-r from-amber-400 to-orange-500 px-4 pt-3 pb-5 text-white safe-top relative">
         {/* Subtle pattern overlay */}
         <div className="absolute inset-0 opacity-[0.06]" style={{
           backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
@@ -772,7 +772,7 @@ export default function MathHome() {
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={handleBack}
-              className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95"
+              className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95 min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4" />
               返回

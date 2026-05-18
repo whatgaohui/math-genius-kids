@@ -131,7 +131,7 @@ export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 via-orange-50/20 to-white">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 pb-5 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 pt-3 pb-5 text-white safe-top relative overflow-hidden">
         {/* Pattern overlay */}
         <div className="absolute inset-0 opacity-[0.06]" style={{
           backgroundImage: 'radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px)',
@@ -141,7 +141,7 @@ export default function LeaderboardPage() {
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={() => { playClickSound(); setCurrentView('home'); }}
-              className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95"
+              className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95 min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4" />
               返回

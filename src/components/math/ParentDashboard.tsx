@@ -886,7 +886,7 @@ export default function ParentDashboard() {
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={() => { playClickSound(); setCurrentView('home'); }}
-              className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95"
+              className="flex items-center gap-1 text-white/80 hover:text-white text-sm transition-colors active:scale-95 min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4" />
               返回

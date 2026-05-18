@@ -19,7 +19,7 @@ import { englishPlayConfig } from '@/components/english/EnglishHome';
 import { calculateStars, calculateXP } from '@/lib/math-utils';
 import { playCorrectSound, playWrongSound, playComboSound, playClickSound, playCompleteSound } from '@/lib/sound';
 import { addError, generateId } from '@/lib/error-book';
-import { speakEnglish, stopSpeaking } from '@/lib/tts';
+import { speakEnglish, stopSpeaking, resumeAudioForMobile } from '@/lib/tts';
 import PracticeResult from '@/components/shared/PracticeResult';
 
 type FeedbackState = 'idle' | 'correct' | 'wrong';
@@ -166,6 +166,7 @@ export default function EnglishPlay() {
 
   const handleSpeak = useCallback(() => {
     if (!currentQuestion) return;
+    resumeAudioForMobile();
     setIsSpeaking(true);
     speakEnglish(currentQuestion.correctAnswer, 0.8).finally(() => setIsSpeaking(false));
   }, [currentQuestion]);
