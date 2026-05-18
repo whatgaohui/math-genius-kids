@@ -199,3 +199,39 @@ Work Log:
 Stage Summary:
 - App icon now features a confident teenage girl character
 - All icon variants updated across all platforms
+
+---
+Task ID: 7
+Agent: Main Agent
+Task: Build APK with current icon and update settings page download link
+
+Work Log:
+- Set up Capacitor Android project for APK build
+  - Installed @capacitor/core, @capacitor/cli, @capacitor/android
+  - Created capacitor.config.json with appId: com.zhishixiaoyongshi.app
+  - Configured Next.js for static export (output: "export") temporarily
+  - Built static export to /out directory (3.5MB)
+  - Added Android platform with `npx cap add android`
+- Set up Android SDK
+  - Downloaded Android command-line tools to ~/android-sdk
+  - Accepted SDK licenses
+  - Installed platforms;android-36 and build-tools;36.0.0
+  - Downloaded Temurin JDK 21 (system only had JRE, no javac)
+- Generated Android adaptive icons
+  - Created launcher icons for all densities (mdpi through xxxhdpi)
+  - Created foreground layer icons for adaptive icon support
+  - Set adaptive icon background color to #8B5CF6 (purple)
+  - Round icons generated as well
+- Built APK successfully
+  - `./gradlew assembleDebug` completed in 49s
+  - Output: android/app/build/outputs/apk/debug/app-debug.apk (6.3MB)
+  - Copied to public/app-debug.apk for download
+- Restored Next.js config to standalone mode (for dev server)
+- Restored API routes (moved back from /tmp)
+- Updated SettingsPage.tsx: APK size from 4.9MB → 6.3MB
+
+Stage Summary:
+- APK built successfully with current cartoon girl icon
+- APK available at /app-debug.apk (6.3MB)
+- Settings page download link updated to match new APK
+- Build toolchain established: Capacitor + Android SDK + JDK 21

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import '@/lib/question-bank';
 
+export const dynamic = 'force-static';
+
 // ─── Template Data ───────────────────────────────────────────────────────────
 
 const TEMPLATES = {
