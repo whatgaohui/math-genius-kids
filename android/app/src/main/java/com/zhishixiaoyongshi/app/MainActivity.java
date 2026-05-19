@@ -357,11 +357,30 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
     private class TtsJsBridge {
         @JavascriptInterface
         public void speak(String text, String lang, float rate, float pitch, int callbackId) {
+            // If TTS is not ready yet, wait for it on a background thread
+            // This fixes the "no sound on first click" issue because TTS
+            // initialization takes 1-2 seconds and the user might tap before it's done.
             if (!ttsReady || tts == null) {
-                notifyJs(callbackId, "error", "TTS not ready");
+                Log.i(TAG, "TTS not ready yet, waiting before speaking...");
+                new Thread(() -> {
+                    long startTime = System.currentTimeMillis();
+                    while (!ttsReady && tts != null && System.currentTimeMillis() - startTime < 5000) {
+                        try { Thread.sleep(100); } catch (InterruptedException e) { break; }
+                    }
+                    if (ttsReady && tts != null) {
+                        doSpeak(text, lang, rate, pitch, callbackId);
+                    } else {
+                        Log.e(TAG, "TTS still not ready after waiting, giving up");
+                        notifyJs(callbackId, "error", "TTS not ready after waiting");
+                    }
+                }).start();
                 return;
             }
 
+            doSpeak(text, lang, rate, pitch, callbackId);
+        }
+
+        private void doSpeak(String text, String lang, float rate, float pitch, int callbackId) {
             try {
                 // Set language
                 Locale locale;

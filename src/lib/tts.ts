@@ -42,13 +42,50 @@ let webSpeechHasVoices: boolean | null = null;
 // ─── Android Native Bridge Detection ────────────────────────────────────────
 
 /**
- * Check if the Android native TTS bridge is available.
- * This bridge is injected by the Android WebView's MainActivity via addJavascriptInterface.
- * It uses Android's native TextToSpeech engine, which works on ALL devices
- * including Huawei/Honor (unlike the Web Speech API which is NOT available in WebView).
+ * Check if the Android native TTS bridge OBJECT exists.
+ * We check for object existence only, NOT isAvailable(), because:
+ * - AndroidTTS object is injected immediately on WebView creation
+ * - But TTS engine initialization takes 1-2 seconds (async)
+ * - isAvailable() returns false during init, causing hasNativeBridge() to return false
+ * - This makes the code fall through to Web Speech API, which doesn't work in WebView
+ * - Result: NO SOUND on first click after app starts
+ *
+ * By checking object existence only, we ensure speakWithNativeBridge is always used
+ * when running inside the APK. The speakWithNativeBridge function handles the
+ * "TTS not ready yet" case by waiting for initialization to complete.
  */
 function hasNativeBridge(): boolean {
-  return typeof window !== 'undefined' && typeof window.AndroidTTS !== 'undefined' && window.AndroidTTS.isAvailable();
+  return typeof window !== 'undefined' && typeof window.AndroidTTS !== 'undefined';
+}
+
+/**
+ * Wait for the native TTS engine to become ready (max 5 seconds).
+ * Android TextToSpeech initialization is async and takes 1-2 seconds.
+ * During this time, AndroidTTS.isAvailable() returns false.
+ */
+function waitForNativeTTS(timeoutMs: number = 5000): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || typeof window.AndroidTTS === 'undefined') {
+      resolve(false);
+      return;
+    }
+    if (window.AndroidTTS.isAvailable()) {
+      resolve(true);
+      return;
+    }
+    // TTS is initializing - wait for it
+    const startTime = Date.now();
+    const checkInterval = setInterval(() => {
+      if (window.AndroidTTS?.isAvailable()) {
+        clearInterval(checkInterval);
+        resolve(true);
+      } else if (Date.now() - startTime > timeoutMs) {
+        clearInterval(checkInterval);
+        console.warn('[TTS] Native TTS did not become ready within timeout');
+        resolve(false);
+      }
+    }, 100);
+  });
 }
 
 /**
@@ -57,6 +94,10 @@ function hasNativeBridge(): boolean {
  * 1. Android WebView does NOT support window.speechSynthesis (Chromium bug #40417848)
  * 2. Android's native TextToSpeech works on ALL devices including Huawei/Honor
  * 3. No server backend needed (unlike /api/tts which requires a running server)
+ *
+ * IMPORTANT: If TTS engine is not ready yet (still initializing), this function
+ * will WAIT up to 5 seconds for it to become ready before speaking.
+ * This fixes the "no sound on first click" issue.
  */
 function speakWithNativeBridge(
   text: string,
@@ -69,33 +110,55 @@ function speakWithNativeBridge(
         return;
       }
 
-      // Initialize callback storage if needed
-      if (!window._ttsCallbacks) {
-        window._ttsCallbacks = {};
-        window._ttsCallbackCounter = 0;
+      // If TTS is not ready yet, wait for it
+      if (!window.AndroidTTS.isAvailable()) {
+        console.log('[TTS] Native TTS not ready yet, waiting...');
+        waitForNativeTTS(5000).then((ready) => {
+          if (!ready) {
+            console.warn('[TTS] Native TTS failed to initialize, giving up');
+            resolve();
+            return;
+          }
+          doSpeak();
+        });
+        return;
       }
 
-      const callbackId = ++window._ttsCallbackCounter;
+      doSpeak();
 
-      // Set up callback
-      window._ttsCallbacks[callbackId] = (type: string, _msg: string) => {
-        delete window._ttsCallbacks[callbackId];
-        if (type === 'error') {
-          console.warn('[TTS] Native bridge error:', _msg);
-        }
-        resolve(); // Always resolve, never reject - don't break the app
-      };
+      function doSpeak() {
+        try {
+          // Initialize callback storage if needed
+          if (!window._ttsCallbacks) {
+            window._ttsCallbacks = {};
+            window._ttsCallbackCounter = 0;
+          }
 
-      // Safety timeout: if native bridge doesn't call back in 15 seconds, resolve
-      setTimeout(() => {
-        if (window._ttsCallbacks && window._ttsCallbacks[callbackId]) {
-          delete window._ttsCallbacks[callbackId];
+          const callbackId = ++window._ttsCallbackCounter;
+
+          // Set up callback
+          window._ttsCallbacks[callbackId] = (type: string, _msg: string) => {
+            delete window._ttsCallbacks[callbackId];
+            if (type === 'error') {
+              console.warn('[TTS] Native bridge error:', _msg);
+            }
+            resolve(); // Always resolve, never reject - don't break the app
+          };
+
+          // Safety timeout: if native bridge doesn't call back in 15 seconds, resolve
+          setTimeout(() => {
+            if (window._ttsCallbacks && window._ttsCallbacks[callbackId]) {
+              delete window._ttsCallbacks[callbackId];
+              resolve();
+            }
+          }, 15000);
+
+          // Call the native bridge
+          window.AndroidTTS!.speak(text, options.lang, options.speed, options.pitch, callbackId);
+        } catch {
           resolve();
         }
-      }, 15000);
-
-      // Call the native bridge
-      window.AndroidTTS.speak(text, options.lang, options.speed, options.pitch, callbackId);
+      }
     } catch {
       resolve();
     }
