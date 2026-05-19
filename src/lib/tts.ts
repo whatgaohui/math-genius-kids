@@ -1,31 +1,122 @@
 // Text-to-speech helper for 知识小勇士
 'use client';
 
+// ─── Type declarations for Android native bridge ────────────────────────────
+interface AndroidTTSBridge {
+  speak(text: string, lang: string, rate: number, pitch: number, callbackId: number): void;
+  stop(): void;
+  isAvailable(): boolean;
+  getEngines(): string;
+}
+
+declare global {
+  interface Window {
+    AndroidTTS?: AndroidTTSBridge;
+    _ttsCallbacks?: Record<number, (type: string, msg: string) => void>;
+    _ttsCallbackCounter?: number;
+    _nativeTTSReady?: boolean;
+    _onNativeTTSReady?: () => void;
+  }
+}
+
 interface TTSOptions {
   lang?: string;
   speed?: number;
   pitch?: number;
 }
 
-// Track if voices are loaded and actually usable
-let voicesLoaded = false;
-let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+// ─── State ──────────────────────────────────────────────────────────────────
 
-// Global AudioContext for all audio playback (TTS backend, sounds, etc.)
-// This MUST be created/resumed during a user gesture to work on mobile
+// Global AudioContext for backend TTS playback
 let audioContext: AudioContext | null = null;
-
-// Cache whether Web Speech API has usable voices (survives across calls)
-let webSpeechHasVoices: boolean | null = null;
 
 // Currently playing audio source (for stopping)
 let currentBufferSource: AudioBufferSourceNode | null = null;
 let currentHtmlAudio: HTMLAudioElement | null = null;
 
+// Track if voices are loaded and actually usable (for browser Web Speech API)
+let voicesLoaded = false;
+let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+let webSpeechHasVoices: boolean | null = null;
+
+// ─── Android Native Bridge Detection ────────────────────────────────────────
+
 /**
- * Get or create the global AudioContext.
- * IMPORTANT: Must be called from a user gesture handler to work on mobile.
+ * Check if the Android native TTS bridge is available.
+ * This bridge is injected by the Android WebView's MainActivity via addJavascriptInterface.
+ * It uses Android's native TextToSpeech engine, which works on ALL devices
+ * including Huawei/Honor (unlike the Web Speech API which is NOT available in WebView).
  */
+function hasNativeBridge(): boolean {
+  return typeof window !== 'undefined' && typeof window.AndroidTTS !== 'undefined' && window.AndroidTTS.isAvailable();
+}
+
+/**
+ * Speak using the Android native TTS bridge.
+ * This is the MOST RELIABLE method for APK builds because:
+ * 1. Android WebView does NOT support window.speechSynthesis (Chromium bug #40417848)
+ * 2. Android's native TextToSpeech works on ALL devices including Huawei/Honor
+ * 3. No server backend needed (unlike /api/tts which requires a running server)
+ */
+function speakWithNativeBridge(
+  text: string,
+  options: { lang: string; speed: number; pitch: number }
+): Promise<void> {
+  return new Promise((resolve) => {
+    try {
+      if (!window.AndroidTTS) {
+        resolve();
+        return;
+      }
+
+      // Initialize callback storage if needed
+      if (!window._ttsCallbacks) {
+        window._ttsCallbacks = {};
+        window._ttsCallbackCounter = 0;
+      }
+
+      const callbackId = ++window._ttsCallbackCounter;
+
+      // Set up callback
+      window._ttsCallbacks[callbackId] = (type: string, _msg: string) => {
+        delete window._ttsCallbacks[callbackId];
+        if (type === 'error') {
+          console.warn('[TTS] Native bridge error:', _msg);
+        }
+        resolve(); // Always resolve, never reject - don't break the app
+      };
+
+      // Safety timeout: if native bridge doesn't call back in 15 seconds, resolve
+      setTimeout(() => {
+        if (window._ttsCallbacks && window._ttsCallbacks[callbackId]) {
+          delete window._ttsCallbacks[callbackId];
+          resolve();
+        }
+      }, 15000);
+
+      // Call the native bridge
+      window.AndroidTTS.speak(text, options.lang, options.speed, options.pitch, callbackId);
+    } catch {
+      resolve();
+    }
+  });
+}
+
+/**
+ * Stop native TTS bridge playback
+ */
+function stopNativeBridge(): void {
+  try {
+    if (window.AndroidTTS) {
+      window.AndroidTTS.stop();
+    }
+  } catch {
+    // Silent fail
+  }
+}
+
+// ─── AudioContext helpers ───────────────────────────────────────────────────
+
 function getAudioContext(): AudioContext {
   if (!audioContext) {
     const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -34,10 +125,6 @@ function getAudioContext(): AudioContext {
   return audioContext;
 }
 
-/**
- * Ensure AudioContext is resumed (critical for mobile browsers).
- * Must be called from a user gesture handler.
- */
 function ensureAudioContext(): void {
   try {
     const ctx = getAudioContext();
@@ -49,43 +136,16 @@ function ensureAudioContext(): void {
   }
 }
 
-/**
- * Check if the device is likely a Huawei/Honor phone.
- * These devices often have broken Web Speech API because they lack Google TTS.
- * Honor phones have UA strings containing "HONOR" or "Magic".
- * Huawei phones have UA strings containing "Huawei" or "HUAWEI".
- */
-function isHuaweiOrHonor(): boolean {
-  if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  // Also check for MagicOS which is Honor's custom OS
-  return /HUAWEI|Huawei|HONOR|Honor|MagicOS|Magic/i.test(ua);
-}
+// ─── Device detection ───────────────────────────────────────────────────────
 
-/**
- * Check if we're likely on a mobile device
- */
 function isMobileDevice(): boolean {
   if (typeof window === 'undefined') return false;
   const ua = navigator.userAgent || '';
   return /Android|iPhone|iPad|iPod/i.test(ua);
 }
 
-/**
- * Check if we're in an Android WebView
- * WebView does NOT support Web Speech API at all
- */
-function isAndroidWebView(): boolean {
-  if (typeof window === 'undefined') return false;
-  const ua = navigator.userAgent || '';
-  // WebView typically has "wv" in the UA or doesn't have Chrome version
-  return /Android/.test(ua) && (/wv/.test(ua) || !/Chrome\/[0-9]/.test(ua));
-}
+// ─── Web Speech API (browser only, NOT available in WebView) ────────────────
 
-/**
- * Pre-load voices - call this early to ensure voices are available.
- * Returns voices array, which may be empty on devices without TTS engines.
- */
 function getVoices(force = false): Promise<SpeechSynthesisVoice[]> {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     return Promise.resolve([]);
@@ -103,7 +163,6 @@ function getVoices(force = false): Promise<SpeechSynthesisVoice[]> {
   if (voicesPromise) return voicesPromise;
 
   voicesPromise = new Promise<SpeechSynthesisVoice[]>((resolve) => {
-    // Try to get voices immediately
     let voices = window.speechSynthesis.getVoices();
     if (voices.length > 0) {
       voicesLoaded = true;
@@ -111,7 +170,6 @@ function getVoices(force = false): Promise<SpeechSynthesisVoice[]> {
       return;
     }
 
-    // Wait for voiceschanged event
     const handler = () => {
       voicesLoaded = true;
       window.speechSynthesis.removeEventListener('voiceschanged', handler);
@@ -120,7 +178,6 @@ function getVoices(force = false): Promise<SpeechSynthesisVoice[]> {
 
     window.speechSynthesis.addEventListener('voiceschanged', handler);
 
-    // Timeout after 3 seconds
     setTimeout(() => {
       window.speechSynthesis.removeEventListener('voiceschanged', handler);
       voicesLoaded = true;
@@ -132,47 +189,23 @@ function getVoices(force = false): Promise<SpeechSynthesisVoice[]> {
   return voicesPromise;
 }
 
-/**
- * Check if Web Speech API has voices available for the given language.
- * This is critical for detecting devices like Honor/Huawei where
- * speechSynthesis exists but has no usable TTS engine.
- */
 async function hasUsableVoices(lang: string): Promise<boolean> {
-  // If we already checked, use cached result
   if (webSpeechHasVoices === false) return false;
-
-  // Android WebView: Web Speech API is NOT supported at all
-  if (isAndroidWebView()) {
-    console.log('[TTS] Android WebView detected, skipping Web Speech API');
-    webSpeechHasVoices = false;
-    return false;
-  }
-
-  // Honor/Huawei devices: skip Web Speech API entirely
-  // These devices have speechSynthesis but no working TTS engine
-  if (isHuaweiOrHonor()) {
-    console.log('[TTS] Huawei/Honor device detected, skipping Web Speech API');
-    webSpeechHasVoices = false;
-    return false;
-  }
 
   try {
     const voices = await getVoices(true);
     if (voices.length === 0) {
-      console.log('[TTS] No voices available, Web Speech API not usable');
       webSpeechHasVoices = false;
       return false;
     }
 
-    // Check if there's a voice matching the requested language
     const langPrefix = lang.split('-')[0];
     const hasMatchingVoice = voices.some((v) =>
       v.lang === lang || v.lang.startsWith(langPrefix)
     );
 
     if (!hasMatchingVoice) {
-      console.log(`[TTS] No voice found for language "${lang}", Web Speech API may not work properly`);
-      // Still allow it - the browser may fall back to a default voice
+      console.log(`[TTS] No voice for "${lang}" in Web Speech API`);
     }
 
     webSpeechHasVoices = true;
@@ -183,53 +216,26 @@ async function hasUsableVoices(lang: string): Promise<boolean> {
   }
 }
 
-/**
- * Find the best matching voice for a given language.
- * Prioritizes exact match, then language prefix, then any available voice.
- */
 function findBestVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | null {
   if (voices.length === 0) return null;
+  const langPrefix = lang.split('-')[0];
 
-  const langPrefix = lang.split('-')[0]; // e.g., 'en' from 'en-US'
-
-  // 1. Exact match (e.g., 'en-US' === 'en-US')
   const exact = voices.find((v) => v.lang === lang);
   if (exact) return exact;
 
-  // 2. Same language, any region (e.g., 'en-GB' matches 'en-US' request)
   const sameLang = voices.find((v) => v.lang.startsWith(langPrefix));
   if (sameLang) return sameLang;
 
-  // 3. For English: look for any English voice including non-standard ones
-  if (langPrefix === 'en') {
-    const anyEnglish = voices.find((v) => {
-      const vLang = v.lang.toLowerCase();
-      return vLang.startsWith('en');
-    });
-    if (anyEnglish) return anyEnglish;
-  }
-
-  // 4. Last resort: first available voice
   return voices[0];
 }
 
-/**
- * Speak text using the Web Speech API (browser native).
- *
- * KEY FIX: Detects "silent playback" - on Honor/Huawei devices, speak() may
- * trigger onend immediately without actually producing sound. We detect this
- * by checking if speech ended suspiciously fast (< 500ms for any text).
- */
 function speakWithWebSpeech(
   text: string,
   options: { lang: string; speed: number; pitch: number }
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
-      // Resume AudioContext for mobile browsers (needed for speech to work)
       ensureAudioContext();
-
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
 
       const utterance = new SpeechSynthesisUtterance(text);
@@ -238,36 +244,26 @@ function speakWithWebSpeech(
       utterance.pitch = options.pitch;
       utterance.volume = 1;
 
-      // Find best voice
       getVoices(true).then((voices) => {
-        // Android workaround: voices may load async
         if (voices.length === 0) {
-          // Retry once more after a short delay
           setTimeout(() => {
             const retryVoices = window.speechSynthesis.getVoices();
-            // If still no voices after retry, reject to trigger backend fallback
             if (retryVoices.length === 0) {
               if (!settled) {
                 settled = true;
-                console.log('[TTS] Web Speech: no voices available, falling back to backend');
                 reject(new Error('No voices available'));
               }
               return;
             }
             const voice = findBestVoice(retryVoices, options.lang);
-            if (voice) {
-              utterance.voice = voice;
-            }
+            if (voice) utterance.voice = voice;
             startSpeaking();
           }, 500);
           return;
         }
 
         const voice = findBestVoice(voices, options.lang);
-        if (voice) {
-          utterance.voice = voice;
-        }
-
+        if (voice) utterance.voice = voice;
         startSpeaking();
       });
 
@@ -277,27 +273,18 @@ function speakWithWebSpeech(
       function startSpeaking() {
         if (settled) return;
 
-        // Mobile workaround: Chrome on Android sometimes needs a small delay
-        // after user interaction before speech works
         const delay = isMobileDevice() ? 100 : 0;
 
         setTimeout(() => {
           if (settled) return;
-
-          // Double-check AudioContext is still running (mobile can suspend it)
           ensureAudioContext();
-
           speakStartTime = Date.now();
 
           utterance.onend = () => {
             if (!settled) {
               const elapsed = Date.now() - speakStartTime;
-              // KEY FIX: Detect "silent playback" on Honor/Huawei
-              // If speech ended in less than 500ms for non-empty text,
-              // the TTS engine likely didn't actually produce any sound
-              const minExpectedDuration = text.length * 50; // ~50ms per character minimum
+              const minExpectedDuration = text.length * 50;
               if (elapsed < Math.min(500, minExpectedDuration) && text.length > 0) {
-                console.log(`[TTS] Web Speech: suspiciously fast completion (${elapsed}ms for "${text}"), likely silent playback - falling back to backend`);
                 webSpeechHasVoices = false;
                 settled = true;
                 reject(new Error('Silent playback detected'));
@@ -310,7 +297,6 @@ function speakWithWebSpeech(
           utterance.onerror = (e) => {
             if (!settled) {
               settled = true;
-              // Don't reject on "canceled" or "interrupted" errors (common on mobile)
               const errorStr = String(e.error);
               if (errorStr === 'canceled' || errorStr === 'interrupted') {
                 resolve();
@@ -322,9 +308,6 @@ function speakWithWebSpeech(
 
           try {
             window.speechSynthesis.speak(utterance);
-
-            // Chrome on Android bug: speechSynthesis can get stuck in "paused" state
-            // This workaround periodically resumes it
             if (isMobileDevice()) {
               const resumeInterval = setInterval(() => {
                 if (window.speechSynthesis.paused) {
@@ -341,7 +324,6 @@ function speakWithWebSpeech(
         }, delay);
       }
 
-      // Timeout safety - 15 seconds max
       setTimeout(() => {
         if (!settled) {
           settled = true;
@@ -355,49 +337,24 @@ function speakWithWebSpeech(
   });
 }
 
-/**
- * Stop any currently playing audio
- */
+// ─── Backend TTS API (server required, only works in browser with dev server) ──
+
 function stopCurrentAudio(): void {
-  // Stop AudioBufferSourceNode (backend TTS via AudioContext)
   if (currentBufferSource) {
-    try {
-      currentBufferSource.stop();
-      currentBufferSource.disconnect();
-    } catch {
-      // Already stopped
-    }
+    try { currentBufferSource.stop(); currentBufferSource.disconnect(); } catch { /* ok */ }
     currentBufferSource = null;
   }
-  // Stop HTML5 Audio element (fallback)
   if (currentHtmlAudio) {
-    try {
-      currentHtmlAudio.pause();
-      currentHtmlAudio.currentTime = 0;
-    } catch {
-      // Already stopped
-    }
+    try { currentHtmlAudio.pause(); currentHtmlAudio.currentTime = 0; } catch { /* ok */ }
     currentHtmlAudio = null;
   }
 }
 
-/**
- * Speak using the backend TTS API endpoint.
- * 
- * KEY FIX: Uses AudioContext.decodeAudioData() instead of HTML5 Audio element.
- * This is critical for mobile browsers (especially Honor/Huawei) because:
- * 1. AudioContext can be unlocked during user gesture (click)
- * 2. After unlock, decodeAudioData() + AudioBufferSourceNode works even after async fetch
- * 3. HTML5 Audio.play() gets blocked by autoplay policy after async operations
- */
 async function speakWithBackend(
   text: string,
   options: { lang: string; speed: number }
 ): Promise<void> {
-  // Stop any currently playing audio first
   stopCurrentAudio();
-
-  // Ensure AudioContext is created and resumed DURING user gesture
   ensureAudioContext();
   const ctx = getAudioContext();
 
@@ -405,11 +362,7 @@ async function speakWithBackend(
     const response = await fetch('/api/tts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text,
-        lang: options.lang,
-        speed: options.speed,
-      }),
+      body: JSON.stringify({ text, lang: options.lang, speed: options.speed }),
     });
 
     if (!response.ok) {
@@ -417,52 +370,34 @@ async function speakWithBackend(
     }
 
     const arrayBuffer = await response.arrayBuffer();
-
-    // Validate data has actual audio content
     if (arrayBuffer.byteLength < 100) {
       throw new Error('TTS API returned empty audio');
     }
 
-    // Try AudioContext approach first (works on mobile after unlock)
     try {
-      // Resume context if it got suspended again (mobile browsers can re-suspend)
-      if (ctx.state === 'suspended') {
-        await ctx.resume();
-      }
-
+      if (ctx.state === 'suspended') await ctx.resume();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 
       return new Promise((resolve, reject) => {
         const source = ctx.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(ctx.destination);
-
         currentBufferSource = source;
 
-        source.onended = () => {
+        source.onended = () => { currentBufferSource = null; resolve(); };
+        source.onerror = () => {
           currentBufferSource = null;
-          resolve();
-        };
-
-        source.onerror = (e) => {
-          currentBufferSource = null;
-          console.warn('[TTS] AudioBufferSource error:', e);
-          // Fall back to HTML5 Audio
           playWithHtmlAudio(arrayBuffer).then(resolve).catch(reject);
         };
 
         try {
           source.start(0);
-        } catch (startErr) {
+        } catch {
           currentBufferSource = null;
-          console.warn('[TTS] AudioBufferSource.start() failed, falling back to HTML5 Audio:', startErr);
-          // Fall back to HTML5 Audio
           playWithHtmlAudio(arrayBuffer).then(resolve).catch(reject);
         }
       });
-    } catch (decodeErr) {
-      // decodeAudioData failed, try HTML5 Audio as fallback
-      console.warn('[TTS] decodeAudioData failed, trying HTML5 Audio:', decodeErr);
+    } catch {
       return playWithHtmlAudio(arrayBuffer);
     }
   } catch (error) {
@@ -471,11 +406,6 @@ async function speakWithBackend(
   }
 }
 
-/**
- * Fallback: Play audio using HTML5 Audio element.
- * Used when AudioContext.decodeAudioData() fails.
- * May be blocked by autoplay policy on mobile after async operations.
- */
 function playWithHtmlAudio(arrayBuffer: ArrayBuffer): Promise<void> {
   return new Promise((resolve, reject) => {
     try {
@@ -489,46 +419,12 @@ function playWithHtmlAudio(arrayBuffer: ArrayBuffer): Promise<void> {
         currentHtmlAudio = null;
       };
 
-      audio.onended = () => {
-        cleanup();
-        resolve();
-      };
-      audio.onerror = () => {
-        cleanup();
-        reject(new Error('Audio playback failed'));
-      };
+      audio.onended = () => { cleanup(); resolve(); };
+      audio.onerror = () => { cleanup(); reject(new Error('Audio playback failed')); };
 
-      audio.play().then(() => {
-        // Playback started successfully
-      }).catch((e) => {
+      audio.play().catch((e) => {
         cleanup();
-        // On mobile, autoplay may be blocked
-        if (isMobileDevice() && String(e).includes('NotAllowedError')) {
-          console.log('[TTS] Autoplay blocked, showing click-to-play overlay');
-          // Create a one-click overlay to trigger playback
-          const overlay = document.createElement('div');
-          overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);cursor:pointer;';
-          overlay.innerHTML = '<div style="background:white;border-radius:16px;padding:24px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.2)"><div style="font-size:48px;margin-bottom:12px">🔊</div><p style="font-size:16px;color:#333;font-weight:600">点击播放发音</p></div>';
-          overlay.onclick = () => {
-            document.body.removeChild(overlay);
-            ensureAudioContext();
-            const newAudio = new Audio(audioUrl);
-            newAudio.onended = () => { cleanup(); resolve(); };
-            newAudio.onerror = () => { cleanup(); resolve(); };
-            newAudio.play().catch(() => { cleanup(); resolve(); });
-          };
-          document.body.appendChild(overlay);
-          // Auto-dismiss after 5 seconds
-          setTimeout(() => {
-            if (document.body.contains(overlay)) {
-              document.body.removeChild(overlay);
-              cleanup();
-              resolve();
-            }
-          }, 5000);
-        } else {
-          reject(e);
-        }
+        reject(e);
       });
     } catch {
       reject(new Error('HTML5 Audio playback failed'));
@@ -536,20 +432,27 @@ function playWithHtmlAudio(arrayBuffer: ArrayBuffer): Promise<void> {
   });
 }
 
+// ─── Main speak function ────────────────────────────────────────────────────
+
 /**
  * Speak text with TTS.
  *
- * Strategy (optimized for all devices including Honor/Huawei):
- * 1. Check if Web Speech API has usable voices for the target language
- * 2. If Android WebView / Honor/Huawei detected OR no usable voices → go directly to backend TTS
- * 3. If Web Speech API appears usable → try it, but detect "silent playback"
- * 4. If Web Speech API fails or silently plays → fallback to backend TTS
- * 5. Backend TTS uses AudioContext.decodeAudioData() for reliable mobile playback
- * 6. If both fail → silent resolve (no error thrown to caller)
+ * Strategy (PRIORITY ORDER):
+ * 1. Android native bridge (window.AndroidTTS) — for APK builds
+ *    - Works on ALL devices including Huawei/Honor
+ *    - Uses Android's native TextToSpeech engine
+ *    - Available only when running inside the Android WebView app
  *
- * @param text - The text to speak
- * @param options - Optional configuration (language, speed, pitch)
- * @returns Promise that resolves when speech is done
+ * 2. Web Speech API (window.speechSynthesis) — for browser
+ *    - Only available in Chrome/Firefox/Safari browsers
+ *    - NOT available in Android WebView (Chromium bug #40417848)
+ *    - May not work on Huawei/Honor devices without Google TTS
+ *
+ * 3. Backend TTS API (/api/tts) — for browser fallback
+ *    - Only works when Next.js server is running (not in APK)
+ *    - Uses z-ai-web-dev-sdk for high-quality TTS
+ *
+ * 4. Silent resolve — if nothing works, don't crash the app
  */
 export function speakWithAPI(
   text: string,
@@ -557,43 +460,45 @@ export function speakWithAPI(
 ): Promise<void> {
   const { lang = 'zh-CN', speed = 1, pitch = 1 } = options;
 
-  // CRITICAL: Ensure AudioContext is created AND resumed during user gesture.
-  // This must happen BEFORE any async operations to unlock audio on mobile.
+  // Unlock AudioContext for sound effects
   ensureAudioContext();
 
-  // Also stop any currently playing audio to prevent overlap
+  // Stop any currently playing audio
   stopCurrentAudio();
+  stopNativeBridge();
 
-  // Check if Web Speech API is available AND has usable voices
+  // ── PRIORITY 1: Android native TTS bridge ──
+  if (hasNativeBridge()) {
+    console.log('[TTS] Using Android native TTS bridge');
+    return speakWithNativeBridge(text, { lang, speed, pitch });
+  }
+
+  // ── PRIORITY 2: Web Speech API (browser only) ──
   const webSpeechAvailable = typeof window !== 'undefined' && 'speechSynthesis' in window;
 
-  if (!webSpeechAvailable) {
-    // No Web Speech API at all, try backend only
-    return speakWithBackend(text, { lang, speed }).catch(() => {
-      return Promise.resolve();
+  if (webSpeechAvailable) {
+    return hasUsableVoices(lang).then((hasVoices) => {
+      if (hasVoices) {
+        return speakWithWebSpeech(text, { lang, speed, pitch }).catch(() => {
+          // Web Speech failed → try backend
+          console.log('[TTS] Web Speech failed, trying backend TTS');
+          return speakWithBackend(text, { lang, speed }).catch(() => {
+            return Promise.resolve();
+          });
+        });
+      }
+
+      // No usable voices → try backend
+      console.log('[TTS] No usable voices, trying backend TTS');
+      return speakWithBackend(text, { lang, speed }).catch(() => {
+        return Promise.resolve();
+      });
     });
   }
 
-  // Check for usable voices (this also detects Honor/Huawei and Android WebView)
-  return hasUsableVoices(lang).then((hasVoices) => {
-    if (!hasVoices) {
-      // No usable voices → go directly to backend TTS
-      console.log('[TTS] Skipping Web Speech API (no usable voices), using backend TTS');
-      return speakWithBackend(text, { lang, speed }).catch(() => {
-        console.warn('[TTS] Backend TTS also failed');
-        return Promise.resolve();
-      });
-    }
-
-    // Web Speech API has voices, try it first
-    return speakWithWebSpeech(text, { lang, speed, pitch }).catch(() => {
-      // Web Speech failed (including silent playback detection) → fallback to backend
-      console.log('[TTS] Web Speech failed, falling back to backend TTS');
-      return speakWithBackend(text, { lang, speed }).catch(() => {
-        console.warn('[TTS] Both Web Speech and Backend TTS failed');
-        return Promise.resolve();
-      });
-    });
+  // ── PRIORITY 3: Backend TTS API ──
+  return speakWithBackend(text, { lang, speed }).catch(() => {
+    return Promise.resolve();
   });
 }
 
@@ -615,33 +520,35 @@ export function speakChinese(text: string, speed: number = 0.7): Promise<void> {
  * Stop any ongoing speech.
  */
 export function stopSpeaking(): void {
+  // Stop native bridge
+  stopNativeBridge();
   // Stop Web Speech API
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
-  // Stop backend audio playback
+  // Stop backend audio
   stopCurrentAudio();
 }
 
 /**
- * Check if TTS is available in the current browser.
- * Now also checks for actual voice availability.
+ * Check if TTS is available.
  */
 export function isTTSAvailable(): boolean {
   if (typeof window === 'undefined') return false;
-  // Web Speech API exists OR backend TTS can work
+  // Native bridge is available
+  if (hasNativeBridge()) return true;
+  // Web Speech API exists
   if ('speechSynthesis' in window) return true;
-  // Backend TTS might still work even without Web Speech API
+  // Backend might work
   return true;
 }
 
 /**
  * Resume audio context - should be called on user interaction (e.g., touchstart)
- * This is critical for mobile browsers that block audio until user gesture.
  */
 export function resumeAudioForMobile(): void {
   ensureAudioContext();
-  // Also try to warm up speech synthesis by creating and immediately canceling
+  // Also try to warm up speech synthesis
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     try {
       const warmup = new SpeechSynthesisUtterance('');
