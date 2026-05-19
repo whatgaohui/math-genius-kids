@@ -536,7 +536,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-gray-800">下载 Android 安装包</p>
-              <p className="text-[11px] text-gray-400 mt-0.5 font-medium">安装到手机，随时随地学习 · 18MB</p>
+              <p className="text-[11px] text-gray-400 mt-0.5 font-medium">安装到手机，随时随地学习 · 24MB</p>
             </div>
             <div className="flex-shrink-0 flex items-center gap-1">
               <div className="flex items-center gap-1 rounded-xl bg-gradient-to-r from-[#6C5CE7] to-[#a29bfe] px-3 py-1.5 shadow-md shadow-[#6C5CE7]/20">
