@@ -519,79 +519,75 @@ export default function SettingsPage() {
           </SettingItem>
         </motion.div>
 
-        {/* Tools & Data */}
+        {/* Tools & Data - compact row layout */}
         <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible"
           className="bg-white rounded-2xl shadow-sm overflow-hidden"
         >
           <div className="px-4 pt-3 pb-1">
             <span className="text-[10px] font-bold text-[#6C5CE7] uppercase tracking-widest">工具</span>
           </div>
-          <a
-            href="/app-debug.apk"
-            download
-            className="flex items-center gap-3 w-full px-4 py-3 text-left transition-colors active:bg-gray-50"
-          >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#6C5CE7]/10">
-              <Smartphone className="w-3.5 h-3.5 text-[#6C5CE7]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-semibold text-gray-800">下载安卓安装包</p>
-            </div>
-            <span className="text-[10px] text-gray-400 mr-1">34MB</span>
-            <Download className="w-3.5 h-3.5 text-[#6C5CE7]" />
-          </a>
-          <div className="mx-4 h-px bg-gray-50" />
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#FDCB6E]/10">
-              <Coins className="w-3.5 h-3.5 text-[#FDCB6E]" />
-            </div>
-            <div className="flex-1">
-              <p className="text-[12px] font-semibold text-gray-800">充值金币</p>
-            </div>
-            <span className="text-[10px] text-gray-400 mr-1">{coins}🪙</span>
-            <Button size="sm" onClick={() => {
-              const cur = usePetStore.getState().coins;
-              if (cur < 100000) usePetStore.getState().addCoins(100000 - cur);
-            }}
-              className="bg-[#667eea] text-white text-[10px] font-bold rounded-lg h-7 px-2.5 border-0 hover:bg-[#5a6fd6]"
-            >充值</Button>
-          </div>
-          <div className="mx-4 h-px bg-gray-50" />
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="flex items-center gap-3 w-full px-4 py-3 text-left transition-colors active:bg-gray-50">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-red-50">
-                  <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[12px] font-semibold text-red-400">清除数据</p>
-                </div>
-                <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-2xl">
-              <AlertDialogHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-red-500" />
-                  </div>
-                  <AlertDialogTitle className="text-left font-bold">确定要清除所有数据吗？</AlertDialogTitle>
-                </div>
-                <AlertDialogDescription className="text-left pl-[52px] text-gray-500">此操作将删除以下数据且无法恢复：</AlertDialogDescription>
-              </AlertDialogHeader>
-              <div className="pl-[52px] space-y-1.5 mb-4">
-                {['学习记录和统计数据', '成就和里程碑', '宠物、金币和家具', '连续学习天数'].map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-sm text-red-500">
-                    <X className="w-3.5 h-3.5 flex-shrink-0" /><span>{item}</span>
-                  </div>
-                ))}
+          <div className="grid grid-cols-3 gap-0 border-t border-gray-50">
+            {/* Download APK */}
+            <a
+              href="/app-debug.apk"
+              download
+              className="flex flex-col items-center justify-center py-3 text-center transition-colors active:bg-gray-50"
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#6C5CE7]/10 mb-1">
+                <Smartphone className="w-3.5 h-3.5 text-[#6C5CE7]" />
               </div>
-              <AlertDialogFooter className="flex-row gap-2">
-                <AlertDialogCancel className="flex-1 rounded-xl h-11 font-semibold">取消</AlertDialogCancel>
-                <AlertDialogAction onClick={handleClearData} className="flex-1 rounded-xl h-11 bg-red-500 text-white hover:bg-red-600 font-semibold">确定清除</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+              <p className="text-[11px] font-semibold text-gray-700">下载APP</p>
+              <p className="text-[9px] text-gray-400">39MB</p>
+            </a>
+            {/* Recharge Coins */}
+            <button
+              onClick={() => {
+                const cur = usePetStore.getState().coins;
+                if (cur < 100000) usePetStore.getState().addCoins(100000 - cur);
+              }}
+              className="flex flex-col items-center justify-center py-3 text-center transition-colors active:bg-gray-50 border-x border-gray-50"
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#FDCB6E]/10 mb-1">
+                <Coins className="w-3.5 h-3.5 text-[#FDCB6E]" />
+              </div>
+              <p className="text-[11px] font-semibold text-gray-700">充值金币</p>
+              <p className="text-[9px] text-gray-400">{coins}🪙</p>
+            </button>
+            {/* Clear Data */}
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button className="flex flex-col items-center justify-center py-3 text-center transition-colors active:bg-gray-50">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-red-50 mb-1">
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                  </div>
+                  <p className="text-[11px] font-semibold text-red-400">清除数据</p>
+                  <p className="text-[9px] text-gray-400">不可恢复</p>
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-2xl">
+                <AlertDialogHeader>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-red-500" />
+                    </div>
+                    <AlertDialogTitle className="text-left font-bold">确定要清除所有数据吗？</AlertDialogTitle>
+                  </div>
+                  <AlertDialogDescription className="text-left pl-[52px] text-gray-500">此操作将删除以下数据且无法恢复：</AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="pl-[52px] space-y-1.5 mb-4">
+                  {['学习记录和统计数据', '成就和里程碑', '宠物、金币和家具', '连续学习天数'].map((item) => (
+                    <div key={item} className="flex items-center gap-2 text-sm text-red-500">
+                      <X className="w-3.5 h-3.5 flex-shrink-0" /><span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <AlertDialogFooter className="flex-row gap-2">
+                  <AlertDialogCancel className="flex-1 rounded-xl h-11 font-semibold">取消</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearData} className="flex-1 rounded-xl h-11 bg-red-500 text-white hover:bg-red-600 font-semibold">确定清除</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </motion.div>
 
         {/* About */}
@@ -604,7 +600,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex-1">
               <h4 className="text-[13px] font-bold text-gray-800">知识小勇士</h4>
-              <p className="text-[10px] text-gray-400 font-medium">v1.1.0 · 数学·语文·英语·宠物·成就</p>
+              <p className="text-[10px] text-gray-400 font-medium">v1.3.0 · 数学·语文·英语·宠物·成就</p>
             </div>
           </div>
         </motion.div>
