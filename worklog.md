@@ -257,3 +257,32 @@ Stage Summary:
 - Large files (>100MB) removed from entire git history
 - .gitignore updated to prevent future commits of build artifacts and temporary files
 - Repository is now clean and pushable to GitHub
+
+---
+Task ID: 9
+Agent: Main Agent
+Task: 修复APK闪退问题 - 改用Capacitor BridgeActivity
+
+Work Log:
+- 用户报告安装最新版APK后APP闪退，无法启动
+- 诊断发现：之前的MainActivity.java使用自定义WebView加载file:///android_asset/public/index.html
+- 问题根因：
+  1. 自定义WebView绕过了Capacitor的BridgeActivity，缺少WebView正确配置
+  2. file:// URL scheme在Android WebView中限制很多，许多Web API不可用
+  3. Capacitor的BridgeActivity会使用https://localhost提供web内容，所有API可用
+- 修复措施：
+  1. 重写MainActivity.java，从继承AppCompatActivity改为继承Capacitor的BridgeActivity
+  2. 添加network_security_config.xml，允许localhost和本地网络连接
+  3. AndroidManifest.xml添加networkSecurityConfig和usesCleartextTraffic属性
+  4. 重新进行Next.js静态导出（临时移除API路由，因为export模式不支持force-dynamic）
+  5. 执行cap sync android同步web资源到Android assets
+  6. 重新编译APK（30.5MB，包含Capacitor BridgeActivity和所有依赖）
+  7. 更新SettingsPage.tsx中APK大小为30MB
+- 推送到GitHub: https://github.com/whatgaohui/math-genius-kids
+
+Stage Summary:
+- APK闪退问题已修复：改用Capacitor BridgeActivity替代自定义WebView
+- 新APK大小30MB（含Capacitor运行时），已复制到public/app-debug.apk
+- 网络安全配置已添加，支持本地https连接
+- 注意：APK中不包含/api/tts服务端API，TTS功能仅依赖Web Speech API
+- 未解决：荣耀/华为设备上TTS可能仍无法使用（无Google TTS引擎），需后续接入Capacitor TTS插件或第三方TTS
