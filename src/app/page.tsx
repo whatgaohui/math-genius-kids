@@ -1,9 +1,10 @@
 'use client'
 
-import { Component } from 'react'
+import { Component, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { useGameStore } from '@/lib/game-store'
+import { resumeAudioForMobile } from '@/lib/tts'
 
 // Lazy load all page components for performance
 const HomePage = dynamic(() => import('@/components/math/HomePage'), { ssr: false })
@@ -153,6 +154,27 @@ function PageRouter() {
   const currentView = useGameStore((s) => s.currentView)
 
   const PageComponent = viewComponents[currentView] || HomePage
+
+  // Unlock AudioContext on first touch/click for mobile browsers
+  // This is critical for TTS to work on Honor/Huawei and other Android devices
+  useEffect(() => {
+    let unlocked = false;
+    const unlock = () => {
+      if (!unlocked) {
+        unlocked = true;
+        resumeAudioForMobile();
+      }
+    };
+    // Listen for first user interaction to unlock audio
+    document.addEventListener('touchstart', unlock, { once: true, passive: true });
+    document.addEventListener('touchend', unlock, { once: true, passive: true });
+    document.addEventListener('click', unlock, { once: true, passive: true });
+    return () => {
+      document.removeEventListener('touchstart', unlock);
+      document.removeEventListener('touchend', unlock);
+      document.removeEventListener('click', unlock);
+    };
+  }, []);
 
   return (
     <motion.div
