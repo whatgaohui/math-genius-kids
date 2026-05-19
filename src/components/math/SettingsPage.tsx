@@ -21,7 +21,7 @@ import {
 import {
   User, Volume2, VolumeX, Trash2, Check, ChevronRight,
   Star, Zap, Trophy, Coins, Flame, Sparkles, Palette, Shield, X,
-  Settings, GraduationCap, FileText, Database, Crown, Moon, Bell,
+  Settings, GraduationCap, FileText, Database,
   Download, Smartphone,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
@@ -29,7 +29,7 @@ import { useOnboardingStore } from '@/lib/onboarding-store';
 import { getGradeLabel, GRADE_LABELS, GRADE_EMOJIS, type Grade, type Semester } from '@/lib/curriculum-config';
 import { usePetStore, PET_CONFIGS, getPetEmoji } from '@/lib/pet-store';
 import { getXPForNextLevel } from '@/lib/math-utils';
-import { getCurrentRank, getNextRank } from '@/lib/rank-system';
+import { getCurrentRank } from '@/lib/rank-system';
 import BottomNav from './BottomNav';
 
 // ─── Animations ───
@@ -290,7 +290,7 @@ export default function SettingsPage() {
   const xpInfo = useMemo(() => getXPForNextLevel(totalXP), [totalXP]);
   const petConfig = petType ? PET_CONFIGS.find((p) => p.id === petType) : null;
   const currentRank = getCurrentRank(playerLevel);
-  const nextRank = getNextRank(playerLevel);
+
 
   const handleClearData = () => {
     localStorage.removeItem('math-genius-game-store');
@@ -519,124 +519,93 @@ export default function SettingsPage() {
           </SettingItem>
         </motion.div>
 
-        {/* App Download */}
+        {/* Tools & Data */}
         <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible"
           className="bg-white rounded-2xl shadow-sm overflow-hidden"
         >
           <div className="px-4 pt-3 pb-1">
-            <span className="text-[10px] font-bold text-[#6C5CE7] uppercase tracking-widest">应用下载</span>
+            <span className="text-[10px] font-bold text-[#6C5CE7] uppercase tracking-widest">工具</span>
           </div>
           <a
             href="/app-debug.apk"
             download
-            className="flex items-center gap-3 w-full px-4 py-3.5 text-left transition-colors active:bg-gray-50"
+            className="flex items-center gap-3 w-full px-4 py-3 text-left transition-colors active:bg-gray-50"
           >
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#6C5CE7]/10">
-              <Smartphone className="w-4 h-4 text-[#6C5CE7]" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#6C5CE7]/10">
+              <Smartphone className="w-3.5 h-3.5 text-[#6C5CE7]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-semibold text-gray-800">下载 Android 安装包</p>
-              <p className="text-[11px] text-gray-400 mt-0.5 font-medium">安装到手机，随时随地学习 · 34MB</p>
+              <p className="text-[12px] font-semibold text-gray-800">下载安卓安装包</p>
             </div>
-            <div className="flex-shrink-0 flex items-center gap-1">
-              <div className="flex items-center gap-1 rounded-xl bg-gradient-to-r from-[#6C5CE7] to-[#a29bfe] px-3 py-1.5 shadow-md shadow-[#6C5CE7]/20">
-                <Download className="w-3.5 h-3.5 text-white" />
-                <span className="text-[11px] font-bold text-white">APK</span>
-              </div>
-            </div>
+            <span className="text-[10px] text-gray-400 mr-1">34MB</span>
+            <Download className="w-3.5 h-3.5 text-[#6C5CE7]" />
           </a>
-        </motion.div>
-
-        {/* Testing tools */}
-        <motion.div custom={7} variants={fadeUp} initial="hidden" animate="visible"
-          className="bg-white rounded-2xl shadow-sm overflow-hidden"
-        >
-          <div className="px-4 pt-3 pb-1">
-            <span className="text-[10px] font-bold text-[#FDCB6E] uppercase tracking-widest">测试工具</span>
-          </div>
-          <div className="flex items-center gap-3 px-4 py-3.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-[#FDCB6E]/10">
-              <Coins className="w-4 h-4 text-[#FDCB6E]" />
+          <div className="mx-4 h-px bg-gray-50" />
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#FDCB6E]/10">
+              <Coins className="w-3.5 h-3.5 text-[#FDCB6E]" />
             </div>
             <div className="flex-1">
-              <p className="text-[13px] font-semibold text-gray-800">充值金币</p>
-              <p className="text-[11px] text-gray-400 mt-0.5 font-medium">当前: {coins} 🪙 · 充值到 100,000</p>
+              <p className="text-[12px] font-semibold text-gray-800">充值金币</p>
             </div>
+            <span className="text-[10px] text-gray-400 mr-1">{coins}🪙</span>
             <Button size="sm" onClick={() => {
               const cur = usePetStore.getState().coins;
               if (cur < 100000) usePetStore.getState().addCoins(100000 - cur);
             }}
-              className="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white text-[11px] font-bold shadow-md shadow-[#667eea]/20 rounded-xl h-9 px-3 border-0"
-            >💰 充值</Button>
+              className="bg-[#667eea] text-white text-[10px] font-bold rounded-lg h-7 px-2.5 border-0 hover:bg-[#5a6fd6]"
+            >充值</Button>
           </div>
-        </motion.div>
-
-        {/* Danger Zone */}
-        <motion.div custom={8} variants={fadeUp} initial="hidden" animate="visible"
-          className="bg-white rounded-2xl shadow-sm overflow-hidden"
-        >
-          <div className="px-4 pt-3 pb-1">
-            <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest">数据管理</span>
-          </div>
-          <div className="px-4 py-3">
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" className="w-full h-auto p-0 flex items-center gap-3 hover:bg-transparent text-left">
-                  <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-red-50">
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-[13px] font-semibold text-red-500">清除所有数据</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5 font-medium">删除学习记录、成就、宠物数据等</p>
-                  </div>
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-2xl">
-                <AlertDialogHeader>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-red-500" />
-                    </div>
-                    <AlertDialogTitle className="text-left font-bold">确定要清除所有数据吗？</AlertDialogTitle>
-                  </div>
-                  <AlertDialogDescription className="text-left pl-[52px] text-gray-500">此操作将删除以下数据且无法恢复：</AlertDialogDescription>
-                </AlertDialogHeader>
-                <div className="pl-[52px] space-y-1.5 mb-4">
-                  {['学习记录和统计数据', '成就和里程碑', '宠物、金币和家具', '连续学习天数'].map((item) => (
-                    <div key={item} className="flex items-center gap-2 text-sm text-red-500">
-                      <X className="w-3.5 h-3.5 flex-shrink-0" /><span>{item}</span>
-                    </div>
-                  ))}
+          <div className="mx-4 h-px bg-gray-50" />
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button className="flex items-center gap-3 w-full px-4 py-3 text-left transition-colors active:bg-gray-50">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-red-50">
+                  <Trash2 className="w-3.5 h-3.5 text-red-400" />
                 </div>
-                <AlertDialogFooter className="flex-row gap-2">
-                  <AlertDialogCancel className="flex-1 rounded-xl h-11 font-semibold">取消</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleClearData} className="flex-1 rounded-xl h-11 bg-red-500 text-white hover:bg-red-600 font-semibold">确定清除</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                <div className="flex-1">
+                  <p className="text-[12px] font-semibold text-red-400">清除数据</p>
+                </div>
+                <ChevronRight className="w-3.5 h-3.5 text-gray-300" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-2xl">
+              <AlertDialogHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-red-500" />
+                  </div>
+                  <AlertDialogTitle className="text-left font-bold">确定要清除所有数据吗？</AlertDialogTitle>
+                </div>
+                <AlertDialogDescription className="text-left pl-[52px] text-gray-500">此操作将删除以下数据且无法恢复：</AlertDialogDescription>
+              </AlertDialogHeader>
+              <div className="pl-[52px] space-y-1.5 mb-4">
+                {['学习记录和统计数据', '成就和里程碑', '宠物、金币和家具', '连续学习天数'].map((item) => (
+                  <div key={item} className="flex items-center gap-2 text-sm text-red-500">
+                    <X className="w-3.5 h-3.5 flex-shrink-0" /><span>{item}</span>
+                  </div>
+                ))}
+              </div>
+              <AlertDialogFooter className="flex-row gap-2">
+                <AlertDialogCancel className="flex-1 rounded-xl h-11 font-semibold">取消</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearData} className="flex-1 rounded-xl h-11 bg-red-500 text-white hover:bg-red-600 font-semibold">确定清除</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </motion.div>
 
         {/* About */}
         <motion.div custom={9} variants={fadeUp} initial="hidden" animate="visible"
-          className="bg-white rounded-2xl shadow-sm p-5"
+          className="bg-white rounded-2xl shadow-sm px-4 py-3"
         >
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center text-2xl shadow-lg shadow-[#667eea]/20">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#667eea] to-[#764ba2] flex items-center justify-center text-lg shadow-md shadow-[#667eea]/20">
               ⚔️
             </div>
-            <div>
-              <h4 className="text-base font-bold text-gray-800">知识小勇士</h4>
-              <p className="text-[11px] text-gray-400 font-medium">v1.1.0</p>
+            <div className="flex-1">
+              <h4 className="text-[13px] font-bold text-gray-800">知识小勇士</h4>
+              <p className="text-[10px] text-gray-400 font-medium">v1.1.0 · 数学·语文·英语·宠物·成就</p>
             </div>
-          </div>
-          <p className="text-[12px] text-gray-400 leading-relaxed font-medium">
-            欢迎来到知识小勇士！这是一个集数学、语文、英语于一体的学习乐园，还有可爱的宠物伙伴陪你一起成长！
-          </p>
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {['🧮 数学', '📖 语文', '🔤 英语', '🐾 宠物', '🏆 成就'].map((tag) => (
-              <span key={tag} className="rounded-lg bg-[#F7F8FC] px-2.5 py-1 text-[10px] font-semibold text-gray-500">{tag}</span>
-            ))}
           </div>
         </motion.div>
 
