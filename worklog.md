@@ -403,4 +403,47 @@ Stage Summary:
 - 构建配置优化：降低targetSdk、统一Kotlin版本、移除splash依赖
 - 设置页面精简：工具区3列紧凑布局
 - 新APK 39MB，v1.3，已推送到GitHub
+
+---
+Task ID: 13
+Agent: Main Agent
+Task: 端到端测试验收 - 重点排查APK闪退和安卓TTS无声问题
+
+Work Log:
+- 使用agent-browser对Web版进行全面测试：
+  - 首页、设置、统计、成就、宠物、数学、英语等页面全部正常
+  - 英语听力练习+TTS后端回退正常工作
+  - JavaScript零错误
+- **发现APK闪退的真正根因：file://协议无法解析Next.js绝对路径**
+  - Next.js静态导出使用绝对路径：`/_next/static/chunks/xxx.js`
+  - 在`file:///android_asset/public/index.html`下，`/_next/...`解析为`file:///_next/...`
+  - 但实际文件在`file:///android_asset/public/_next/...`
+  - 结果：**所有JS/CSS/字体文件全部404 → 空白页 → 用户以为闪退**
+  - 这解释了为什么之前修了SplashScreen主题仍然"闪退"
+- 修复方案：**使用WebViewAssetLoader代替file://协议**
+  - WebViewAssetLoader通过`https://appassets.androidplatform.net/`提供本地assets
+  - 绝对路径`/_next/...`现在正确解析为`https://appassets.androidplatform.net/_next/...`
+  - `shouldInterceptRequest`拦截所有请求并路由到assetLoader
+  - 自定义`PublicAssetsPathHandler`将`/`映射到`assets/public/`
+- 其他修复：
+  - 清理Capacitor残留文件（capacitor.build.gradle, capacitor.settings.gradle等）
+  - 从静态导出中移除app-debug.apk（节省~35MB空间）
+  - APK从39MB缩减到5.6MB
+  - 添加metadataBase修复og:image/twitter:image的localhost URL
+  - 更新settings页面APK大小显示
+  - Polyfill不再覆盖已存在的_ttsCallbacks（防止与tts.ts冲突）
+- TTS链路分析：
+  - APK中TTS流程：hasNativeBridge() → speakWithNativeBridge() → AndroidTTS.speak() → 原生TextToSpeech
+  - 如果TTS未就绪：hasNativeBridge()返回false → speakWithWebSpeech（通过polyfill）→ AndroidTTS.speak() → "TTS not ready" → 回退到speakWithBackend → 静默失败
+  - 这是一个时序问题：TTS初始化需要1-2秒，如果用户在这之前点击播放，会无声音
+  - 解决方案：polyfill现在也走AndroidTTS路径，即使ttsReady=false也会立即通知JS
+- agent-browser测试结果：Web版所有功能正常
+- 推送到GitHub
+
+Stage Summary:
+- **真正的闪退根因**：file://协议无法解析绝对路径 → WebViewAssetLoader修复
+- APK从39MB缩减到5.6MB（移除嵌套APK和Capacitor残留）
+- Web版功能全部正常（agent-browser验证）
+- TTS链路正确但有时序问题（首次点击可能无声音）
+- 待验证：新APK在荣耀Magic 8 Pro上是否正常加载和播放声音
 - 待验证：荣耀Magic 8 Pro上是否仍闪退
