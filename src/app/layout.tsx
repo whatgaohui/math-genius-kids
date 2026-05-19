@@ -23,6 +23,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://appassets.androidplatform.net'),
   title: "知识小勇士 - 闯关答题，快乐成长",
   description: "专为小朋友设计的趣味学习应用，包含数学、语文、英语三大科目练习。养宠物、赚金币、解锁成就，让学习变得更有趣！",
   keywords: ["知识小勇士", "儿童学习", "数学练习", "语文学习", "英语学习", "闯关答题", "宠物养成"],

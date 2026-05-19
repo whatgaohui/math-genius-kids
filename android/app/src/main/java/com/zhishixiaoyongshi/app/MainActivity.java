@@ -4,19 +4,19 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.WindowManager;
 import android.webkit.ConsoleMessage;
 import android.webkit.JavascriptInterface;
+import android.webkit.MimeTypeMap;
 import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -26,7 +26,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.webkit.WebViewAssetLoader;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -34,17 +37,19 @@ import java.util.Locale;
 /**
  * Main Activity: WebView wrapper with native TTS bridge.
  *
- * Key design decisions:
- * - Uses plain WebView (not Capacitor) for minimal complexity
+ * Architecture:
+ * - Uses WebViewAssetLoader to serve local assets via HTTPS
+ *   (file:// protocol can't resolve Next.js absolute paths like /_next/...)
  * - Native TTS via addJavascriptInterface (WebView doesn't support speechSynthesis)
  * - mediaPlaybackRequiresUserGesture=false for sound effects
- * - No splash screen dependency (was causing crashes on Android 12+)
  */
 public class MainActivity extends AppCompatActivity implements TextToSpeech.OnInitListener {
 
     private static final String TAG = "知识小勇士";
+    private static final String ASSET_BASE_URL = "https://appassets.androidplatform.net";
 
     private WebView webView;
+    private WebViewAssetLoader assetLoader;
     private TextToSpeech tts;
     private boolean ttsReady = false;
 
@@ -72,6 +77,16 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             Log.e(TAG, "Failed to init TTS", e);
         }
 
+        // Set up WebViewAssetLoader to serve assets through HTTPS
+        // This is CRITICAL: file:// protocol cannot resolve Next.js absolute paths like /_next/...
+        // WebViewAssetLoader serves assets through https://appassets.androidplatform.net/
+        // so absolute paths resolve correctly
+        assetLoader = new WebViewAssetLoader.Builder()
+                .setDomain("appassets.androidplatform.net")
+                .setHttpAllowed(true)
+                .addPathHandler("/", new PublicAssetsPathHandler())
+                .build();
+
         // Create WebView
         FrameLayout layout = new FrameLayout(this);
         webView = new WebView(this);
@@ -83,18 +98,58 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         configureWebView();
     }
 
-    private void setupImmersiveMode() {
-        // Make the app draw behind system bars for full-screen experience
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+    /**
+     * Custom path handler that serves files from assets/public/ directory.
+     * This maps the root path "/" to assets/public/ so that:
+     *   https://appassets.androidplatform.net/_next/static/chunks/xxx.js
+     *   → assets/public/_next/static/chunks/xxx.js
+     */
+    private class PublicAssetsPathHandler implements WebViewAssetLoader.PathHandler {
+        @Override
+        public WebResourceResponse handle(String path) {
+            try {
+                InputStream is = getAssets().open("public/" + path);
+                String mimeType = guessMimeType(path);
+                return new WebResourceResponse(mimeType, null, is);
+            } catch (IOException e) {
+                return null; // Let WebView handle it as 404
+            }
+        }
+    }
 
-        // Hide status bar and navigation bar
+    private String guessMimeType(String path) {
+        String ext = MimeTypeMap.getFileExtensionFromUrl(path);
+        if (ext == null || ext.isEmpty()) {
+            // Try extracting extension manually
+            int dot = path.lastIndexOf('.');
+            if (dot >= 0 && dot < path.length() - 1) {
+                ext = path.substring(dot + 1);
+            }
+        }
+        if (ext != null) {
+            String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+            if (mime != null) return mime;
+        }
+        // Fallback for common types
+        if (path.endsWith(".js")) return "application/javascript";
+        if (path.endsWith(".css")) return "text/css";
+        if (path.endsWith(".html")) return "text/html";
+        if (path.endsWith(".json")) return "application/json";
+        if (path.endsWith(".woff2")) return "font/woff2";
+        if (path.endsWith(".woff")) return "font/woff";
+        if (path.endsWith(".png")) return "image/png";
+        if (path.endsWith(".svg")) return "image/svg+xml";
+        if (path.endsWith(".ico")) return "image/x-icon";
+        return "application/octet-stream";
+    }
+
+    private void setupImmersiveMode() {
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         WindowInsetsControllerCompat controller = WindowCompat.getInsetsController(getWindow(), getWindow().getDecorView());
         if (controller != null) {
             controller.hide(WindowInsetsCompat.Type.systemBars());
             controller.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
         }
-
-        // Keep screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
@@ -107,22 +162,18 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
 
         // ── Media & Audio ───────────────────────────────────
-        // CRITICAL: Allow media autoplay without user gesture
         settings.setMediaPlaybackRequiresUserGesture(false);
 
         // ── DOM Storage ─────────────────────────────────────
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
 
-        // ── File Access (for file:// URLs) ──────────────────
+        // ── File Access ─────────────────────────────────────
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
-        settings.setAllowFileAccessFromFileURLs(true);
-        settings.setAllowUniversalAccessFromFileURLs(true);
 
         // ── Caching ─────────────────────────────────────────
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setDomStorageEnabled(true);
 
         // ── Display ─────────────────────────────────────────
         settings.setUseWideViewPort(true);
@@ -136,6 +187,17 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
         // ── WebViewClient ───────────────────────────────────
         webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                // Route all requests through WebViewAssetLoader
+                // This serves local assets through HTTPS, enabling absolute path resolution
+                WebResourceResponse response = assetLoader.shouldInterceptRequest(request.getUrl());
+                if (response != null) {
+                    return response;
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
+
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
@@ -153,10 +215,11 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String url = request.getUrl().toString();
-                // Only load local files in WebView; open everything else in browser
-                if (url.startsWith("file://") || url.contains("androidplatform.net")) {
+                // Load local assets and androidplatform.net URLs in WebView
+                if (url.startsWith("file://") || url.contains("appassets.androidplatform.net")) {
                     return false;
                 }
+                // Open external URLs in browser
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
                 } catch (Exception e) {
@@ -193,8 +256,10 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             }
         });
 
-        // ── Load web app ────────────────────────────────────
-        String url = "file:///android_asset/public/index.html";
+        // ── Load web app via WebViewAssetLoader (NOT file://) ──
+        // This enables absolute path resolution: /_next/static/chunks/xxx.js
+        // resolves correctly through the HTTPS domain
+        String url = ASSET_BASE_URL + "/index.html";
         Log.i(TAG, "Loading: " + url);
         webView.loadUrl(url);
     }
@@ -212,7 +277,6 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 tts.setLanguage(Locale.US);
             }
 
-            // Log available engines
             try {
                 List<TextToSpeech.EngineInfo> engines = tts.getEngines();
                 for (TextToSpeech.EngineInfo engine : engines) {
@@ -222,7 +286,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                 Log.w(TAG, "Cannot list TTS engines", e);
             }
 
-            // Notify WebView
+            // Notify WebView that TTS is ready
             if (webView != null) {
                 webView.post(() -> {
                     try {
@@ -335,7 +399,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
                     }
                 });
 
-                // Speak
+                // Speak using the deprecated HashMap API (works on all API levels)
                 HashMap<String, String> params = new HashMap<>();
                 params.put(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId);
                 int speakResult = tts.speak(text, TextToSpeech.QUEUE_FLUSH, params);
@@ -381,7 +445,7 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
 
     private void notifyJs(int callbackId, String type, String msg) {
         if (webView == null) return;
-        String escapedMsg = (msg != null) ? msg.replace("'", "\\'") : "";
+        String escapedMsg = (msg != null) ? msg.replace("'", "\\'").replace("\n", "\\n") : "";
         webView.post(() -> {
             try {
                 webView.evaluateJavascript(
@@ -402,8 +466,8 @@ public class MainActivity extends AppCompatActivity implements TextToSpeech.OnIn
             "(function(){" +
             "if(window._speechPolyfillInstalled)return;" +
             "window._speechPolyfillInstalled=true;" +
-            "window._ttsCallbacks={};" +
-            "window._ttsCallbackCounter=0;" +
+            "if(!window._ttsCallbacks)window._ttsCallbacks={};" +
+            "if(!window._ttsCallbackCounter)window._ttsCallbackCounter=0;" +
             "window._nativeTTSReady=false;" +
             "var zv={voiceURI:'Android-TTS-zh-CN',name:'Android Chinese',lang:'zh-CN',localService:true,default:true};" +
             "var ev={voiceURI:'Android-TTS-en-US',name:'Android English',lang:'en-US',localService:true,default:false};" +

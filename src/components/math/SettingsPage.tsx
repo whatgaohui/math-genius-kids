@@ -537,7 +537,7 @@ export default function SettingsPage() {
                 <Smartphone className="w-3.5 h-3.5 text-[#6C5CE7]" />
               </div>
               <p className="text-[11px] font-semibold text-gray-700">下载APP</p>
-              <p className="text-[9px] text-gray-400">39MB</p>
+              <p className="text-[9px] text-gray-400">6MB</p>
             </a>
             {/* Recharge Coins */}
             <button

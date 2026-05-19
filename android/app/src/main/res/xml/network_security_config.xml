@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- WebViewAssetLoader serves local assets through this domain -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">appassets.androidplatform.net</domain>
+    </domain-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">localhost</domain>
         <domain includeSubdomains="true">10.0.2.2</domain>
