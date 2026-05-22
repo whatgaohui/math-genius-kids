@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,19 +10,21 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  Delete,
   Flame,
   Gift,
   Sparkles,
   Star,
   Target,
   Trophy,
+  XCircle,
   Zap,
 } from 'lucide-react';
 import { useGameStore } from '@/lib/game-store';
 import { addError } from '@/lib/error-book';
 import { generateQuestions, calculateStars, calculateXP } from '@/lib/math-utils';
 import type { MathQuestion } from '@/lib/math-utils';
-import { playClickSound, playCorrectSound, playWrongSound } from '@/lib/sound';
+import { playClickSound, playCorrectSound, playWrongSound, resumeAudioContext } from '@/lib/sound';
 import { usePetStore } from '@/lib/pet-store';
 import BottomNav from './BottomNav';
 
@@ -94,25 +96,15 @@ function generateDailyQuestions(): MathQuestion[] {
   );
 }
 
-// ─── Animation Variants ─────────────────────────────────────────────────────
+// ─── Confetti Particles ─────────────────────────────────────────────────────
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.97 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { type: 'spring', stiffness: 300, damping: 24 },
-  },
-};
+const CONFETTI_PARTICLES = Array.from({ length: 12 }, (_, i) => ({
+  id: i,
+  x: Math.random() * 100,
+  delay: Math.random() * 0.2,
+  color: ['#f59e0b', '#f97316', '#10b981', '#3b82f6', '#8b5cf6'][i % 5],
+  size: 6 + Math.random() * 6,
+}));
 
 // ─── Component ──────────────────────────────────────────────────────────────
 
@@ -124,11 +116,34 @@ export default function DailyChallengePage() {
 
   const [challengeState, setChallengeState] = useState<DailyChallengeState | null>(null);
   const [showResult, setShowResult] = useState(false);
-  const [userInput, setUserInput] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [showFeedback, setShowFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const confettiTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const config = useMemo(() => getDailyChallengeConfig(), []);
   const today = useMemo(() => new Date().toISOString().split('T')[0], []);
   const isCompleted = dailyChallengeCompletedDates.includes(today);
+
+  // Resume audio context on first interaction
+  useEffect(() => {
+    const handler = () => resumeAudioContext();
+    document.addEventListener('touchstart', handler, { once: true });
+    document.addEventListener('click', handler, { once: true });
+    return () => {
+      document.removeEventListener('touchstart', handler);
+      document.removeEventListener('click', handler);
+    };
+  }, []);
+
+  // Cleanup timers
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
+    };
+  }, []);
 
   const startChallenge = useCallback(() => {
     const questions = generateDailyQuestions();
@@ -145,23 +160,21 @@ export default function DailyChallengePage() {
       completed: false,
     });
     setShowResult(false);
-    setUserInput('');
+    setInputValue('');
     playClickSound();
   }, []);
 
-  const handleSubmitAnswer = useCallback(() => {
-    if (!challengeState || !userInput.trim()) return;
+  const handleSubmitAnswer = useCallback((answer: number) => {
+    if (!challengeState || showFeedback) return;
 
     const currentQ = challengeState.questions[challengeState.currentIndex];
-    const answer = Number(userInput.trim());
-    const isCorrect = answer === Number(currentQ.correctAnswer);
+    const isCorrect = Number(answer) === Number(currentQ.correctAnswer);
     const timeMs = Date.now() - challengeState.questionStartTime;
 
     if (isCorrect) {
       playCorrectSound();
     } else {
       playWrongSound();
-      // Track wrong answer in error book
       addError({
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
         subject: 'math',
@@ -178,77 +191,114 @@ export default function DailyChallengePage() {
       });
     }
 
-    const newCombo = isCorrect ? challengeState.combo + 1 : 0;
-    const newAnswers = [...challengeState.answers, { questionId: currentQ.id, answer, correct: isCorrect, timeMs }];
-
-    const newCorrect = challengeState.correct + (isCorrect ? 1 : 0);
-    const newWrong = challengeState.wrong + (isCorrect ? 0 : 1);
-    const isLast = challengeState.currentIndex >= challengeState.questions.length - 1;
-
-    if (isLast) {
-      // Challenge complete
-      const finalMaxCombo = Math.max(challengeState.maxCombo, newCombo);
-      const finalTimeMs = Date.now() - challengeState.startTime;
-      setChallengeState({
-        ...challengeState,
-        correct: newCorrect,
-        wrong: newWrong,
-        combo: newCombo,
-        maxCombo: finalMaxCombo,
-        answers: newAnswers,
-        completed: true,
-      });
-      setShowResult(true);
-
-      // Properly record the result using completeSubjectSession
-      const gameState = useGameStore.getState();
-      const isFirstCompletion = !gameState.dailyChallengeCompletedDates.includes(
-        new Date().toISOString().split('T')[0]
-      );
-
-      useGameStore.getState().completeSubjectSession({
-        correct: newCorrect,
-        total: challengeState.questions.length,
-        timeMs: finalTimeMs,
-        maxCombo: finalMaxCombo,
-        subject: 'math',
-        mode: 'daily',
-        difficulty: config.difficulty,
-      });
-
-      // Apply first-completion bonus (1.5x coins)
-      if (isFirstCompletion) {
-        const petStore = usePetStore.getState();
-        const resultState = useGameStore.getState();
-        const earnedCoins = resultState.lastResult?.coinsEarned ?? 0;
-        const bonusCoins = Math.floor(earnedCoins * 0.5);
-        if (bonusCoins > 0) {
-          petStore.addCoins(bonusCoins);
-        }
-      }
-
-      // Track daily challenge completion date
-      const todayStr = new Date().toISOString().split('T')[0];
-      const state = useGameStore.getState();
-      if (!state.dailyChallengeCompletedDates.includes(todayStr)) {
-        useGameStore.setState({
-          dailyChallengeCompletedDates: [...state.dailyChallengeCompletedDates, todayStr],
-        });
-      }
-    } else {
-      setChallengeState({
-        ...challengeState,
-        currentIndex: challengeState.currentIndex + 1,
-        correct: newCorrect,
-        wrong: newWrong,
-        combo: newCombo,
-        maxCombo: Math.max(challengeState.maxCombo, newCombo),
-        answers: newAnswers,
-        questionStartTime: Date.now(),
-      });
-      setUserInput('');
+    // Show feedback animation
+    setShowFeedback(isCorrect ? 'correct' : 'wrong');
+    if (isCorrect) {
+      setShowConfetti(true);
+      if (confettiTimerRef.current) clearTimeout(confettiTimerRef.current);
+      confettiTimerRef.current = setTimeout(() => setShowConfetti(false), 1000);
     }
-  }, [challengeState, userInput, config]);
+
+    feedbackTimerRef.current = setTimeout(() => {
+      setShowFeedback(null);
+
+      const newCombo = isCorrect ? challengeState.combo + 1 : 0;
+      const newAnswers = [...challengeState.answers, { questionId: currentQ.id, answer, correct: isCorrect, timeMs }];
+      const newCorrect = challengeState.correct + (isCorrect ? 1 : 0);
+      const newWrong = challengeState.wrong + (isCorrect ? 0 : 1);
+      const isLast = challengeState.currentIndex >= challengeState.questions.length - 1;
+
+      if (isLast) {
+        const finalMaxCombo = Math.max(challengeState.maxCombo, newCombo);
+        const finalTimeMs = Date.now() - challengeState.startTime;
+        setChallengeState({
+          ...challengeState,
+          correct: newCorrect,
+          wrong: newWrong,
+          combo: newCombo,
+          maxCombo: finalMaxCombo,
+          answers: newAnswers,
+          completed: true,
+        });
+        setShowResult(true);
+
+        const gameState = useGameStore.getState();
+        const isFirstCompletion = !gameState.dailyChallengeCompletedDates.includes(
+          new Date().toISOString().split('T')[0]
+        );
+
+        useGameStore.getState().completeSubjectSession({
+          correct: newCorrect,
+          total: challengeState.questions.length,
+          timeMs: finalTimeMs,
+          maxCombo: finalMaxCombo,
+          subject: 'math',
+          mode: 'daily',
+          difficulty: config.difficulty,
+        });
+
+        if (isFirstCompletion) {
+          const petStore = usePetStore.getState();
+          const resultState = useGameStore.getState();
+          const earnedCoins = resultState.lastResult?.coinsEarned ?? 0;
+          const bonusCoins = Math.floor(earnedCoins * 0.5);
+          if (bonusCoins > 0) {
+            petStore.addCoins(bonusCoins);
+          }
+        }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const state = useGameStore.getState();
+        if (!state.dailyChallengeCompletedDates.includes(todayStr)) {
+          useGameStore.setState({
+            dailyChallengeCompletedDates: [...state.dailyChallengeCompletedDates, todayStr],
+          });
+        }
+      } else {
+        setChallengeState({
+          ...challengeState,
+          currentIndex: challengeState.currentIndex + 1,
+          correct: newCorrect,
+          wrong: newWrong,
+          combo: newCombo,
+          maxCombo: Math.max(challengeState.maxCombo, newCombo),
+          answers: newAnswers,
+          questionStartTime: Date.now(),
+        });
+        setInputValue('');
+      }
+    }, isCorrect ? 400 : 800);
+  }, [challengeState, showFeedback, config]);
+
+  // ── Number pad handlers ──
+  const handleNumPress = useCallback((num: string) => {
+    if (showFeedback || !challengeState) return;
+    setInputValue((prev) => {
+      const newVal = prev + num;
+      if (newVal.length > 6) return prev;
+      return newVal;
+    });
+  }, [challengeState, showFeedback]);
+
+  const handleDelete = useCallback(() => {
+    if (showFeedback) return;
+    setInputValue((prev) => prev.slice(0, -1));
+  }, [showFeedback]);
+
+  const handleToggleNegative = useCallback(() => {
+    if (showFeedback || !challengeState) return;
+    setInputValue((prev) => {
+      if (prev.startsWith('-')) return prev.slice(1);
+      return '-' + prev;
+    });
+  }, [challengeState, showFeedback]);
+
+  const handleNumericSubmit = useCallback(() => {
+    if (!inputValue) return;
+    const num = parseInt(inputValue, 10);
+    if (isNaN(num)) return;
+    handleSubmitAnswer(num);
+  }, [inputValue, handleSubmitAnswer]);
 
   // ── Result View ──
   if (showResult && challengeState) {
@@ -351,117 +401,229 @@ export default function DailyChallengePage() {
     );
   }
 
-  // ── Playing Mode ──
+  // ── Playing Mode ── (with number pad, no BottomNav to maximize space)
   if (challengeState && !challengeState.completed) {
     const currentQ = challengeState.questions[challengeState.currentIndex];
     const progress = ((challengeState.currentIndex + 1) / challengeState.questions.length) * 100;
+    const currentCombo = challengeState.combo;
+
+    // Get display expression
+    const getDisplay = (q: MathQuestion) => {
+      if (q.expression) {
+        if (q.expression.includes('=') || q.expression.includes('？')) return q.expression;
+        return `${q.expression} = ?`;
+      }
+      return `${q.num1} ${q.displayOp} ${q.num2} = ?`;
+    };
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50/30 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white flex flex-col relative overflow-x-hidden max-w-lg mx-auto">
+        {/* Confetti */}
+        <AnimatePresence>
+          {showConfetti && (
+            <div className="fixed inset-0 pointer-events-none z-50">
+              {CONFETTI_PARTICLES.map((p) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 1, top: '20%', left: `${p.x}%`, scale: 0 }}
+                  animate={{ opacity: 0, top: '110%', left: `${p.x + (Math.random() - 0.5) * 30}%`, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, delay: p.delay }}
+                  className="absolute rounded-sm"
+                  style={{ width: p.size, height: p.size, backgroundColor: p.color }}
+                />
+              ))}
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* Header */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 pt-3 pb-4 text-white safe-top">
-          <div className="mx-auto max-w-md">
-            <div className="flex items-center justify-between mb-2">
-              <button
-                onClick={() => { setChallengeState(null); playClickSound(); }}
-                className="flex items-center gap-1 text-white/80 hover:text-white text-sm active:scale-95 min-h-[44px]"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                退出
-              </button>
-              <div className="flex items-center gap-2">
-                {challengeState.combo > 1 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="text-xs font-bold bg-orange-400/80 rounded-full px-2 py-0.5"
-                  >
-                    🔥 {challengeState.combo}连击
-                  </motion.span>
-                )}
-                <span className="text-sm font-medium text-white/80">
-                  {challengeState.currentIndex + 1}/{challengeState.questions.length}
-                </span>
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 px-4 pt-3 py-3 text-white safe-top flex-shrink-0">
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={() => {
+                if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+                setChallengeState(null);
+                playClickSound();
+              }}
+              className="flex items-center gap-1 text-white/80 hover:text-white text-sm active:scale-95 min-h-[44px]"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              退出
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="text-sm font-bold">{challengeState.correct}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <XIcon className="w-4 h-4" />
+                <span className="text-sm font-bold">{challengeState.wrong}</span>
               </div>
             </div>
-            <div className="h-2 rounded-full bg-white/20 overflow-hidden">
-              <motion.div
-                className="h-full rounded-full bg-white"
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.3 }}
-              />
+            <div className="flex items-center gap-2">
+              {currentCombo > 1 && (
+                <motion.span
+                  key={currentCombo}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="text-xs font-bold bg-orange-400/80 rounded-full px-2 py-0.5"
+                >
+                  🔥 {currentCombo}
+                </motion.span>
+              )}
+              <span className="text-sm font-medium text-white/80">
+                {challengeState.currentIndex + 1}/{challengeState.questions.length}
+              </span>
             </div>
+          </div>
+          <div className="h-2 rounded-full bg-white/20 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-white"
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3 }}
+            />
           </div>
         </div>
 
-        <div className="mx-auto max-w-md px-4 pb-24 pt-6">
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-4 max-w-lg mx-auto w-full">
+          {/* Combo Badge */}
+          <AnimatePresence>
+            {currentCombo >= 3 && (
+              <motion.div
+                key={currentCombo}
+                initial={{ scale: 0, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0, opacity: 0, y: -20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                className="mb-3"
+              >
+                <Badge className="bg-gradient-to-r from-orange-400 to-red-500 text-white border-none px-3 py-1.5 text-sm gap-1 shadow-lg">
+                  <Flame className="w-4 h-4" />
+                  {currentCombo} 连击
+                </Badge>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Question Card */}
           <motion.div
             key={challengeState.currentIndex}
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+            className="w-full mb-4"
           >
-            <Card className="overflow-hidden border-0 shadow-lg py-0 mb-5">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Badge className="bg-amber-50 text-amber-600 border-0 text-[10px]">
-                    {config.emoji} {config.label}
-                  </Badge>
-                  <Badge className="bg-orange-50 text-orange-500 border-0 text-[10px]">
-                    🎯 每日挑战
-                  </Badge>
-                </div>
-
-                <div className="text-center py-8">
-                  <p className="text-4xl font-black text-gray-800 mb-2">
-                    {currentQ.expression || `${currentQ.num1} ${currentQ.displayOp} ${currentQ.num2}`}
-                  </p>
-                  <p className="text-lg text-gray-400">= ?</p>
-                </div>
-
-                {/* Answer Input */}
-                <div className="flex gap-2">
-                  <input
-                    type="number"
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSubmitAnswer()}
-                    placeholder="输入答案"
-                    className="flex-1 h-14 rounded-xl border border-gray-200 px-4 text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-                    autoFocus
-                    inputMode="numeric"
-                  />
-                  <Button
-                    onClick={handleSubmitAnswer}
-                    disabled={!userInput.trim()}
-                    className="h-14 w-14 rounded-xl bg-gradient-to-r from-amber-400 to-orange-400 hover:from-amber-500 hover:to-orange-500 text-white font-bold shadow-md p-0"
+            <div className={`
+              relative bg-white rounded-2xl shadow-lg border-2 p-5 text-center transition-all
+              ${showFeedback === 'correct'
+                ? 'border-emerald-300 bg-emerald-50'
+                : showFeedback === 'wrong'
+                  ? 'border-red-300 bg-red-50'
+                  : 'border-amber-100'
+              }
+            `}>
+              {/* Feedback overlay */}
+              <AnimatePresence>
+                {showFeedback && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{
+                      opacity: 1,
+                      scale: 1,
+                      rotate: showFeedback === 'correct' ? 0 : [0, -6, 6, -4, 4, 0],
+                    }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: showFeedback === 'wrong' ? 0.3 : 0.2 }}
+                    className="absolute inset-0 flex items-center justify-center z-10 bg-white/70 rounded-2xl"
                   >
-                    ✓
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                    {showFeedback === 'correct' ? (
+                      <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 0.3 }}>
+                        <CheckCircle2 className="w-16 h-16 text-emerald-500" />
+                      </motion.div>
+                    ) : (
+                      <XCircle className="w-16 h-16 text-red-500" />
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Badges */}
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <Badge className="bg-amber-50 text-amber-600 border-0 text-[10px]">
+                  {config.emoji} {config.label}
+                </Badge>
+                <Badge className="bg-orange-50 text-orange-500 border-0 text-[10px]">
+                  🎯 每日挑战
+                </Badge>
+              </div>
+
+              {/* Question text */}
+              <p className="text-3xl sm:text-4xl font-bold text-gray-800 tracking-wide">
+                {getDisplay(currentQ)}
+              </p>
+
+              {/* Input display */}
+              <div className="mt-3 min-h-[44px] flex items-center justify-center">
+                <span className="text-4xl font-bold text-amber-500 font-mono">
+                  {inputValue || <span className="text-gray-300">_</span>}
+                </span>
+              </div>
+            </div>
           </motion.div>
 
-          {/* Stats Row */}
-          <div className="flex justify-center gap-6">
-            <div className="flex items-center gap-1.5 text-sm">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-              <span className="font-bold text-emerald-600">{challengeState.correct}</span>
+          {/* Number Pad */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="w-full"
+          >
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => handleNumPress(String(num))}
+                  disabled={!!showFeedback}
+                  className="h-14 rounded-xl bg-white border-2 border-gray-200 text-gray-800 font-bold text-xl shadow-sm hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 select-none"
+                >
+                  {num}
+                </button>
+              ))}
             </div>
-            <div className="flex items-center gap-1.5 text-sm">
-              <XIcon className="w-4 h-4 text-red-400" />
-              <span className="font-bold text-red-500">{challengeState.wrong}</span>
+            <div className="grid grid-cols-4 gap-2 mt-2">
+              <button
+                onClick={handleDelete}
+                disabled={!!showFeedback}
+                className="h-14 rounded-xl bg-red-50 border-2 border-red-200 text-red-500 flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 select-none"
+              >
+                <Delete className="w-6 h-6" />
+              </button>
+              <button
+                onClick={() => handleNumPress('0')}
+                disabled={!!showFeedback}
+                className="h-14 rounded-xl bg-white border-2 border-gray-200 text-gray-800 font-bold text-xl shadow-sm hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50 select-none"
+              >
+                0
+              </button>
+              <button
+                onClick={handleToggleNegative}
+                disabled={!!showFeedback}
+                className="h-14 rounded-xl bg-indigo-50 border-2 border-indigo-200 text-indigo-600 font-bold text-lg shadow-sm hover:bg-indigo-100 transition-all active:scale-95 disabled:opacity-50 select-none"
+              >
+                ±
+              </button>
+              <button
+                onClick={handleNumericSubmit}
+                disabled={!!showFeedback || !inputValue}
+                className="h-14 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-bold text-xl shadow-md hover:opacity-90 transition-all active:scale-95 disabled:opacity-50 select-none"
+              >
+                ✓
+              </button>
             </div>
-            <div className="flex items-center gap-1.5 text-sm">
-              <Flame className="w-4 h-4 text-orange-400" />
-              <span className="font-bold text-orange-500">{challengeState.combo}</span>
-            </div>
-          </div>
+          </motion.div>
         </div>
-
-        <BottomNav />
       </div>
     );
   }
