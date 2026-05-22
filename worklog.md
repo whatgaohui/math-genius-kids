@@ -538,3 +538,50 @@ Stage Summary:
 - 移动端布局优化：答题模式全屏，无BottomNav遮挡
 - 添加答题反馈动画和音效
 - 新APK 5.2MB已生成
+
+---
+Task ID: 16
+Agent: Main Agent
+Task: 全面端到端QA测试 + 修复所有发现的问题 + 重新编译APK
+
+Work Log:
+- 使用agent-browser对所有页面进行E2E测试（移动视口375x812）
+- 测试覆盖：首页、统计、成就、宠物、设置、数学天地、语文天地、英语乐园、每日挑战
+- 零JS运行时错误，控制台干净
+
+### 发现的问题及修复
+
+1. **Critical: 数学/语文/英语三个科目首页缺少BottomNav**
+   - 用户在科目页面无法通过底部导航切换到其他页面
+   - 修复：为MathHome.tsx、ChineseHome.tsx、EnglishHome.tsx添加BottomNav组件
+   - 同时将内容区底部padding从pb-24增加到pb-28
+
+2. **Medium: 首页"攻略"按钮触控区域过小（27px高）**
+   - 未达到44px最低触控标准
+   - 修复：增加min-h-[44px]和py-2
+
+3. **Medium: 所有含BottomNav的页面底部内容可能被遮挡**
+   - pb-24(96px)在部分设备上不够（BottomNav高56px + 安全区域34px ≈ 90px）
+   - 修复：将所有BottomNav页面的pb-24统一改为pb-28(112px)
+   - 涉及文件：HomePage、StatsPage、AchievementsPage、PetPage、SettingsPage、
+     DailyChallengePage、ErrorBookPage、LeaderboardPage、HelpGuide、
+     ParentDashboard、CurriculumTestTool、QuestionBankManager
+
+4. **已确认无问题的项目**：
+   - 所有BottomNav页面都有正确的pb-28底部padding
+   - 所有交互按钮都满足44px触控标准
+   - 中文/英语答题选项min-h-[44px]
+   - 每日挑战数字键盘体验良好
+   - 安全区域padding（safe-top）正确
+   - 无JS运行时错误
+
+### APK重新编译
+- 重新执行静态导出 + Gradle编译
+- APK大小：5.2MB
+- Dev server正常运行
+
+Stage Summary:
+- 3个科目页面新增BottomNav，导航体验完整
+- 所有页面底部padding统一为pb-28，防止内容被遮挡
+- 攻略按钮触控区域增大
+- APK v1.4 (5.2MB)已重新编译

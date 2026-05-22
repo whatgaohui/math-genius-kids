@@ -131,7 +131,7 @@ export default function AchievementsPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-md px-4 pb-24">
+      <div className="mx-auto max-w-md px-4 pb-28">
         {/* Progress Card */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}

@@ -441,7 +441,7 @@ export default function PetPage() {
           </div>
         </div>
 
-        <div className="mx-auto max-w-md px-4 py-6 pb-24">
+        <div className="mx-auto max-w-md px-4 py-6 pb-28">
           <div className="grid grid-cols-1 gap-4">
             {PET_CONFIGS.map((pet, i) => {
               // Each pet type gets a unique color theme for their talent badge
@@ -544,7 +544,7 @@ export default function PetPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-md px-4 py-6 pb-24">
+      <div className="mx-auto max-w-md px-4 py-6 pb-28">
 
         {/* Tab Bar */}
         <div className="flex gap-1 rounded-xl bg-white/60 p-1 mb-6 dark:bg-gray-800/60 backdrop-blur-sm">

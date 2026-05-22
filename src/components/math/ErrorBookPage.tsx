@@ -187,7 +187,7 @@ export default function ErrorBookPage() {
           </div>
         </div>
 
-        <div className="mx-auto max-w-md px-4 pb-24 pt-5">
+        <div className="mx-auto max-w-md px-4 pb-28 pt-5">
           {/* Progress bar */}
           <div className="mb-5">
             <div className="h-2 rounded-full bg-red-100 overflow-hidden">
@@ -307,7 +307,7 @@ export default function ErrorBookPage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-md px-4 pb-24">
+      <div className="mx-auto max-w-md px-4 pb-28">
         {/* Stats Cards */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}

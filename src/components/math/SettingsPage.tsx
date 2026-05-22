@@ -382,7 +382,7 @@ export default function SettingsPage() {
       </motion.div>
 
       {/* ═══════════════════ SETTINGS GROUPS ═══════════════════ */}
-      <div className="mx-auto max-w-md px-4 pb-24 space-y-4">
+      <div className="mx-auto max-w-md px-4 pb-28 space-y-4">
 
         {/* Profile */}
         <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible"

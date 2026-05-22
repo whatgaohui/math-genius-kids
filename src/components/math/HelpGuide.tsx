@@ -1905,7 +1905,7 @@ export default function HelpGuide() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="max-w-md mx-auto px-4 pt-4 pb-24"
+          className="max-w-md mx-auto px-4 pt-4 pb-28"
         >
           <ActiveContent />
         </motion.div>

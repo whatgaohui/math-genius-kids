@@ -155,7 +155,7 @@ export default function LeaderboardPage() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 pb-24">
+      <div className="max-w-md mx-auto px-4 pb-28">
         {/* Top 3 Podium */}
         {leaderboard.length >= 3 && (
           <motion.div

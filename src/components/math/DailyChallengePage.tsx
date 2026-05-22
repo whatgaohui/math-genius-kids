@@ -310,7 +310,7 @@ export default function DailyChallengePage() {
 
     return (
       <div className="min-h-screen bg-gradient-to-b from-amber-50 via-yellow-50/30 to-white">
-        <div className="mx-auto max-w-md px-4 py-6 pb-24">
+        <div className="mx-auto max-w-md px-4 py-6 pb-28">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -651,7 +651,7 @@ export default function DailyChallengePage() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-md px-4 pb-24">
+      <div className="mx-auto max-w-md px-4 pb-28">
         {/* Today's Challenge Info */}
         <motion.div
           initial={{ y: 20, opacity: 0 }}

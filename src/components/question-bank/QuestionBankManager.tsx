@@ -221,7 +221,7 @@ export default function QuestionBankManager() {
       </header>
 
       {/* Content */}
-      <main className="flex-1 px-4 pt-4 pb-24 max-w-lg mx-auto w-full">
+      <main className="flex-1 px-4 pt-4 pb-28 max-w-lg mx-auto w-full">
         <Tabs defaultValue="store" className="w-full">
           <TabsList className="w-full grid grid-cols-4 h-auto p-1 bg-white rounded-2xl shadow-sm border border-orange-100 mb-4">
             <TabsTrigger

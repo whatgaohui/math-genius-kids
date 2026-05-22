@@ -30,6 +30,7 @@ import { getGradeLabel, GRADE_EMOJIS } from '@/lib/curriculum-config';
 import { playClickSound } from '@/lib/sound';
 import { cn } from '@/lib/utils';
 import type { Operation, Difficulty } from '@/lib/math-utils';
+import BottomNav from './BottomNav';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -813,7 +814,7 @@ export default function MathHome() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="max-w-md mx-auto px-4 pt-4 pb-24 relative"
+        className="max-w-md mx-auto px-4 pt-4 pb-28 relative"
       >
         {/* Practice Stats Summary */}
         {mathSessions > 0 && (
@@ -957,6 +958,7 @@ export default function MathHome() {
           </motion.div>
         </AnimatePresence>
       </motion.div>
+      <BottomNav />
     </div>
   );
 }

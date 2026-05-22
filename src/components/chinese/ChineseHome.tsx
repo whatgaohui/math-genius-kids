@@ -23,6 +23,7 @@ import { MODE_CONFIG, getModesForGrade, type ChineseMode, type ChineseGrade } fr
 import { getGradeLabel } from '@/lib/curriculum-config';
 import { playClickSound, resumeAudioContext } from '@/lib/sound';
 import { cn } from '@/lib/utils';
+import BottomNav from '@/components/math/BottomNav';
 
 // ── Shared mutable config for ChinesePlay ──
 let _chinesePlayConfig = {
@@ -861,7 +862,7 @@ export default function ChineseHome() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="max-w-md mx-auto px-4 pt-4 pb-24 relative"
+        className="max-w-md mx-auto px-4 pt-4 pb-28 relative"
       >
         {/* Practice Stats Summary */}
         {chineseSessions > 0 && (
@@ -1005,6 +1006,7 @@ export default function ChineseHome() {
           </motion.div>
         </AnimatePresence>
       </motion.div>
+      <BottomNav />
     </div>
   );
 }

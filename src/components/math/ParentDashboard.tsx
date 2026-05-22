@@ -906,7 +906,7 @@ export default function ParentDashboard() {
       </div>
 
       <motion.main
-        className="mx-auto max-w-md px-4 pb-24 -mt-3"
+        className="mx-auto max-w-md px-4 pb-28 -mt-3"
         variants={containerVariants}
         initial="hidden"
         animate="visible"

@@ -24,6 +24,7 @@ import { ALL_ENGLISH_MODES, getEnglishModesForGrade, type EnglishMode, type Engl
 import { getGradeLabel } from '@/lib/curriculum-config';
 import { playClickSound, resumeAudioContext } from '@/lib/sound';
 import { cn } from '@/lib/utils';
+import BottomNav from '@/components/math/BottomNav';
 
 // ── Shared mutable config for EnglishPlay ──
 let _englishPlayConfig = {
@@ -811,7 +812,7 @@ export default function EnglishHome() {
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="max-w-md mx-auto px-4 pt-4 pb-24 relative"
+        className="max-w-md mx-auto px-4 pt-4 pb-28 relative"
       >
         {/* Practice Stats Summary */}
         {englishSessions > 0 && (
@@ -955,6 +956,7 @@ export default function EnglishHome() {
           </motion.div>
         </AnimatePresence>
       </motion.div>
+      <BottomNav />
     </div>
   );
 }
