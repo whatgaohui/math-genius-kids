@@ -1,14 +1,7 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
 # dependencies
 node_modules
 /.pnp
 .pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
 
 # testing
 /coverage
@@ -30,39 +23,38 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files
 .env*
 
 # vercel
 .vercel
 
-
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-local-*
+
+# IDE / AI config
 .claude
 .z-ai-config
-*.log
-dev.log
-dev.out.log
-test
-prompt
 
-server.log
-# Skills directory
+# Logs
+*.log
+
+# Skills directory (platform-provided, not project code)
 /skills/
 
 # Android SDK tools
 cmdline-tools.zip
 android-sdk/
 
+# Android build cache
+android/app/build/
+android/app/src/main/assets/public/
+android/.gradle/
+
 # Build artifacts
 *.apk
 public/app-debug.apk
-
-# QA screenshots
-qa-*.png
 
 # Database
 db/*.db
@@ -72,3 +64,13 @@ examples/
 
 # Mini services (local only)
 mini-services/
+
+# Work logs (local only)
+worklog*.md
+
+# Download temp
+download/
+
+# Z scripts runtime files
+.zscripts/dev.pid
+.zscripts/dev.log
